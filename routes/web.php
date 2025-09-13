@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -14,9 +16,14 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [UserController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
+
+// Admin Routes:
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/category', [AdminController::class, 'indexCategory'])->name('admin.category.index'); // List for categories
+    Route::get('/admin/category/create', [AdminController::class, 'createCategory'])->name('admin.category.create'); // Show create category form
+    Route::post('/admin/category/store', [AdminController::class, 'storeCategory'])->name('admin.category.store'); // Handle create category form submission
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
