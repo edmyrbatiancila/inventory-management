@@ -9,7 +9,8 @@ class Category extends Model
 {
     /** @use HasFactory<\Database\Factories\CategoryFactory> */
     use HasFactory;
-    
+    use \App\Traits\HasSearchAndFilter;
+
     protected $fillable = [
         'name',
         'description'

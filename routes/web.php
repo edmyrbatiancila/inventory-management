@@ -23,6 +23,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/category', [AdminController::class, 'indexCategory'])->name('admin.category.index'); // List for categories
     Route::get('/admin/category/create', [AdminController::class, 'createCategory'])->name('admin.category.create'); // Show create category form
     Route::post('/admin/category/store', [AdminController::class, 'storeCategory'])->name('admin.category.store'); // Handle create category form submission
+    Route::get('/admin/category/{id}/edit', [AdminController::class, 'editCategory'])->name('admin.category.edit'); // Show edit category form
+    Route::put('/admin/category/{category}', [AdminController::class, 'updateCategory'])->name('admin.category.update'); // Update category
 });
 
 Route::middleware('auth')->group(function () {

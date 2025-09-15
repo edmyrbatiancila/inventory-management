@@ -11,16 +11,19 @@ use Inertia\Inertia;
 class AdminController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the category resource.
      */
     public function indexCategory()
     {
+        $sort = request()->input('sort', 'newest');
         $categories = Category::select('id', 'name', 'description', 'created_at')
-            ->latest()
-            ->paginate(10);
+            ->searchAndFilter(request(), ['name', 'description'], 'created_at')
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('admin/category/Index', [
-            'categories' => $categories
+            'categories' => $categories,
+            'sort' => $sort,
         ]);
     }
 
@@ -53,17 +56,21 @@ class AdminController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Admin $admin)
+    public function editCategory(Category $category)
     {
-        //
+        
+        return Inertia::render('admin/category/Edit', [
+            'category' => $category
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified category in storage.
      */
-    public function update(UpdateAdminRequest $request, Admin $admin)
+    public function updateCategory(UpdateAdminRequest $request, Category $category)
     {
-        //
+        $category->update($request->validated());
+        return redirect()->route('admin.category.index')->with('success', 'Category successfully updated');
     }
 
     /**
