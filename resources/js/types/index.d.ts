@@ -27,6 +27,15 @@ export interface Category {
     created_at: string;
 };
 
+export interface Brand {
+    id: number;
+    name: string;
+    description: string;
+    logo_url?: string;
+    website_url?: string;
+    created_at: string;
+}
+
 export interface PaginationLink {
     url: string | null;
     label: string;

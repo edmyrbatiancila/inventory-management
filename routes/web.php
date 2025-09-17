@@ -20,11 +20,17 @@ Route::get('/dashboard', [UserController::class, 'dashboard'])->middleware(['aut
 
 // Admin Routes:
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/category', [AdminController::class, 'indexCategory'])->name('admin.category.index'); // List for categories
-    Route::get('/admin/category/create', [AdminController::class, 'createCategory'])->name('admin.category.create'); // Show create category form
-    Route::post('/admin/category/store', [AdminController::class, 'storeCategory'])->name('admin.category.store'); // Handle create category form submission
-    Route::get('/admin/category/{id}/edit', [AdminController::class, 'editCategory'])->name('admin.category.edit'); // Show edit category form
-    Route::put('/admin/category/{category}', [AdminController::class, 'updateCategory'])->name('admin.category.update'); // Update category
+
+    // Category Routes:
+    Route::get('/admin/categories', [AdminController::class, 'indexCategory'])->name('admin.category.index'); // List for categories
+    Route::get('/admin/categories/create', [AdminController::class, 'createCategory'])->name('admin.category.create'); // Show create category form
+    Route::post('/admin/categories/store', [AdminController::class, 'storeCategory'])->name('admin.category.store'); // Handle create category form submission
+    Route::get('/admin/categories/{category}/edit', [AdminController::class, 'editCategory'])->name('admin.category.edit'); // Show edit category form
+    Route::put('/admin/categories/{category}', [AdminController::class, 'updateCategory'])->name('admin.category.update'); // Update category
+    Route::delete('/admin/categories/{category}', [AdminController::class, 'destroyCategory'])->name('admin.category.destroy'); // Delete category
+
+    // Brand Routes:
+    Route::get('/admin/brands', [AdminController::class, 'indexBrand'])->name('admin.brand.index'); // Index page for brands
 });
 
 Route::middleware('auth')->group(function () {

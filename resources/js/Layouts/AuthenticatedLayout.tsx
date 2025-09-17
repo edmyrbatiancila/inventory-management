@@ -33,12 +33,24 @@ export default function Authenticated({
                                 >
                                     Dashboard
                                 </NavLink>
-                                <NavLink
-                                    href={route('admin.category.index')}
-                                    active={route().current('admin.category.index')}
-                                >
-                                    Category
-                                </NavLink>
+                                
+                                {/* Admin-only navigation */}
+                                {user.type === 'admin' && (
+                                    <>
+                                        <NavLink
+                                            href={route('admin.category.index')}
+                                            active={route().current('admin.category.*')}
+                                        >
+                                            Categories
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('admin.brand.index')}
+                                            active={route().current('admin.brand.*')}
+                                        >
+                                            Brands
+                                        </NavLink>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -143,12 +155,24 @@ export default function Authenticated({
                         >
                             Dashboard
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('admin.category.index')}
-                            active={route().current('admin.category.index')}
-                        >
-                            Category
-                        </ResponsiveNavLink>
+                        
+                        {/* Admin-only mobile navigation */}
+                        {user.type === 'admin' && (
+                            <>
+                                <ResponsiveNavLink
+                                    href={route('admin.category.index')}
+                                    active={route().current('admin.category.*')}
+                                >
+                                    Categories
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('admin.brand.index')}
+                                    active={route().current('admin.brand.*')}
+                                >
+                                    Brands
+                                </ResponsiveNavLink>
+                            </>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">

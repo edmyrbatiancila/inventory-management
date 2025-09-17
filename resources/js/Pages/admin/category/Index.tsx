@@ -5,6 +5,17 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/Components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { Category, PaginatedResponse } from "@/types";
 import type { PageProps } from '@/types';
@@ -22,6 +33,7 @@ interface ICategoryProps {
 type InertiaPageProps = PageProps & {
     flash?: {
         success?: string;
+        error?: string;
     };
 };
 
@@ -61,13 +73,35 @@ export default function CategoryIndex({ categories, sort: initialSort = 'newest'
             router.get(route('admin.category.index'), {}, { preserveState: true, replace: true });
         };
 
+        const handleDeleteCategory = (categoryId: number) => {
+            router.delete(route('admin.category.destroy', categoryId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Success message will be handled by the flash message
+                },
+                onError: () => {
+                    toast.error('Failed to delete category', {
+                        description: 'The category could not be deleted. It may be in use.',
+                        duration: 4000,
+                    });
+                }
+            });
+        }
+
         useEffect(() => {
             if (props.flash && props.flash.success) {
                 toast.success(props.flash.success, {
-                    description: 'The new category is now available in your inventory.',
+                    description: 'Category operation completed successfully.',
                     duration: 4000,
                     style: { fontWeight: 'bold', fontSize: '1.1rem' },
                     icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
+                });
+            }
+            if (props.flash && props.flash.error) {
+                toast.error(props.flash.error, {
+                    description: 'Please try again or contact support if the problem persists.',
+                    duration: 4000,
+                    style: { fontWeight: 'bold', fontSize: '1.1rem' },
                 });
             }
         }, [props.flash]);
@@ -84,7 +118,6 @@ export default function CategoryIndex({ categories, sort: initialSort = 'newest'
                             <Package className="w-7 h-7 text-blue-600" />
                             Category Management
                         </h2>
-                        <div className="h-1 w-24 bg-blue-200 rounded mt-2 mb-1" />
                     </motion.div>
                 )}
             >
@@ -202,13 +235,35 @@ export default function CategoryIndex({ categories, sort: initialSort = 'newest'
                                                                         >
                                                                             <Edit2 className="w-4 h-4" />
                                                                         </motion.button>
-                                                                        <motion.button
-                                                                            whileHover={{ scale: 1.15 }}
-                                                                            className="p-2 rounded hover:bg-red-100 text-red-600"
-                                                                            title="Delete"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </motion.button>
+                                                                        <AlertDialog>
+                                                                            <AlertDialogTrigger asChild>
+                                                                                <motion.button
+                                                                                    whileHover={{ scale: 1.15 }}
+                                                                                    className="p-2 rounded hover:bg-red-100 text-red-600"
+                                                                                    title="Delete"
+                                                                                >
+                                                                                    <Trash2 className="w-4 h-4" />
+                                                                                </motion.button>
+                                                                            </AlertDialogTrigger>
+                                                                            <AlertDialogContent>
+                                                                                <AlertDialogHeader>
+                                                                                    <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                                                                                    <AlertDialogDescription>
+                                                                                        Are you sure you want to delete "{category.name}"? 
+                                                                                        This action cannot be undone and will permanently remove the category from your inventory.
+                                                                                    </AlertDialogDescription>
+                                                                                </AlertDialogHeader>
+                                                                                <AlertDialogFooter>
+                                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                    <AlertDialogAction 
+                                                                                        onClick={() => handleDeleteCategory(category.id)}
+                                                                                        className="bg-red-600 hover:bg-red-700"
+                                                                                    >
+                                                                                        Delete
+                                                                                    </AlertDialogAction>
+                                                                                </AlertDialogFooter>
+                                                                            </AlertDialogContent>
+                                                                        </AlertDialog>
                                                                     </TableCell>
                                                                 </motion.tr>
                                                             );
