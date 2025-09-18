@@ -98,10 +98,19 @@ export default function CategoryCreate() {
                                         <InputError message={errors.description} />
                                     </div>
                                     <div className="flex justify-end gap-2">
-                                        <Button type="button" variant="outline" onClick={() => reset()} disabled={processing}>
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => reset()} 
+                                            disabled={processing}
+                                        >
                                             Reset
                                         </Button>
-                                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={processing}>
+                                        <Button 
+                                            type="submit" 
+                                            className="bg-blue-600 hover:bg-blue-700 text-white" 
+                                            disabled={processing}
+                                        >
                                             {processing ? 'Saving...' : 'Create Category'}
                                         </Button>
                                     </div>

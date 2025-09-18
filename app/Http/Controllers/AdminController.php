@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use App\Http\Requests\StoreAdminRequest;
+use App\Http\Requests\StoreBrandRequest;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateAdminRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class AdminController extends Controller
@@ -61,7 +64,7 @@ class AdminController extends Controller
     /**
      * Update the specified category in storage.
      */
-    public function updateCategory(UpdateAdminRequest $request, Category $category)
+    public function updateCategory(UpdateCategoryRequest $request, Category $category)
     {
         $category->update($request->validated());
 
@@ -94,5 +97,41 @@ class AdminController extends Controller
             'brands' => $brands,
             'sort' => $sort,
         ]);
+    }
+
+    public function createBrand()
+    {
+        return Inertia::render('admin/brand/Create');
+    }
+
+    public function storeBrand(StoreBrandRequest $request)
+    {
+        $validated = $request->validated();
+        
+        // Auto-generate slug if not provided
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+            
+            // Ensure slug is unique by appending a number if needed
+            $originalSlug = $validated['slug'];
+            $counter = 1;
+            while (Brand::where('slug', $validated['slug'])->exists()) {
+                $validated['slug'] = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+        }
+
+        // Handle empty logo_url and website_url
+        if (empty($validated['logo_url'])) {
+            $validated['logo_url'] = null;
+        }
+        
+        if (empty($validated['website_url'])) {
+            $validated['website_url'] = null;
+        }
+
+        Brand::create($validated);
+
+        return redirect()->route('admin.brand.index')->with('success', 'Brand successfully created');
     }
 }

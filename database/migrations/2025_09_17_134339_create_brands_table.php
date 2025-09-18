@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->text('description');
             $table->string('slug')->unique();
-            $table->string('logo_url');
-            $table->string('website_url');
+            $table->string('logo_url')->nullable();
+            $table->string('website_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();

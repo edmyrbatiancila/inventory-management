@@ -31,8 +31,10 @@ export interface Brand {
     id: number;
     name: string;
     description: string;
+    slug: string;
     logo_url?: string;
     website_url?: string;
+    is_active: boolean;
     created_at: string;
 }
 
