@@ -33,9 +33,11 @@ export interface Brand {
     description: string;
     slug: string;
     logo_url?: string;
+    logo?: File | null;
     website_url?: string;
     is_active: boolean;
     created_at: string;
+    updated_at?: string;
 }
 
 export interface PaginationLink {

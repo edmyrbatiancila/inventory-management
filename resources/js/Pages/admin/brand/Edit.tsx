@@ -1,54 +1,56 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
+import { Brand } from "@/types";
 import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeft, Asterisk, Tag, Upload, Globe } from "lucide-react";
+import { ArrowLeft, Globe, Tag, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import React, { useState, useEffect } from "react";
 import { Label } from "@/Components/ui/label";
-import { Input } from "@/Components/ui/input";
 import InputError from "@/Components/InputError";
+import { Input } from "@/Components/ui/input";
 import { Textarea } from "@/Components/ui/textarea";
-import { useState } from "react";
 
-const BrandCreate = () => {
+interface IBrandEditProps {
+    brand: Brand;
+}
+
+const BrandEdit = ({ brand }: IBrandEditProps) => {
+
     const [logoPreview, setLogoPreview] = useState<string>('');
+    const [selectedFileName, setSelectedFileName] = useState<string>('');
 
-    const { data, setData, post, processing, errors, reset } = useForm<{
-        name: string;
-        description: string;
-        slug: string;
-        logo: File | null;
-        logo_url: string;
-        website_url: string;
-        is_active: boolean;
-    }>({
-        name: '',
-        description: '',
-        slug: '',
-        logo: null,
-        logo_url: '',
-        website_url: '',
-        is_active: true,
+    const { data, setData, put, processing, errors, reset } = useForm({
+        name: brand.name || '',
+        description: brand.description || '',
+        website_url: brand.website_url || '',
+        is_active: brand.is_active ? 1 : 0,
+        logo: null as File | null,
+        logo_url: brand.logo_url || '',
+        slug: brand.slug || '',
     });
 
-    // Helper function to generate slug from name
-    const generateSlug = (name: string) => {
-        return name
-            .toLowerCase()
-            .replace(/[^\w\s-]/g, '') // Remove special characters
-            .replace(/\s+/g, '-') // Replace spaces with hyphens
-            .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-            .trim();
-    };
+    // Initialize logo preview with existing logo
+    useEffect(() => {
+        if (brand.logo_url && !logoPreview) {
+            setLogoPreview(`/storage/${brand.logo_url}`);
+            // Extract file name from logo_url for display
+            const fileName = brand.logo_url.split('/').pop() || '';
+            setSelectedFileName(fileName);
+        }
+    }, [brand.logo_url]);
 
-    // Handle name change and auto-generate slug
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const name = e.target.value;
-        setData(prev => ({
-            ...prev,
-            name: name,
-            slug: generateSlug(name)
-        }));
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        put(route('admin.brand.update', brand.id), {
+            onSuccess: () => {
+                console.log('Brand updated successfully');
+            },
+            onError: (errors) => {
+                console.error('Update failed:', errors);
+            }
+        });
     };
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,33 +58,20 @@ const BrandCreate = () => {
         if (file) {
             const previewUrl = URL.createObjectURL(file);
             setLogoPreview(previewUrl);
+            setSelectedFileName(file.name);
             setData('logo', file);
         } else {
-            setLogoPreview('');
+            // Reset to existing logo if no new file selected
+            if (brand.logo_url) {
+                setLogoPreview(`/storage/${brand.logo_url}`);
+                const fileName = brand.logo_url.split('/').pop() || '';
+                setSelectedFileName(fileName);
+            } else {
+                setLogoPreview('');
+                setSelectedFileName('');
+            }
             setData('logo', null);
         }
-    };
-
-    const clearLogo = () => {
-        setLogoPreview('');
-        setData('logo', null);
-        // Clear the file input
-        const fileInput = document.getElementById('logo') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Use the post method from useForm - it will automatically handle the current form data
-        post(route('admin.brand.store'), {
-            forceFormData: true,
-            onSuccess: () => {
-                reset();
-                setLogoPreview('');
-            },
-            preserveScroll: true,
-        });
     };
 
     return (
@@ -93,13 +82,13 @@ const BrandCreate = () => {
                         <Tag className="w-8 h-8 text-blue-600" />
                     </div>
                     <div className="flex flex-col justify-center">
-                        <h2 className="text-2xl font-bold leading-tight text-gray-800">Create Brand</h2>
-                        <p className="text-sm text-gray-600 mt-1">Add a new brand to your inventory</p>
+                        <h2 className="text-2xl font-bold leading-tight text-gray-800">Edit Brand</h2>
+                        <p className="text-sm text-gray-600 mt-1">Update the brand information</p>
                     </div>
                 </div>
             }
         >
-            <Head title="Create Brand" />
+            <Head title="Edit Brand" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <motion.div
@@ -118,38 +107,27 @@ const BrandCreate = () => {
                                 Back to List
                             </Button>
                         </div>
-                        <Card
-                            className="shadow-lg border-0 bg-white/90 px-2 sm:px-6 md:px-10 py-6"
-                        >
-                            <CardHeader
-                                className="mb-2"
-                            >
-                                <CardTitle
-                                    className="text-xl font-semibold text-gray-900 flex items-center gap-2"
-                                >
-                                    <Tag className="w-6 h-6 text-blue-600" />
-                                    New Brand
+                        <Card className="shadow-lg border-0 bg-white/90 px-2 sm:px-6 md:px-10 py-6">
+                            <CardHeader className="mb-2">
+                                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-blue-600" />
+                                    Update Brand
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <form 
-                                    onSubmit={ handleSubmit } 
-                                    className="space-y-6"
-                                >
+                                <form onSubmit={ handleSubmit } className="space-y-6">
                                     <div>
-                                        <Label 
-                                            htmlFor="name" 
+                                        <Label
+                                            htmlFor="name"
                                             className="block text-sm font-medium text-gray-700 mb-1"
                                         >
                                             Brand Name
-                                            <Asterisk className="inline-block w-3 h-3 text-red-500 ml-0.5" />
                                         </Label>
-                                        <Input 
+                                        <Input
+                                            type="text"
                                             id="name"
-                                            name="name"
                                             value={data.name}
-                                            onChange={handleNameChange}
-                                            placeholder="Enter brand name"
+                                            onChange={e => setData('name', e.target.value)}
                                             className="w-full"
                                             autoFocus
                                         />
@@ -157,8 +135,8 @@ const BrandCreate = () => {
                                     </div>
 
                                     <div>
-                                        <Label 
-                                            htmlFor="slug" 
+                                        <Label
+                                            htmlFor="slug"
                                             className="block text-sm font-medium text-gray-700 mb-1"
                                         >
                                             Slug (URL-friendly name)
@@ -169,25 +147,22 @@ const BrandCreate = () => {
                                             name="slug"
                                             value={data.slug}
                                             onChange={e => setData('slug', e.target.value)}
-                                            placeholder="brand-slug-example"
                                             className="w-full font-mono text-sm"
                                         />
                                         <InputError message={errors.slug} />
                                     </div>
+
                                     <div>
-                                        <Label 
+                                        <Label
                                             htmlFor="description"
                                             className="block text-sm font-medium text-gray-700 mb-1"
                                         >
-                                            Description
-                                            <Asterisk className="inline-block w-3 h-3 text-red-500 ml-0.5" />
+                                            Brand Description
                                         </Label>
                                         <Textarea
                                             id="description"
-                                            name="description"
                                             value={data.description}
                                             onChange={e => setData('description', e.target.value)}
-                                            placeholder="Enter brand description"
                                             className="w-full min-h-[100px]"
                                         />
                                         <InputError message={errors.description} />
@@ -195,54 +170,60 @@ const BrandCreate = () => {
 
                                     {/* Logo Upload */}
                                     <div>
-                                        <Label 
+                                        <Label
                                             htmlFor="logo"
                                             className="block text-sm font-medium text-gray-700 mb-1"
                                         >
                                             Brand Logo
-                                            <Asterisk className="inline-block w-3 h-3 text-red-500 ml-0.5" />
                                         </Label>
                                         <div className="flex items-center space-x-4">
                                             <div className="flex-1">
                                                 <div className="relative">
                                                     <Input
-                                                        id="logo"
-                                                        name="logo"
                                                         type="file"
+                                                        id="logo"
                                                         accept="image/*"
-                                                        onChange={handleLogoChange}
+                                                        onChange={ handleLogoChange }
                                                         className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                     />
                                                     <Upload className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
                                                 </div>
+                                                {selectedFileName && (
+                                                    <p className="mt-1 text-sm text-blue-600 font-medium">
+                                                        📎 {selectedFileName}
+                                                    </p>
+                                                )}
                                                 <p className="mt-1 text-xs text-gray-500">
                                                     PNG, JPG up to 2MB recommended size: 200x200px
+                                                    {brand.logo_url && !data.logo && " (Current logo will be replaced)"}
                                                 </p>
                                             </div>
-                                            {logoPreview && (
-                                                <div className="flex-shrink-0">
-                                                    <img
-                                                        src={logoPreview}
-                                                        alt="Logo preview"
-                                                        className="h-16 w-16 rounded-lg border border-gray-200 object-cover shadow-sm"
-                                                    />
-                                                </div>
-                                            )}
+                                        {(logoPreview || brand.logo_url) && (
+                                            <div className="flex-shrink-0">
+                                                <img 
+                                                    src={logoPreview || `/storage/${brand.logo_url}`}
+                                                    alt="Logo Preview"
+                                                    className="h-16 w-16 rounded-lg border border-gray-200 object-cover shadow-sm"
+                                                />
+                                                <p className="text-xs text-center mt-1 text-gray-500">
+                                                    {data.logo ? 'New Logo' : 'Current Logo'}
+                                                </p>
+                                            </div>
+                                        )}
                                         </div>
-                                        <InputError message={errors.logo_url} />
+                                        <InputError message={errors.logo || errors.logo_url} />
                                     </div>
 
                                     {/* Website URL */}
                                     <div>
-                                        <Label 
+                                        <Label
                                             htmlFor="website_url"
                                             className="block text-sm font-medium text-gray-700 mb-1"
                                         >
                                             Website URL
-                                            <Asterisk className="inline-block w-3 h-3 text-red-500 ml-0.5" />
                                         </Label>
                                         <div className="relative">
-                                            <Input
+                                            <Input 
                                                 id="website_url"
                                                 name="website_url"
                                                 type="url"
@@ -251,32 +232,37 @@ const BrandCreate = () => {
                                                 placeholder="https://www.brandwebsite.com"
                                                 className="w-full pl-10"
                                             />
-                                            <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                            <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
                                         </div>
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            Enter the official brand website URL
-                                        </p>
                                         <InputError message={errors.website_url} />
                                     </div>
 
                                     <div className="flex justify-end gap-2">
-                                        <Button 
-                                            type="button" 
-                                            variant="outline" 
+                                        <Button
+                                            type="button"
+                                            variant="outline"
                                             onClick={() => {
                                                 reset();
-                                                setLogoPreview('');
+                                                // Reset logo preview and file name to original or empty
+                                                if (brand.logo_url) {
+                                                    setLogoPreview(`/storage/${brand.logo_url}`);
+                                                    const fileName = brand.logo_url.split('/').pop() || '';
+                                                    setSelectedFileName(fileName);
+                                                } else {
+                                                    setLogoPreview('');
+                                                    setSelectedFileName('');
+                                                }
                                             }} 
                                             disabled={processing}
                                         >
                                             Reset
                                         </Button>
-                                        <Button 
+                                        <Button
                                             type="submit" 
                                             className="bg-blue-600 hover:bg-blue-700 text-white" 
                                             disabled={processing}
                                         >
-                                            {processing ? 'Creating...' : 'Create Brand'}
+                                            {processing ? 'Updating...' : 'Update Brand'}
                                         </Button>
                                     </div>
                                 </form>
@@ -289,4 +275,4 @@ const BrandCreate = () => {
     );
 }
 
-export default BrandCreate;
+export default BrandEdit;

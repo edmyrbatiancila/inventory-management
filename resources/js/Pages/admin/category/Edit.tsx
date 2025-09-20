@@ -29,12 +29,12 @@ const CategoryEdit = ({ category }: IEditProps) => {
         });
     };
 
-    useEffect(() => {
-        setData({
-            name: category.name || '',
-            description: category.description || ''
-        })
-    }, [category]);
+    // useEffect(() => {
+    //     setData({
+    //         name: category.name || '',
+    //         description: category.description || ''
+    //     })
+    // }, [category]);
 
     return (
         <AuthenticatedLayout

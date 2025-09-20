@@ -7,6 +7,7 @@ use App\Http\Requests\StoreAdminRequest;
 use App\Http\Requests\StoreBrandRequest;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateAdminRequest;
+use App\Http\Requests\UpdateBrandRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Brand;
 use App\Models\Category;
@@ -107,11 +108,18 @@ class AdminController extends Controller
     public function storeBrand(StoreBrandRequest $request)
     {
         $validated = $request->validated();
-        
+
+        // Handle logo file upload
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('brands', 'public');
+            $validated['logo_url'] = '/storage/' . $path;
+        } elseif (empty($validated['logo_url'])) {
+            $validated['logo_url'] = null;
+        }
+
         // Auto-generate slug if not provided
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
-            
             // Ensure slug is unique by appending a number if needed
             $originalSlug = $validated['slug'];
             $counter = 1;
@@ -121,11 +129,6 @@ class AdminController extends Controller
             }
         }
 
-        // Handle empty logo_url and website_url
-        if (empty($validated['logo_url'])) {
-            $validated['logo_url'] = null;
-        }
-        
         if (empty($validated['website_url'])) {
             $validated['website_url'] = null;
         }
@@ -133,5 +136,63 @@ class AdminController extends Controller
         Brand::create($validated);
 
         return redirect()->route('admin.brand.index')->with('success', 'Brand successfully created');
+    }
+
+    public function editBrand(Brand $brand)
+    {
+        return Inertia::render('admin/brand/Edit', [
+            'brand' => $brand
+        ]);
+    }
+
+    public function updateBrand(UpdateBrandRequest $request, Brand $brand)
+    {
+        $validated = $request->validated();
+
+        // Handle file upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if it exists
+            if ($brand->logo_url && file_exists(public_path('storage/' . $brand->logo_url))) {
+                unlink(public_path('storage/' . $brand->logo_url));
+            }
+
+            $logoFile = $request->file('logo');
+            $logoName = time() . '_' . $logoFile->getClientOriginalName();
+            $logoPath = $logoFile->storeAs('brands/logos', $logoName, 'public');
+            $validated['logo_url'] = $logoPath;
+        }
+
+        // Generate slug if not provided
+        if (empty($validated['slug'])) {
+            $baseSlug = Str::slug($validated['name']);
+            $slug = $baseSlug;
+            $counter = 1;
+            
+            while (Brand::where('slug', $slug)->where('id', '!=', $brand->id)->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+            $validated['slug'] = $slug;
+        }
+
+        // Handle nullable fields
+        $validated['website_url'] = empty($validated['website_url']) ? null : $validated['website_url'];
+        $validated['description'] = empty($validated['description']) ? null : $validated['description'];
+
+        // Update the brand
+        $brand->update($validated);
+
+        return redirect()->route('admin.brand.index')->with('success', 'Brand updated successfully.');
+    }
+
+    public function destroyBrand(Brand $brand)
+    {
+        try {
+            $brand->delete();
+            
+            return redirect()->route('admin.brand.index')->with('success', 'Brand successfully deleted');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.brand.index')->with('error', 'Failed to delete brand. It may be in use.');
+        }
     }
 }

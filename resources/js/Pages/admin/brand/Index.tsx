@@ -191,16 +191,16 @@ const BrandIndex = ({
                                         exit={{ opacity: 0, y: 20 }}
                                         transition={{ duration: 0.4 }}
                                     >
-                                        <Table>
+                                        <Table className="min-w-full">
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead className="w-16">#</TableHead>
-                                                    <TableHead>Name</TableHead>
-                                                    <TableHead>Description</TableHead>
-                                                    <TableHead>Logo</TableHead>
-                                                    <TableHead>Website</TableHead>
-                                                    <TableHead>Created</TableHead>
-                                                    <TableHead className="text-center">Actions</TableHead>
+                                                    <TableHead className="w-32">Name</TableHead>
+                                                    <TableHead className="w-48">Description</TableHead>
+                                                    <TableHead className="w-20">Logo</TableHead>
+                                                    <TableHead className="w-40">Website</TableHead>
+                                                    <TableHead className="w-24">Created</TableHead>
+                                                    <TableHead className="w-32 text-center">Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -215,59 +215,96 @@ const BrandIndex = ({
                                                         transition={{ duration: 0.3, delay: idx * 0.04 }}
                                                         className="hover:bg-blue-50/60 transition-colors"
                                                     >
-                                                        <TableCell className="font-semibold text-blue-700">{rowNumber}</TableCell>
-                                                        <TableCell className="font-medium">{brand.name}</TableCell>
-                                                        <TableCell className="text-gray-600 truncate">{brand.description}</TableCell>
-                                                        <TableCell><img src={brand.logo_url} alt={brand.name} className="w-16 h-16 object-cover" /></TableCell>
-                                                        <TableCell>
-                                                            <a 
-                                                                href={brand.website_url} 
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer" 
-                                                                className="text-blue-600 hover:underline truncate"
-                                                            >
-                                                                {brand.website_url}
-                                                            </a>
+                                                        <TableCell className="w-16 font-semibold text-blue-700">{rowNumber}</TableCell>
+                                                        <TableCell className="w-32 font-medium">
+                                                            <div className="truncate" title={brand.name}>{brand.name}</div>
                                                         </TableCell>
-                                                        <TableCell className="text-gray-500">{new Date(brand.created_at).toLocaleDateString()}</TableCell>
-                                                        <TableCell className="flex gap-2 justify-center">
-                                                            <motion.button
-                                                                whileHover={{ scale: 1.15 }}
-                                                                className="p-2 rounded hover:bg-blue-100 text-blue-600"
-                                                                title="Edit"
-                                                                onClick={() => router.visit(route('admin.brand.edit', brand.id))}
-                                                            >
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </motion.button>
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <motion.button
-                                                                        whileHover={{ scale: 1.15 }}
-                                                                        className="p-2 rounded hover:bg-red-100 text-red-600"
-                                                                        title="Delete"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </motion.button>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Delete Brand</AlertDialogTitle>
-                                                                        <AlertDialogDescription>
-                                                                            Are you sure you want to delete "{brand.name}"? 
-                                                                            This action cannot be undone and will permanently remove this brand.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction 
-                                                                            onClick={() => handleDeleteBrand(brand.id)}
-                                                                            className="bg-red-600 hover:bg-red-700"
+                                                        <TableCell className="w-48 text-gray-600">
+                                                            <div className="truncate" title={brand.description || "No description"}>
+                                                                {brand.description || "No description"}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="w-20">
+                                                            {brand.logo_url ? (
+                                                                <img 
+                                                                    src={`/storage/${brand.logo_url}?v=${new Date(brand.updated_at || brand.created_at).getTime()}`} 
+                                                                    alt={brand.name} 
+                                                                    className="w-16 h-16 object-cover rounded border border-gray-200 bg-white" 
+                                                                    onError={(e) => {
+                                                                        // Replace with fallback text when image fails to load
+                                                                        const img = e.currentTarget;
+                                                                        const cell = img.parentElement;
+                                                                        if (img && cell) {
+                                                                            img.remove();
+                                                                            const fallback = document.createElement('div');
+                                                                            fallback.className = 'w-16 h-16 flex items-center justify-center bg-gray-100 text-gray-400 border border-gray-200 rounded';
+                                                                            fallback.innerHTML = '<span class="text-xs">No Logo</span>';
+                                                                            cell.appendChild(fallback);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <div className="w-16 h-16 flex items-center justify-center bg-gray-100 text-gray-400 border border-gray-200 rounded">
+                                                                    <span className="text-xs">No Logo</span>
+                                                                </div>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="w-40 truncate">
+                                                            {brand.website_url ? (
+                                                                <a 
+                                                                    href={brand.website_url} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer" 
+                                                                    className="text-blue-600 hover:underline block truncate"
+                                                                    title={brand.website_url}
+                                                                >
+                                                                    {brand.website_url}
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-400">No website</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="w-24 text-gray-500 text-sm">{new Date(brand.created_at).toLocaleDateString()}</TableCell>
+                                                        <TableCell className="w-32">
+                                                            <div className="flex gap-2 justify-center">
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.15 }}
+                                                                    className="p-2 rounded hover:bg-blue-100 text-blue-600"
+                                                                    title="Edit"
+                                                                    onClick={() => router.visit(route('admin.brand.edit', brand.id))}
+                                                                >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </motion.button>
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <motion.button
+                                                                            whileHover={{ scale: 1.15 }}
+                                                                            className="p-2 rounded hover:bg-red-100 text-red-600"
+                                                                            title="Delete"
                                                                         >
-                                                                            Delete
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </motion.button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Delete Brand</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                Are you sure you want to delete "{brand.name}"? 
+                                                                                This action cannot be undone and will permanently remove this brand.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction 
+                                                                                onClick={() => handleDeleteBrand(brand.id)}
+                                                                                className="bg-red-600 hover:bg-red-700"
+                                                                            >
+                                                                                Delete
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </div>
                                                         </TableCell>
                                                     </motion.tr>
                                                 );
