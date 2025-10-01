@@ -16,7 +16,6 @@ class Product extends Model
         'name',
         'description',
         'price',
-        'stock_quantity',
         'category_id',
         'brand_id',
         'is_active',
@@ -46,5 +45,27 @@ class Product extends Model
     public function brand() {
 
         return $this->belongsTo(Brand::class);
+    }
+
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
+    }
+
+    public function warehouses()
+    {
+        return $this->belongsToMany(Warehouse::class, 'inventories')
+            ->withPivot('quantity_on_hand', 'quantity_reserved', 'quantity_available')
+            ->withTimestamps();
+    }
+
+    public function inventoryMovements()
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function totalStock()
+    {
+        return $this->inventories()->sum('quantity_available');
     }
 }
