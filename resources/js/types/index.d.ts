@@ -41,7 +41,7 @@ export interface Brand {
 }
 
 export interface PaginationLink {
-    url: string | null;
+    url?: string;
     label: string;
     active: boolean;
 }
