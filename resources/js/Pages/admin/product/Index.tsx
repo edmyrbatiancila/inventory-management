@@ -1,4 +1,5 @@
 import ProductsFilterSection from "@/Components/Products/ProductsFilterSection";
+import ProductsTable from "@/Components/Products/ProductsTable";
 import ProductStatistics from "@/Components/Products/ProductStatistics";
 import { Button } from "@/Components/ui/button";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
@@ -211,7 +212,15 @@ const ProductIndex = ({
                     />
 
                     {/* Products Table Section */}
-                    {renderProducsTable()}
+                    <ProductsTable 
+                        products={ products }
+                        onHandleView={ handleView }
+                        onHandleEdit={ handleEdit }
+                        onHandleDelete={ handleDeleteProduct }
+                        currentFilters={ currentFilters }
+                        handleClearFilters={ handleClearFilters }
+                        handleCreate={ handleCreateNewProduct }
+                    />
 
                     {/* Pagination Section */}
                     {renderPagination()}
