@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Repositories;
+
 use App\Models\Warehouse;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
