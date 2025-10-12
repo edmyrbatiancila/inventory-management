@@ -1,22 +1,24 @@
-import ProductsFilterSection from "@/Components/Products/ProductsFilterSection";
-import ProductsTable from "@/Components/Products/ProductsTable";
-import ProductStatistics from "@/Components/Products/ProductStatistics";
+import CustomPagination from "@/Components/CustomPagination";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
 import { Button } from "@/Components/ui/button";
-import Authenticated from "@/Layouts/AuthenticatedLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Input } from "@/Components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Brand, Category, PageProps, PaginatedResponse } from "@/types";
 import { Product, ProductFilters } from "@/types/Product/IProduct";
 import { Head, router, usePage } from "@inertiajs/react";
-import { motion } from "framer-motion";
-import debounce from "lodash.debounce";
-import { Barcode, CheckCircle2, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Barcode, CheckCircle2, Edit2, PhilippinePeso, Plus, Trash2, View } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface IProductIndexProps {
     products: PaginatedResponse<Product>;
     categories: Category[];
     brands: Brand[];
-    filters?: ProductFilters;
+    sort?: string;
 }
 
 type InertiaPageProps = PageProps & {
@@ -30,103 +32,54 @@ const ProductIndex = ({
     products,
     categories,
     brands,
-    filters
+    sort: initialSort = 'newest'
 }: IProductIndexProps) => {
 
-    // Search and filtering state
-    const [search, setSearch] = useState(filters?.search || '');
-    const [selectedCategory, setSelectedCategory] = useState(filters?.category_id || '');
-    const [selectedBrand, setSelectedBrand] = useState(filters?.brand_id || '');
-    const [statusFilter, setStatusFilter] = useState(filters?.is_active || '');
-    const [sortBy, setSortBy] = useState(filters?.sort || 'newest');
-    const [currentFilters, setCurrentFilters] = useState<ProductFilters>(filters || {});
-
-    // Refs
-    const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-    // UI state
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [showFilters, setShowFilters] = useState<boolean>(false);
-    const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
-
-    // Debounce ref for search
-    const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Page props for flash messages
     const { props } = usePage<InertiaPageProps>();
 
-    // Navigation Handlers
-    const handleCreateNewProduct = () => {
-        router.visit(route('admin.products.cresate'));
+    const [search, setSearch] = useState<string>('');
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [sort, setSort] = useState(initialSort);
+    const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Handle search input with debounce
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        setIsSearching(true);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            router.get(route('admin.products.index'), { search: value, sort }, { preserveState: true, replace: true });
+            setIsSearching(false);
+        }, 500);
     };
 
-    const handleEdit = (productId: number) => {
-        router.visit(route('admin.products.edit', productId));
+    // Handle filter/sort change for shadcn UI Select
+    const handleSortChange = (value: string) => {
+        setSort(value);
+        router.get(route('admin.products.index'), { search, sort: value }, { preserveState: true, replace: true });
     };
 
-    const handleView = (productId: number) => {
-        router.visit(route('admin.products.show', productId))
+    // Clear search
+    const handleClear = () => {
+        setSearch('');
+        setSort('newest');
+        router.get(route('admin.products.index'), {}, { preserveState: true, replace: true });
     };
 
-    // Delete Handler
     const handleDeleteProduct = (productId: number) => {
         router.delete(route('admin.products.destroy', productId), {
             preserveScroll: true,
             onSuccess: () => {
-                console.log('Product deleted successfully');
+                // Success message will be handled by the flash message
             },
             onError: () => {
                 toast.error('Failed to delete product', {
                     description: 'The product could not be deleted. It may be in use.',
-                    duration: 4000
+                    duration: 4000,
                 });
             }
         });
-    };
-
-    // Search Handler with Debounce
-    const debouncedSearch = useCallback(
-        debounce((searchTerm: string) => {
-            const newFilters = { ...currentFilters, search: searchTerm, page: 1 };
-            setCurrentFilters(newFilters);
-
-            router.get(route('admin.products.index'), newFilters, {
-                preserveState: true,
-                replace: true,
-                onStart: () => setIsLoading(true),
-                onFinish: () => setIsLoading(false),
-            });
-        }, 500),
-        [currentFilters]
-    );
-
-    // Filter Handlers
-    const handleFilterChange = (filterKey: keyof ProductFilters, value: any) => {
-        const newFilters = { ...currentFilters, [filterKey]: value, page: 1 };
-        setCurrentFilters(newFilters);
-        
-        router.get(route('admin.products.index'), newFilters, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handleClearFilters = () => {
-        const clearedFilters = { per_page: 15 };
-        setCurrentFilters(clearedFilters);
-        setSearch('');
-        
-        router.get(route('admin.products.index'), clearedFilters, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    // Search Input Handler
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearch(value);
-        debouncedSearch(value);
     };
 
     useEffect(() => {
@@ -138,7 +91,6 @@ const ProductIndex = ({
                 icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
             });
         }
-
         if (props.flash && props.flash.error) {
             toast.error(props.flash.error, {
                 description: 'Please try again or contact support if the problem persists.',
@@ -149,85 +101,248 @@ const ProductIndex = ({
     }, [props.flash]);
 
     return (
-        <Authenticated
-            header={
+        <AuthenticatedLayout
+            header={(
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="flex items-center justify-between"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
-                            <Barcode className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold leading-tight text-gray-900">
-                                Product Management
-                            </h2>
-                            <p className="text-sm text-gray-600">
-                                Manage your inventory products and track stock levels
-                            </p>
-                        </div>
-                    </div>
-
-                    <Button
-                        onClick={ handleCreateNewProduct }
-                        className="flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add New Product
-                    </Button>
+                    <h2 className="text-2xl font-bold leading-tight text-blue-800 tracking-tight flex items-center gap-2">
+                        <Barcode className="w-7 h-7 text-blue-600" />
+                        Product Management
+                    </h2>
                 </motion.div>
-            }
+            )}
         >
-            <Head title="Product Management" />
+            <Head title="Products" />
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="py-12"
+            >
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Filter/Search UI */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+                    >
+                        <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <Input
+                                type="text"
+                                placeholder="Search products..."
+                                value={search}
+                                onChange={handleSearchChange}
+                                className="w-full max-w-xs shadow-sm focus:ring-2 focus:ring-blue-200"
+                                aria-label="Search products"
+                            />
+                            {search && (
+                                <motion.div whileHover={{ scale: 1.1 }}>
+                                    <Button size="icon" variant="ghost" onClick={handleClear} title="Clear search">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </Button>
+                                </motion.div>
+                            )}
+                            <motion.div whileHover={{ scale: 1.03 }}>
+                                <Select value={sort} onValueChange={handleSortChange}>
+                                    <SelectTrigger className="w-[180px] shadow-sm focus:ring-2 focus:ring-blue-200">
+                                        <SelectValue placeholder="Filter products" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Select Filter</SelectLabel>
+                                            <SelectItem value="newest">Newest</SelectItem>
+                                            <SelectItem value="oldest">Oldest</SelectItem>
+                                            <SelectItem value="az">A-Z</SelectItem>
+                                            <SelectItem value="za">Z-A</SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </motion.div>
+                        </div>
+                        <motion.div whileHover={{ scale: 1.04 }}>
+                            <Button
+                                onClick={() => router.visit(route('admin.products.create'))}
+                                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all duration-150"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Product
+                            </Button>
+                        </motion.div>
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.25 }}
+                    >
+                        <Card className="shadow-lg border border-blue-100 rounded-xl bg-white/90">
+                            <CardHeader className="flex flex-row items-center justify-between border-b border-blue-100 bg-blue-50/60 rounded-t-xl">
+                                <CardTitle className="flex items-center gap-2 text-blue-800">
+                                    <Barcode className="w-6 h-6 text-blue-600" />
+                                    Products <span className="text-blue-400 font-normal">({products.total})</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <AnimatePresence mode="wait">
+                                {products.data.length > 0 ? (
+                                    <motion.div
+                                        key="table"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 20 }}
+                                        transition={{ duration: 0.4 }}
+                                    >
+                                        <Table className="min-w-full">
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="w-16">#</TableHead>
+                                                    <TableHead className="w-48">Product</TableHead>
+                                                    <TableHead className="w-32">Category</TableHead>
+                                                    <TableHead className="w-32">Brand</TableHead>
+                                                    <TableHead className="w-24">Price</TableHead>
+                                                    <TableHead className="w-20">Status</TableHead>
+                                                    <TableHead className="w-32 text-center">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                            {products.data.map((product, idx) => {
+                                                const rowNumber = (products.current_page - 1) * products.per_page + idx + 1;
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Statistics Cards Section */}
-                    <ProductStatistics 
-                        totalProducts={ products.total }
-                        activeProducts={ products.data.filter(p => p.is_active).length }
-                        lowStockItems={ products.data.filter(p => p.inventories_count < p.min_stock_level).length }
-                        categoriesCount={ categories.length }
-                    />
-
-                    {/* Filters and Search Section */}
-                    <ProductsFilterSection 
-                        onSearchInputRef={ searchInputRef }
-                        onValue={ search }
-                        onSearchChange={ handleSearchChange }
-                        onSelectValueCategory={ currentFilters.category_id?.toString() || '' }
-                        onSelectChangeCategory={ (value) => handleFilterChange('category_id', value ? parseInt(value) : undefined) }
-                        categories={ categories }
-                        onSelectValueBrand={ currentFilters.brand_id?.toString() || "" }
-                        onSelectChangeBrand={ (value) => handleFilterChange('brand_id', value ? parseInt(value) : undefined) }
-                        brands={ brands }
-                        onSelectValueStatus={ currentFilters.is_active?.toString() || "" }
-                        onSelectChangeStatus={ (value) => 
-                            handleFilterChange('is_active', value === "" ? undefined : value === "true") 
-                        }
-                        onHandleClearFilters={ handleClearFilters }
-                    />
-
-                    {/* Products Table Section */}
-                    <ProductsTable 
-                        products={ products }
-                        onHandleView={ handleView }
-                        onHandleEdit={ handleEdit }
-                        onHandleDelete={ handleDeleteProduct }
-                        currentFilters={ currentFilters }
-                        handleClearFilters={ handleClearFilters }
-                        handleCreate={ handleCreateNewProduct }
-                    />
-
-                    {/* Pagination Section */}
-                    {renderPagination()}
+                                                return (
+                                                    <motion.tr
+                                                        key={product.id}
+                                                        initial={{ opacity: 0, x: -20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ duration: 0.3, delay: idx * 0.04 }}
+                                                        className="hover:bg-blue-50/60 transition-colors"
+                                                    >
+                                                        <TableCell className="w-16 font-semibold text-blue-700">{rowNumber}</TableCell>
+                                                        <TableCell className="w-48">
+                                                            <div>
+                                                                <div className="font-medium truncate" title={product.name}>
+                                                                    {product.name}
+                                                                </div>
+                                                                <div className="text-sm text-gray-500 truncate" title={product.sku}>
+                                                                    SKU: {product.sku}
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="w-32 text-gray-600">
+                                                            <div className="truncate" title={product.category?.name || "No category"}>
+                                                                {product.category?.name || "No category"}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="w-32 text-gray-600">
+                                                            <div className="truncate" title={product.brand?.name || "No brand"}>
+                                                                {product.brand?.name || "No brand"}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="w-24 font-medium">
+                                                            ₱{product.price}
+                                                        </TableCell>
+                                                        <TableCell className="w-20">
+                                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                                product.is_active 
+                                                                    ? 'bg-green-100 text-green-800' 
+                                                                    : 'bg-red-100 text-red-800'
+                                                            }`}>
+                                                                {product.is_active ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="w-32">
+                                                            <div className="flex gap-2 justify-center">
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.15 }}
+                                                                    className="p-2 rounded hover:bg-blue-100 text-blue-600"
+                                                                    title="View Product Details"
+                                                                    onClick={() => router.visit(route('admin.products.show', product.id))}
+                                                                >
+                                                                    <View className="w-4 h-4" />
+                                                                </motion.button>
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.15 }}
+                                                                    className="p-2 rounded hover:bg-blue-100 text-blue-600"
+                                                                    title="Edit Product Details"
+                                                                    onClick={() => router.visit(route('admin.products.edit', product.id))}
+                                                                >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </motion.button>
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <motion.button
+                                                                            whileHover={{ scale: 1.15 }}
+                                                                            className="p-2 rounded hover:bg-red-100 text-red-600"
+                                                                            title="Delete Product"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </motion.button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent>
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                                                            <AlertDialogDescription>
+                                                                                Are you sure you want to delete "{product.name}"? 
+                                                                                This action cannot be undone and will permanently remove this product.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                            <AlertDialogAction 
+                                                                                onClick={() => handleDeleteProduct(product.id)}
+                                                                                className="bg-red-600 hover:bg-red-700"
+                                                                            >
+                                                                                Delete
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            </div>
+                                                        </TableCell>
+                                                    </motion.tr>
+                                                );
+                                            })}
+                                            </TableBody>
+                                        </Table>
+                                        <div className="mt-6">
+                                            <CustomPagination data={products} />
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="empty"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="text-center py-12"
+                                    >
+                                        <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                                            <Barcode className="w-14 h-14 text-blue-200 mx-auto mb-4" />
+                                        </motion.div>
+                                        <h3 className="text-xl font-semibold mb-2 text-blue-700">No products found</h3>
+                                        <p className="text-gray-500 mb-4">Get started by creating your first product.</p>
+                                        <motion.div whileHover={{ scale: 1.08 }}>
+                                            <Button
+                                                onClick={() => router.visit(route('admin.products.create'))}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                                            >
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Add Product
+                                            </Button>
+                                        </motion.div>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
                 </div>
-            </div>
-        </Authenticated>
+            </motion.div>
+        </AuthenticatedLayout>
     );
-}
+};
 
 export default ProductIndex;

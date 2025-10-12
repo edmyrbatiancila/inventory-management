@@ -9,6 +9,7 @@ use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,12 +28,39 @@ class ProductController extends Controller
     {
         $filters = $request->only(['search', 'category_id', 'brand_id', 'is_active', 'per_page']);
         
-        $products = $this->productService->getAllProducts($filters);
+        try {
+            $products = $this->productService->getAllProducts($filters);
+            $categories = $this->productService->getAllCategories();
+            $brands = $this->productService->getAllBrands();
 
-        return Inertia::render('admin/product/Index', [
-            'products' => $products,
-            'filters' => $filters
-        ]);
+            // Debug logging
+            Log::info('ProductController@index - Data check:', [
+                'products_count' => $products?->total() ?? 0,
+                'categories_count' => $categories?->count() ?? 0,
+                'brands_count' => $brands?->count() ?? 0,
+                'filters' => $filters
+            ]);
+
+            return Inertia::render('admin/product/Index', [
+                'products' => $products,
+                'categories' => $categories,
+                'brands' => $brands,
+                'filters' => $filters
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ProductController@index - Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return empty data to prevent crashes
+            return Inertia::render('admin/product/Index', [
+                'products' => collect()->paginate(15),
+                'categories' => collect(),
+                'brands' => collect(),
+                'filters' => $filters
+            ]);
+        }
     }
 
     /**
@@ -40,7 +68,24 @@ class ProductController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Products/Create');
+        try {
+            $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
+            $brands = \App\Models\Brand::select('id', 'name')->where('is_active', true)->orderBy('name')->get();
+
+            return Inertia::render('admin/product/Create', [
+                'categories' => $categories,
+                'brands' => $brands
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to load product creation page: ' . $e->getMessage());
+
+            return Inertia::render('admin/product/Create', [
+                'categories' => collect(),
+                'brands' => collect(),
+                'error' => 'Failed to load product creation page.'
+            ]);
+        }
     }
 
     /**
@@ -52,10 +97,12 @@ class ProductController extends Controller
             $product = $this->productService->createProduct($request->validated());
 
             return redirect()
-                ->route('products.show', $product)
+                ->route('admin.products.index')
                 ->with('success', 'Product created successfully!');
 
         } catch (\Exception $e) {
+            Log::error('Failed to create product: ' . $e->getMessage());
+            
             return redirect()
                 ->back()
                 ->withInput()
@@ -79,7 +126,7 @@ class ProductController extends Controller
             $stockSummary = $this->productService->getProductStockSummary($id);
             $analytics = $this->productService->getInventoryAnalytics($id);
 
-            return Inertia::render('Products/Show', [
+            return Inertia::render('admin/product/View', [
                 'product' => $product,
                 'stockSummary' => $stockSummary,
                 'analytics' => $analytics
@@ -102,11 +149,17 @@ class ProductController extends Controller
                 abort(404, 'Product not found');
             }
 
-            return Inertia::render('Products/Edit', [
-                'product' => $product
+            $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
+            $brands = \App\Models\Brand::select('id', 'name')->where('is_active', true)->orderBy('name')->get();
+
+            return Inertia::render('admin/product/Edit', [
+                'product' => $product,
+                'categories' => $categories,
+                'brands' => $brands
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Failed to load product edit page: ' . $e->getMessage());
             abort(404, 'Product not found');
         }
     }
@@ -120,6 +173,7 @@ class ProductController extends Controller
             $updated = $this->productService->updateProduct($id, $request->validated());
 
             if (!$updated) {
+                Log::error('Failed to update product with ID: ' . $id);
                 return redirect()
                     ->back()
                     ->withInput()
@@ -127,14 +181,16 @@ class ProductController extends Controller
             }
 
             return redirect()
-                ->route('products.show', $id)
+                ->route('admin.products.index')
                 ->with('success', 'Product updated successfully!');
 
         } catch (\Exception $e) {
+            Log::error('Failed to update product: ' . $e->getMessage());
+            
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to update produc: ' . $e->getMessage());
+                ->with('error', 'Failed to update product: ' . $e->getMessage());
         }
     }
 
@@ -153,10 +209,19 @@ class ProductController extends Controller
             }
 
             return redirect()
-                ->route('products.index')
+                ->route('admin.products.index')
                 ->with('success', 'Product deleted successfully!');
+                
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Product not found for deletion: ' . $e->getMessage());
+            
+            return redirect()
+                ->back()
+                ->with('error', 'Product not found');
+                
         } catch (\Exception $e) {
-
+            Log::error('Failed to delete product: ' . $e->getMessage());
+            
             return redirect()
                 ->back()
                 ->with('error', 'Failed to delete product: ' . $e->getMessage());

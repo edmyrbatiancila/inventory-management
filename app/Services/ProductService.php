@@ -28,7 +28,6 @@ class ProductService
         // Add default filters
         $filters = array_merge([
             'per_page' => 15,
-            'is_active' => true
         ], $filters);
 
         return $this->productRepository->findAll($filters);
@@ -105,7 +104,7 @@ class ProductService
 
         // Check if product has inventory
         if ($this->hasActiveInventory($id)) {
-            throw new ValidationException('Cannot delete product with active inventory');
+            throw new \Exception('Cannot delete product with active inventory');
         }
 
         return $this->productRepository->delete($id);
@@ -395,5 +394,23 @@ class ProductService
                     ->orWhere('quantity_reserved', '>', 0);
             })
             ->exists();
+    }
+
+    /**
+     * Get all categories for dropdowns/filters
+     */
+    public function getAllCategories(): Collection
+    {
+        return \App\Models\Category::orderBy('name')->get();
+    }
+
+    /**
+     * Get all brands for dropdowns/filters
+     */
+    public function getAllBrands(): Collection
+    {
+        return \App\Models\Brand::where('is_active', true)
+            ->orderBy('name')
+            ->get();
     }
 }

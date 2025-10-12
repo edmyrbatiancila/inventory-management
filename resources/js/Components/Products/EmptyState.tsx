@@ -14,7 +14,7 @@ const EmptyState = ({
     onHandleCreate
 }: IEmptyStateProps) => {
 
-    const hasFilters = Object.values(currentFilters).some(value => value !== undefined && value !== '');
+    const hasFilters = Object.values(currentFilters || {}).some(value => value !== undefined && value !== '');
 
     return (
         <Card>
