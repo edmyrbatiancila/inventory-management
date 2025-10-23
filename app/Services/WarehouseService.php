@@ -24,11 +24,23 @@ class WarehouseService
      */
     public function getAllWarehouses(array $filters = []): LengthAwarePaginator
     {
-        try {
-            return $this->warehouseRepository->findAll($filters);
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching warehouses: ' . $e->getMessage());
-        }
+        // add default filters
+        $filters = array_merge([
+            'per_page' => 15,
+        ], $filters);
+
+        return $this->warehouseRepository->findAll($filters);
+        // try {
+        //     // Add default filters
+        //     $filters = array_merge([
+        //         'per_page' => 15,
+        //     ], $filters);
+
+        //     return $this->warehouseRepository->findAll($filters);
+
+        // } catch (\Exception $e) {
+        //     throw new \Exception('Error fetching warehouses: ' . $e->getMessage());
+        // }
     }
 
     /**

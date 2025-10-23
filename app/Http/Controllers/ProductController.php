@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -69,8 +71,8 @@ class ProductController extends Controller
     public function create(): Response
     {
         try {
-            $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
-            $brands = \App\Models\Brand::select('id', 'name')->where('is_active', true)->orderBy('name')->get();
+            $categories = Category::select('id', 'name')->orderBy('name')->get();
+            $brands = Brand::select('id', 'name')->where('is_active', true)->orderBy('name')->get();
 
             return Inertia::render('admin/product/Create', [
                 'categories' => $categories,

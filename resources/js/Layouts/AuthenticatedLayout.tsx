@@ -55,6 +55,12 @@ export default function Authenticated({
                                         >
                                             Products
                                         </NavLink>
+                                        <NavLink
+                                            href={route('admin.warehouses.index')}
+                                            active={route().current('admin.warehouses.*')}
+                                        >
+                                            Warehouses
+                                        </NavLink>
                                     </>
                                 )}
                             </div>
@@ -148,6 +154,7 @@ export default function Authenticated({
                     </div>
                 </div>
 
+                {/* Mobile size navigation */}
                 <div
                     className={
                         (showingNavigationDropdown ? 'block' : 'hidden') +
@@ -176,6 +183,18 @@ export default function Authenticated({
                                     active={route().current('admin.brand.*')}
                                 >
                                     Brands
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('admin.products.index')}
+                                    active={route().current('admin.products.*')}
+                                >
+                                    Products
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink
+                                    href={route('admin.warehouses.index')}
+                                    active={route().current('admin.warehouses.*')}
+                                >
+                                    Warehouses
                                 </ResponsiveNavLink>
                             </>
                         )}

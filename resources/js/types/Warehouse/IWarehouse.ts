@@ -22,3 +22,10 @@ export interface WarehouseFilters {
     sort?: string;
     per_page?: number;
 }
+
+export interface WarehouseWithRelations extends Warehouse {
+    inventories_count?: number;
+    products_count?: number;
+    total_stock?: number;
+    full_address?: string; // This matches the getFullAddressAttribute in your model
+}
