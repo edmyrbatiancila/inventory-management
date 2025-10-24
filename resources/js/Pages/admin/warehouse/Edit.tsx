@@ -1,6 +1,7 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeft, Asterisk, Building, MapPin, Plus, WarehouseIcon } from "lucide-react";
+import { Warehouse } from "@/types/Warehouse/IWarehouse";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
+import { ArrowLeft, Asterisk, Building, CheckCircle2, MapPin, Plus, Save, WarehouseIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
@@ -9,10 +10,25 @@ import { Input } from "@/Components/ui/input";
 import InputError from "@/Components/InputError";
 import { Textarea } from "@/Components/ui/textarea";
 import { Switch } from "@/Components/ui/switch";
+import { useEffect } from "react";
+import { PageProps } from "@/types";
+import { toast } from "sonner";
 
-const WarehouseCreate = () => {
+interface IWarehouseEditProps {
+    warehouse: Warehouse;
+}
 
-    const { data, setData, post, processing, errors, reset } = useForm<{
+type InertiaPageProps = PageProps & {
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+};
+
+const WarehouseEdit = ({ warehouse }: IWarehouseEditProps) => {
+    const { props } = usePage<InertiaPageProps>();
+
+    const { data, setData, put, processing, errors } = useForm<{
         name: string;
         code: string;
         address: string;
@@ -24,16 +40,16 @@ const WarehouseCreate = () => {
         email: string;
         is_active: boolean;
     }>({
-        name: '',
-        code: '',
-        address: '',
-        city: '',
-        state: '',
-        postal_code: '',
-        country: '',
-        phone: '',
-        email: '',
-        is_active: true,
+        name: warehouse.name || '',
+        code: warehouse.code || '',
+        address: warehouse.address || '',
+        city: warehouse.city || '',
+        state: warehouse.state || '',
+        postal_code: warehouse.postal_code || '',
+        country: warehouse.country || '',
+        phone: warehouse.phone || '',
+        email: warehouse.email || '',
+        is_active: warehouse.is_active ?? true,
     });
 
     // Helper function to generate warehouse code from name
@@ -57,11 +73,31 @@ const WarehouseCreate = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        post(route('admin.warehouses.store'), {
-            // No need to reset form since we're redirecting to edit page
+        put(route('admin.warehouses.update', warehouse.id), {
+            onSuccess: () => {
+                // Optionally show a success message or redirect
+            },
             preserveScroll: true,
         });
     };
+
+    useEffect(() => {
+            if (props.flash && props.flash.success) {
+                toast.success(props.flash.success, {
+                    description: 'Warehouse operation completed successfully.',
+                    duration: 4000,
+                    style: { fontWeight: 'bold', fontSize: '1.1rem' },
+                    icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
+                });
+            }
+            if (props.flash && props.flash.error) {
+                toast.error(props.flash.error, {
+                    description: 'Please try again or contact support if the problem persists.',
+                    duration: 4000,
+                    style: { fontWeight: 'bold', fontSize: '1.1rem' },
+                });
+            }
+        }, [props.flash]);
 
     return (
         <Authenticated
@@ -71,13 +107,13 @@ const WarehouseCreate = () => {
                         <WarehouseIcon className="w-8 h-8 text-blue-600" />
                     </div>
                     <div className="flex flex-col justify-center">
-                        <h2 className="text-2xl font-bold leading-tight text-gray-800">Create Warehouse</h2>
-                        <p className="text-sm text-gray-600 mt-1">Add a new warehouse to your inventory</p>
+                        <h2 className="text-2xl font-bold leading-tight text-gray-800">Edit Warehouse</h2>
+                        <p className="text-sm text-gray-600 mt-1">Update warehouse information</p>
                     </div>
                 </div>
             }
         >
-            <Head title="Create Warehouse" />
+            <Head title={`Edit ${warehouse.name}`} />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <motion.div
@@ -339,12 +375,12 @@ const WarehouseCreate = () => {
                                 {processing ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Creating...
+                                        Saving...
                                     </>
                                 ) : (
                                     <>
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Create Warehouse
+                                        <Save className="w-4 h-4 mr-2" />
+                                        Save Changes
                                     </>
                                 )}
                                 </Button>
@@ -373,4 +409,4 @@ const WarehouseCreate = () => {
     );
 }
 
-export default WarehouseCreate;
+export default WarehouseEdit;

@@ -12,6 +12,7 @@ export interface Warehouse {
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    full_address?: string;
 }
 
 export interface WarehouseFilters {

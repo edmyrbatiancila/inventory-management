@@ -29,6 +29,8 @@ class Warehouse extends Model
         'is_active' => 'boolean'
     ];
 
+    protected $appends = ['full_address'];
+
     public function inventories()
     {
         return $this->hasMany(Inventory::class);
@@ -48,7 +50,14 @@ class Warehouse extends Model
 
     public function getFullAddressAttribute()
     {
-        return "{$this->address}, {$this->city}, {$this->state} {$this->postal_code}, {$this->country}";
+        $addressParts = array_filter([
+            $this->address,
+            $this->city,
+            $this->state . ' ' . $this->postal_code,
+            $this->country
+        ]);
+    
+        return implode(', ', $addressParts);
     }
 
 }

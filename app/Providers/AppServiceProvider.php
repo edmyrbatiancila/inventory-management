@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
+use App\Repositories\InventoryRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\WarehouseRepository;
 use Illuminate\Support\Facades\Vite;
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->bind(WarehouseRepositoryInterface::class, WarehouseRepository::class);
+        $this->app->bind(InventoryRepositoryInterface::class, InventoryRepository::class);
     }
 
     /**

@@ -80,7 +80,6 @@ const WarehouseIndex = ({
     useEffect(() => {
         if (props.flash && props.flash.success) {
             toast.success(props.flash.success, {
-                description: 'Warehouse operation completed successfully.',
                 duration: 4000,
                 style: { fontWeight: 'bold', fontSize: '1.1rem' },
                 icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
@@ -202,13 +201,7 @@ const WarehouseIndex = ({
                                                 <TableRow>
                                                     <TableHead className="w-16">#</TableHead>
                                                     <TableHead>Warehouse Name</TableHead>
-                                                    <TableHead>Address</TableHead>
-                                                    <TableHead>City</TableHead>
-                                                    <TableHead>State</TableHead>
-                                                    <TableHead>Postal Code</TableHead>
-                                                    <TableHead>Country</TableHead>
-                                                    <TableHead>Phone Number</TableHead>
-                                                    <TableHead>Email</TableHead>
+                                                    <TableHead>Complete Address</TableHead>
                                                     <TableHead>Status</TableHead>
                                                     <TableHead className="w-32 text-center">Actions</TableHead>
                                                 </TableRow>
@@ -242,60 +235,12 @@ const WarehouseIndex = ({
                                                                 </div>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="w-32 text-gray-600">
+                                                        <TableCell className="w-34 text-gray-600">
                                                             <div
                                                                 className="truncate" 
-                                                                title={warehouse.address || "No address"}
+                                                                title={warehouse.full_address || "No address available"}
                                                             >
-                                                                {warehouse.address}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-32 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.city || "No city"}
-                                                            >
-                                                                {warehouse.city}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-32 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.state || "No state"}
-                                                            >
-                                                                {warehouse.state}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-24 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.postal_code || "No postal code"}
-                                                            >
-                                                                {warehouse.postal_code}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-32 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.country || "No country"}
-                                                            >
-                                                                {warehouse.country}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-24 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.phone || "No phone"}
-                                                            >
-                                                                {warehouse.phone}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="w-24 text-gray-600">
-                                                            <div
-                                                                className="truncate" 
-                                                                title={warehouse.email || "No email"}
-                                                            >
-                                                                {warehouse.email || "No email"}
+                                                                {warehouse.full_address || "No address available"}
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="w-24 text-gray-600">

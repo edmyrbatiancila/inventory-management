@@ -39,6 +39,11 @@ class WarehouseController extends Controller
 
             $warehouses = $this->warehouseService->getAllWarehouses($filters);
 
+            $warehouses->getCollection()->transform(function ($warehouse) {
+                $warehouse->full_address = $warehouse->getFullAddressAttribute();
+                return $warehouse;
+            });
+
             return Inertia::render('admin/warehouse/Index', [
                 'warehouses'=> $warehouses,
                 'filters' => $filters,
@@ -78,9 +83,9 @@ class WarehouseController extends Controller
     public function store(StoreWarehouseRequest $request): RedirectResponse
     {
         try {
-            $this->warehouseService->createWarehouse($request->validated());
+            $warehouse = $this->warehouseService->createWarehouse($request->validated());
 
-            return redirect()->route('admin.warehouses.index')
+            return redirect()->route('admin.warehouses.edit', $warehouse->id)
                 ->with('success', 'Warehouse created successfully.');
 
         } catch (\Exception $e) {
@@ -157,7 +162,7 @@ class WarehouseController extends Controller
                     ->with('error', 'Failed to update warehouse.');
             }
 
-            return redirect()->route('admin.warehouses.index')
+            return redirect()->route('admin.warehouses.edit', $id)
                 ->with('success', 'Warehouse updated successfully.');
 
         } catch (\Exception $e) {

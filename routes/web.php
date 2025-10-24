@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -65,6 +66,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::resource('warehouses', WarehouseController::class)->except(['analytics']);
         Route::get('/warehouses/{id}/analytics', [WarehouseController::class, 'analytics'])
             ->name('warehouses.analytics');
+
+        // Inventory Routes:
+        Route::resource('inventories', InventoryController::class);
+        Route::post('/inventories/{id}/adjust', [InventoryController::class, 'adjustStock'])->name('inventories.adjust');
+        Route::post('/inventories/transfer', [InventoryController::class, 'transferStock'])->name('inventories.transfer');
+        Route::get('/inventories/reports/low-stock', [InventoryController::class, 'lowStockReport'])->name('inventories.reports.low-stock');
+
+        
     });
 });
 
