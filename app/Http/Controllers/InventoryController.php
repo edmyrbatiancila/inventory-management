@@ -68,6 +68,7 @@ class InventoryController extends Controller
         try {
             $products = Product::where('is_active', true)
                 ->where('track_quantity', true)
+                ->with(['category', 'brand'])
                 ->orderBy('name')
                 ->get();
         
@@ -91,40 +92,128 @@ class InventoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreInventoryRequest $request)
+    public function store(StoreInventoryRequest $request): RedirectResponse
     {
-        //
+        try {
+            $inventory = $this->inventoryService->createInventory($request->validated());
+
+            return redirect()->route('admin.inventories.edit', $inventory->id)
+                ->with('success', 'Inventory created successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@store: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error creating inventory: ' . $e->getMessage());
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Inventory $inventory)
+    public function show(Inventory $inventory): Response|RedirectResponse
     {
-        //
+        try {
+            $inventory->load(['product.category', 'product.brand', 'warehouse']);
+        
+            return Inertia::render('admin/inventory/Show', [
+                'inventory' => $inventory
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@show: ' . $e->getMessage());
+        
+            return redirect()->route('admin.inventories.index')
+                ->with('error', 'Error loading inventory details.');
+        }
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Inventory $inventory)
+    public function edit(Inventory $inventory): Response|RedirectResponse
     {
-        //
+        try {
+            $inventory->load(['product.category', 'product.brand', 'warehouse']);
+        
+            $products = Product::where('is_active', true)
+                ->where('track_quantity', true)
+                ->with(['category', 'brand'])
+                ->orderBy('name')
+                ->get();
+            
+            $warehouses = Warehouse::where('is_active', true)
+                ->orderBy('name')
+                ->get();
+
+            return Inertia::render('admin/inventory/Edit', [
+                'inventory' => $inventory,
+                'products' => $products,
+                'warehouses' => $warehouses
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@edit: ' . $e->getMessage());
+        
+            return redirect()->route('admin.inventories.index')
+                ->with('error', 'Error loading edit form.');
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateInventoryRequest $request, Inventory $inventory)
+    public function update(UpdateInventoryRequest $request, Inventory $inventory): RedirectResponse
     {
-        //
+        try {
+            $updated = $this->inventoryService->updateInventory($inventory->id, $request->validated());
+        
+            if ($updated) {
+                return redirect()->route('admin.inventories.edit', $inventory->id)
+                    ->with('success', 'Inventory updated successfully.');
+            }
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update inventory.');
+
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@update: ' . $e->getMessage());
+        
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating inventory: ' . $e->getMessage());
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Inventory $inventory)
+    public function destroy(Inventory $inventory): RedirectResponse
     {
-        //
+        try {
+            // Check if inventory has reserved quantities before attempting deletion
+            if ($inventory->quantity_reserved > 0) {
+                return redirect()->back()
+                    ->with('error', 'Cannot delete inventory with reserved quantities. Please release all reserved quantities first.');
+            }
+            
+            $deleted = $this->inventoryService->deleteInventory($inventory->id);
+            
+            if ($deleted) {
+                return redirect()->route('admin.inventories.index')
+                    ->with('success', 'Inventory deleted successfully.');
+            }
+            
+            return redirect()->back()
+                ->with('error', 'Failed to delete inventory.');
+                
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@destroy: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->with('error', 'Error deleting inventory: ' . $e->getMessage());
+        }
     }
 }

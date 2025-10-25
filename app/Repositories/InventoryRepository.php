@@ -6,6 +6,7 @@ use App\Models\Inventory;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class InventoryRepository implements InventoryRepositoryInterface
 {
@@ -64,6 +65,14 @@ class InventoryRepository implements InventoryRepositoryInterface
             case 'quantity_low':
                 $query->orderBy('quantity_on_hand', 'asc');
                 break;
+            case 'low_stock':
+                $query->whereHas('product', function($q) {
+                    $q->whereColumn('inventories.quantity_available', '<=', 'products.min_stock_level');
+                })->orderBy('quantity_available', 'asc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
             case 'newest':
             default:
                 $query->orderBy('created_at', 'desc');
@@ -121,8 +130,10 @@ class InventoryRepository implements InventoryRepositoryInterface
 
     public function getInventoryLevels(): Collection
     {
-        return Inventory::select('product_id', 'warehouse_id', 'quantity_on_hand', 'quantity_reserved', 'quantity_available')
-            ->get();
+        return Inventory::with(['product', 'warehouse'])
+        ->selectRaw('product_id, warehouse_id, sum(quantity_on_hand) as total_quantity')
+        ->groupBy('product_id', 'warehouse_id')
+        ->get();
     }
 
     public function getStockMovementHistory(int $inventoryId): Collection
@@ -137,7 +148,6 @@ class InventoryRepository implements InventoryRepositoryInterface
     public function getTotalStockValue(): float
     {
         return Inventory::join('products', 'inventories.product_id', '=', 'products.id')
-            ->selectRaw('SUM(inventories.quantity_on_hand * products.cost_price) as total_value')
-            ->value('total_value') ?? 0.0;
+        ->sum(DB::raw('inventories.quantity_on_hand * products.price'));
     }
 }

@@ -27,6 +27,7 @@ class StoreInventoryRequest extends FormRequest
             'warehouse_id' => 'required|integer|exists:warehouses,id',
             'quantity_on_hand' => 'required|integer|min:0',
             'quantity_reserved' => 'nullable|integer|min:0',
+            'notes' => 'nullable|string|max:1000',
         ];
     }
 

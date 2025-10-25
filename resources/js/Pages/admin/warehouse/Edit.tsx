@@ -84,7 +84,6 @@ const WarehouseEdit = ({ warehouse }: IWarehouseEditProps) => {
     useEffect(() => {
             if (props.flash && props.flash.success) {
                 toast.success(props.flash.success, {
-                    description: 'Warehouse operation completed successfully.',
                     duration: 4000,
                     style: { fontWeight: 'bold', fontSize: '1.1rem' },
                     icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
@@ -169,7 +168,12 @@ const WarehouseEdit = ({ warehouse }: IWarehouseEditProps) => {
 
                                         {/* Warehouse Code */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="code">Warehouse Code</Label>
+                                            <Label 
+                                                htmlFor="code"
+                                                className="flex items-center gap-1"
+                                            >
+                                                Warehouse Code
+                                            </Label>
                                             <Input 
                                                 id="code"
                                                 type="text"

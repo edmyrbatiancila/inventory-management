@@ -61,6 +61,12 @@ export default function Authenticated({
                                         >
                                             Warehouses
                                         </NavLink>
+                                        <NavLink
+                                            href={route('admin.inventories.index')}
+                                            active={route().current('admin.inventories.*')}
+                                        >
+                                            Inventories
+                                        </NavLink>
                                     </>
                                 )}
                             </div>
@@ -195,6 +201,13 @@ export default function Authenticated({
                                     active={route().current('admin.warehouses.*')}
                                 >
                                     Warehouses
+                                </ResponsiveNavLink>
+
+                                <ResponsiveNavLink
+                                    href={route('admin.inventories.index')}
+                                    active={route().current('admin.inventories.*')}
+                                >
+                                    Inventories
                                 </ResponsiveNavLink>
                             </>
                         )}

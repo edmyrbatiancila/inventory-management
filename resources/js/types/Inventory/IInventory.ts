@@ -8,12 +8,26 @@ export interface Inventory {
     quantity_on_hand: number;
     quantity_reserved: number;
     quantity_available: number;
+    notes?: string;
     created_at: string;
     updated_at: string;
     
     // Relationships
     product: Product;
     warehouse: Warehouse;
+}
+
+export interface InventoryDeletionError {
+    type: 'reserved_quantity' | 'unknown_error' | 'system_error';
+    title: string;
+    message: string;
+    inventory_id?: number;
+    product_name?: string;
+    warehouse_name?: string;
+    reserved_quantity?: number;
+    available_quantity?: number;
+    steps: string[];
+    error_details?: string;
 }
 
 export interface InventoryFilters {

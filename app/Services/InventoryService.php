@@ -177,6 +177,34 @@ class InventoryService
     }
 
     /**
+     * Update inventory record
+     */
+    public function updateInventory(int $id, array $data): bool
+    {
+        try {
+            DB::beginTransaction();
+            
+            $inventory = $this->getInventoryById($id);
+            if (!$inventory) {
+                throw new ModelNotFoundException('Inventory not found');
+            }
+            
+            // Set calculated available quantity
+            $data['quantity_available'] = ($data['quantity_on_hand'] ?? $inventory->quantity_on_hand) - 
+                ($data['quantity_reserved'] ?? $inventory->quantity_reserved);
+            
+            $result = $this->inventoryRepository->update($id, $data);
+            
+            DB::commit();
+            return $result;
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new \Exception('Error updating inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Delete inventory record
      */
     public function deleteInventory(int $id): bool
@@ -191,7 +219,19 @@ class InventoryService
 
             // Check if there are reserved quantities
             if ($inventory->quantity_reserved > 0) {
-                throw new ValidationException('Cannot delete inventory with reserved quantities');
+                throw new \Exception(json_encode([
+                    'type' => 'reserved_quantity',
+                    'title' => 'Cannot Delete Inventory',
+                    'message' => 'This inventory has reserved quantities that must be released before deletion.',
+                    'reserved_quantity' => $inventory->quantity_reserved,
+                    'available_quantity' => $inventory->quantity_available,
+                    'steps' => [
+                        'Go to the Edit page for this inventory item',
+                        'Reduce the "Quantity Reserved" to 0',
+                        'Save the changes',
+                        'Return to this page and try deleting again'
+                    ]
+                ]));
             }
 
             $result = $this->inventoryRepository->delete($id);

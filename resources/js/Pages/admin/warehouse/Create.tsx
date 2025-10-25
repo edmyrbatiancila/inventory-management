@@ -133,7 +133,12 @@ const WarehouseCreate = () => {
 
                                         {/* Warehouse Code */}
                                         <div className="space-y-2">
-                                            <Label htmlFor="code">Warehouse Code</Label>
+                                            <Label 
+                                                htmlFor="code"
+                                                className="flex items-center gap-1"
+                                            >
+                                                Warehouse Code
+                                            </Label>
                                             <Input 
                                                 id="code"
                                                 type="text"

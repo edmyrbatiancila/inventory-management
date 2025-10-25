@@ -26,7 +26,8 @@ class UpdateInventoryRequest extends FormRequest
             'product_id' => 'required|integer|exists:products,id',
             'warehouse_id' => 'required|integer|exists:warehouses,id',
             'quantity_on_hand' => 'required|integer|min:0',
-            'quantity_reserved' => 'nullable|integer|min:0',
+            'quantity_reserved' => 'nullable|integer|min:0|lte:quantity_on_hand',
+            'notes' => 'nullable|string|max:1000',
         ];
     }
 

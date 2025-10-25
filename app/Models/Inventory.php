@@ -26,7 +26,8 @@ class Inventory extends Model
         'warehouse_id',
         'quantity_on_hand',
         'quantity_reserved',
-        'quantity_available'
+        'quantity_available',
+        'notes'
     ];
 
     protected $casts = [
