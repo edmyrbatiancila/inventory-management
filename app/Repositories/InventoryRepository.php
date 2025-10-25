@@ -6,7 +6,6 @@ use App\Models\Inventory;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class InventoryRepository implements InventoryRepositoryInterface
 {
@@ -130,10 +129,8 @@ class InventoryRepository implements InventoryRepositoryInterface
 
     public function getInventoryLevels(): Collection
     {
-        return Inventory::with(['product', 'warehouse'])
-        ->selectRaw('product_id, warehouse_id, sum(quantity_on_hand) as total_quantity')
-        ->groupBy('product_id', 'warehouse_id')
-        ->get();
+        return Inventory::select('product_id', 'warehouse_id', 'quantity_on_hand', 'quantity_reserved', 'quantity_available')
+            ->get();
     }
 
     public function getStockMovementHistory(int $inventoryId): Collection
@@ -148,6 +145,7 @@ class InventoryRepository implements InventoryRepositoryInterface
     public function getTotalStockValue(): float
     {
         return Inventory::join('products', 'inventories.product_id', '=', 'products.id')
-        ->sum(DB::raw('inventories.quantity_on_hand * products.price'));
+            ->selectRaw('SUM(inventories.quantity_on_hand * products.cost_price) as total_value')
+            ->value('total_value') ?? 0.0;
     }
 }
