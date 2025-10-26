@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateStockAdjustmentRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class UpdateStockAdjustmentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return Auth::check();
     }
 
     /**
@@ -22,7 +23,17 @@ class UpdateStockAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'notes' => 'nullable|string|max:1000',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'notes.max' => 'Notes cannot be longer than 1000 characters.',
         ];
     }
 }

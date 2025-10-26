@@ -67,6 +67,12 @@ export default function Authenticated({
                                         >
                                             Inventories
                                         </NavLink>
+                                        <NavLink
+                                            href={route('admin.stock-adjustments.index')}
+                                            active={route().current('admin.stock-adjustments.*')}
+                                        >
+                                            Stock Adjustments
+                                        </NavLink>
                                     </>
                                 )}
                             </div>
@@ -208,6 +214,13 @@ export default function Authenticated({
                                     active={route().current('admin.inventories.*')}
                                 >
                                     Inventories
+                                </ResponsiveNavLink>
+
+                                <ResponsiveNavLink
+                                    href={route('admin.stock-adjustments.index')}
+                                    active={route().current('admin.stock-adjustments.*')}
+                                >
+                                    Stock Adjustments
                                 </ResponsiveNavLink>
                             </>
                         )}

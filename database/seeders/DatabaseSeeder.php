@@ -13,6 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        User::factory()->create([
+            'name' => 'admin',
+            'email' => 'admin@gmail.com',
+        ]);
+
         // User::factory(10)->create();
         $this->call([
             CategorySeeder::class,
@@ -20,12 +25,9 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             WarehouseSeeder::class,
             InventorySeeder::class,
+            StockAdjustmentSeeder::class,
             InventoryMovementSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@gmail.com',
-        ]);
     }
 }

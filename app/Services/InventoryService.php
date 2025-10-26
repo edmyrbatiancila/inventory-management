@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Inventory;
+use App\Models\StockAdjustment;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
+use App\Repositories\Interfaces\StockAdjustmentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -13,10 +15,12 @@ use Illuminate\Validation\ValidationException;
 class InventoryService
 {
     protected InventoryRepositoryInterface $inventoryRepository;
+    protected StockAdjustmentRepositoryInterface $stockAdjustmentRepository;
 
-    public function __construct(InventoryRepositoryInterface $inventoryRepository)
+    public function __construct(InventoryRepositoryInterface $inventoryRepository, StockAdjustmentRepositoryInterface $stockAdjustmentRepository)
     {
         $this->inventoryRepository = $inventoryRepository;
+        $this->stockAdjustmentRepository = $stockAdjustmentRepository;
     }
 
     /**
@@ -243,6 +247,82 @@ class InventoryService
             DB::rollBack();
             throw new \Exception('Error deleting inventory: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Adjust inventory stock with full audit trail
+     */
+    public function adjustInventoryStock(int $inventoryId, string $adjustmentType, int $quantity, string $reason, ?string $notes = null): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $inventory = $this->getInventoryById($inventoryId);
+            if (!$inventory) {
+                throw new ModelNotFoundException('Inventory not found');
+            }
+
+            // Calculate new quantities
+            $quantityBefore = $inventory->quantity_on_hand;
+            $newQuantity = $adjustmentType === 'increase' 
+                ? $quantityBefore + $quantity 
+                : $quantityBefore - $quantity;
+
+            // Create adjustment record
+            $adjustment = $this->stockAdjustmentRepository->create([
+                'inventory_id' => $inventoryId,
+                'adjustment_type' => $adjustmentType,
+                'quantity_adjusted' => $quantity,
+                'quantity_before' => $quantityBefore,
+                'quantity_after' => $newQuantity,
+                'reason' => $reason,
+                'notes' => $notes,
+                'reference_number' => StockAdjustment::generateReferenceNumber(),
+                'adjusted_by' => auth()->id(),
+                'adjusted_at' => now(),
+            ]);
+
+            // Update inventory
+            $updated = $this->inventoryRepository->update($inventoryId, [
+                'quantity_on_hand' => $newQuantity
+            ]);
+
+            if (!$updated) {
+                throw new \Exception('Failed to update inventory');
+            }
+
+            DB::commit();
+
+            // Reload inventory to get updated calculated fields
+            $updatedInventory = $this->getInventoryById($inventoryId);
+
+            return [
+                'success' => true,
+                'adjustment' => $adjustment,
+                'inventory' => $updatedInventory,
+                'message' => "Stock {$adjustmentType}d by {$quantity}. Reference: {$adjustment->reference_number}"
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new \Exception('Error adjusting stock: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get stock adjustment history for inventory
+     */
+    public function getInventoryAdjustmentHistory(int $inventoryId): Collection
+    {
+        return $this->stockAdjustmentRepository->findByInventory($inventoryId);
+    }
+
+    /**
+     * Get adjustment summary for inventory
+     */
+    public function getInventoryAdjustmentSummary(int $inventoryId): array
+    {
+        return $this->stockAdjustmentRepository->getAdjustmentsSummary($inventoryId);
     }
 
 }

@@ -76,5 +76,8 @@ class Inventory extends Model
         $this->updateAvailableQuantity();
     }
 
-    
+    public function stockAdjustments()
+    {
+        return $this->hasMany(StockAdjustment::class);
+    }
 }

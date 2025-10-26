@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StockAdjustmentController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -73,7 +74,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/inventories/transfer', [InventoryController::class, 'transferStock'])->name('inventories.transfer');
         Route::get('/inventories/reports/low-stock', [InventoryController::class, 'lowStockReport'])->name('inventories.reports.low-stock');
 
-        
+        // Stock Adjustment Routes:
+        Route::resource('stock-adjustments', StockAdjustmentController::class)->parameters([
+            'stock-adjustments' => 'stockAdjustment'
+        ]);
+        Route::get('/api/stock-adjustments/inventory/{inventoryId}', [StockAdjustmentController::class, 'getByInventory'])->name('api.stock-adjustments.by-inventory');
     });
 });
 
