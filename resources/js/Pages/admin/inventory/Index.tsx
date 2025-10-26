@@ -278,7 +278,7 @@ const InventoryIndex = ({
                                                                     {inventory.warehouse?.name || 'Unknown Warehouse'}
                                                                 </div>
                                                                 <div className="text-sm text-gray-500 truncate" title={inventory.warehouse?.code || 'No Code'}>
-                                                                    {inventory.warehouse?.code || 'N/A'}
+                                                                    CODE: {inventory.warehouse?.code || 'N/A'}
                                                                 </div>
                                                             </div>
                                                         </TableCell>

@@ -39,3 +39,19 @@ export interface InventoryFilters {
     sort?: string;
     per_page?: number;
 }
+
+export interface InventoryAnalytics {
+    inventory_id: number;
+    stock_status: 'healthy' | 'low' | 'critical' | 'out_of_stock';
+    stock_percentage: number;
+    days_until_stockout?: number;
+    reorder_suggested: boolean;
+    stock_value: number;
+    turnover_rate?: number;
+}
+
+export interface InventoryWithAnalytics extends Inventory {
+    analytics?: InventoryAnalytics;
+    is_low_stock: boolean;
+    stock_status: string;
+}

@@ -116,9 +116,23 @@ class InventoryController extends Controller
     {
         try {
             $inventory->load(['product.category', 'product.brand', 'warehouse']);
+
+            // Calculate analytics
+            $analytics = [
+                'inventory_id' => $inventory->id,
+                'stock_status' => $this->getStockStatus($inventory),
+                'stock_percentage' => $this->calculateStockPercentage($inventory),
+                'reorder_suggested' => $inventory->isLowStock(),
+                'stock_value' => $inventory->quantity_on_hand * ($inventory->product->cost_price ?? $inventory->product->price),
+            ];
+
+            // Add stock status to inventory
+            $inventory->is_low_stock = $inventory->isLowStock();
+            $inventory->stock_status = $analytics['stock_status'];
         
-            return Inertia::render('admin/inventory/Show', [
-                'inventory' => $inventory
+            return Inertia::render('admin/inventory/View', [
+                'inventory' => $inventory,
+                'analytics' => $analytics
             ]);
 
         } catch (\Exception $e) {
@@ -127,6 +141,40 @@ class InventoryController extends Controller
             return redirect()->route('admin.inventories.index')
                 ->with('error', 'Error loading inventory details.');
         }
+    }
+
+    /**
+     * Get stock status for analytics
+     */
+    private function getStockStatus(Inventory $inventory): string
+    {
+        if ($inventory->quantity_available <= 0) {
+            return 'out_of_stock';
+        }
+        
+        if ($inventory->quantity_available <= $inventory->product->min_stock_level * 0.5) {
+            return 'critical';
+        }
+        
+        if ($inventory->isLowStock()) {
+            return 'low';
+        }
+        
+        return 'healthy';
+    }
+
+    /**
+     * Calculate stock percentage based on min/max levels
+     */
+    private function calculateStockPercentage(Inventory $inventory): float
+    {
+        $maxLevel = $inventory->product->max_stock_level ?? ($inventory->product->min_stock_level * 5);
+        
+        if ($maxLevel <= 0) {
+            return 100.0;
+        }
+        
+        return min(100, ($inventory->quantity_available / $maxLevel) * 100);
     }
 
     /**

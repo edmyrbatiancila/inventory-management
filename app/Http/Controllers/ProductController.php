@@ -225,7 +225,7 @@ class ProductController extends Controller
             Log::error('Failed to delete product: ' . $e->getMessage());
             
             return redirect()
-                ->back()
+                ->route('admin.products.index')
                 ->with('error', 'Failed to delete product: ' . $e->getMessage());
         }
     }

@@ -30,3 +30,18 @@ export interface WarehouseWithRelations extends Warehouse {
     total_stock?: number;
     full_address?: string; // This matches the getFullAddressAttribute in your model
 }
+
+export interface WarehouseAnalytics {
+    warehouse_id: number;
+    warehouse_name: string;
+    total_products: number;
+    total_stock: number;
+    total_reserved: number;
+    total_available: number;
+    utilization_rate: number;
+}
+
+export interface WarehouseWithAnalytics extends Warehouse {
+    inventories_count?: number;
+    total_stock?: number;
+}

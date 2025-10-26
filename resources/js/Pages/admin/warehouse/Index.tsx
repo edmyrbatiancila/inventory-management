@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import { handleDeleteData } from "@/hooks/deleteFunction";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { PageProps, PaginatedResponse } from "@/types";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
@@ -62,20 +63,20 @@ const WarehouseIndex = ({
         router.get(route('admin.warehouses.index'), { search, sort: value }, { preserveState: true, replace: true });
     };
 
-    const handleDeleteWarehouse = (warehouseId: number) => {
-        router.delete(route('admin.warehouses.destroy', warehouseId), {
-            preserveScroll: true,
-            onSuccess: () => {
-                // Success message will be handled by the flash message
-            },
-            onError: () => {
-                toast.error('Failed to delete warehouse', {
-                    description: 'The warehouse could not be deleted. It may be in use.',
-                    duration: 4000,
-                });
-            }
-        });
-    };
+    // const handleDeleteWarehouse = (warehouseId: number) => {
+    //     router.delete(route('admin.warehouses.destroy', warehouseId), {
+    //         preserveScroll: true,
+    //         onSuccess: () => {
+    //             // Success message will be handled by the flash message
+    //         },
+    //         onError: () => {
+    //             toast.error('Failed to delete warehouse', {
+    //                 description: 'The warehouse could not be deleted. It may be in use.',
+    //                 duration: 4000,
+    //             });
+    //         }
+    //     });
+    // };
 
     useEffect(() => {
         if (props.flash && props.flash.success) {
@@ -294,7 +295,7 @@ const WarehouseIndex = ({
                                                                         <AlertDialogFooter>
                                                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                                             <AlertDialogAction 
-                                                                                onClick={() => handleDeleteWarehouse(warehouse.id)}
+                                                                                onClick={() => handleDeleteData(warehouse.id, 'admin.warehouses.destroy')}
                                                                                 className="bg-red-600 hover:bg-red-700"
                                                                             >
                                                                                 Delete

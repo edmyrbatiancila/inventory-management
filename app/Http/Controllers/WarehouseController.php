@@ -112,7 +112,9 @@ class WarehouseController extends Controller
 
             $analytics = $this->warehouseService->getWarehouseAnalytics($id);
 
-            return Inertia::render('admin/warehouse/Show', [
+            $warehouse->full_address = $warehouse->getFullAddressAttribute();
+
+            return Inertia::render('admin/warehouse/View', [
                 'warehouse' => $warehouse,
                 'analytics' => $analytics
             ]);
@@ -193,7 +195,7 @@ class WarehouseController extends Controller
         } catch (\Exception $e) {
             Log::error('Error in WarehouseController@destroy: ' . $e->getMessage());
 
-            return redirect()->back()
+            return redirect()->route('admin.warehouses.index')
                 ->with('error', 'Error deleting warehouse: ' . $e->getMessage());
 
         }

@@ -21,56 +21,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Separator } from "@/Components/ui/separator";
-import { Product } from "@/types/Product/IProduct";
+import { Product, ProductAnalytics, ProductStockSummary } from "@/types/Product/IProduct";
 import { motion } from "framer-motion";
+import { Brand, Category } from "@/types";
+import { cardVariants, containerVariants, headerVariants, staggerContainer } from "@/utils/animationVarians";
+import { formatCurrency } from "@/utils/currency";
+import { formatDate } from "@/utils/date";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
+import { handleDeleteData } from "@/hooks/deleteFunction";
 
 interface ProductDetailsProps {
     product: Product & {
-        category: { id: number; name: string; description: string };
-        brand: { id: number; name: string; description: string; logo_url?: string };
+        category: Category;
+        brand: Brand;
     };
-    stockSummary: {
-        product_id: number;
-        product_name: string;
-        total_stock: number;
-        total_reserved: number;
-        total_available: number;
-        min_stock_level: number;
-        max_stock_level?: number;
-        is_low_stock: boolean;
-        locations: Array<{
-            warehouse_id: number;
-            warehouse_name: string;
-            quantity_on_hand: number;
-            quantity_reserved: number;
-            quantity_available: number;
-            is_low_stock: boolean;
-        }>;
-    };
-    analytics: {
-        product_id: number;
-        current_stock: {
-            total_on_hand: number;
-            total_reserved: number;
-            total_available: number;
-            stock_value: number;
-        };
-        stock_levels: {
-            min_level: number;
-            max_level?: number;
-            reorder_needed: boolean;
-            overstock: boolean;
-        };
-        recent_activity: {
-            stock_in: number;
-            stock_out: number;
-            adjustments: number;
-            net_movement: number;
-            movement_count: number;
-        };
-        locations: number;
-        last_movement?: string;
-    };
+    stockSummary: ProductStockSummary;
+    analytics: ProductAnalytics;
 }
 
 const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetailsProps) => {
@@ -78,117 +44,6 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
         router.visit(route('admin.products.edit', product.id));
     };
 
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this product?')) {
-            router.delete(route('admin.products.destroy', product.id));
-        }
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    // Animation variants
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                duration: 0.6,
-                staggerChildren: 0.1
-            }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { 
-            opacity: 0, 
-            y: 20 
-        },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.5,
-                ease: "easeOut"
-            }
-        }
-    };
-
-    const cardVariants = {
-        hidden: { 
-            opacity: 0, 
-            scale: 0.95,
-            y: 20
-        },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            transition: {
-                duration: 0.5,
-                ease: ["easeOut"]
-            }
-        },
-        hover: {
-            scale: 1.02,
-            transition: {
-                duration: 0.2,
-                ease: ["easeInOut"]
-            }
-        }
-    };
-
-    const alertVariants = {
-        hidden: { 
-            opacity: 0, 
-            x: -50,
-            scale: 0.9
-        },
-        visible: {
-            opacity: 1,
-            x: 0,
-            scale: 1,
-            transition: {
-                duration: 0.6,
-                ease: ["easeOut"]
-            }
-        }
-    };
-
-    const headerVariants = {
-        hidden: { opacity: 0, y: -30 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: {
-                duration: 0.6,
-                ease: "easeOut"
-            }
-        }
-    };
-
-    const staggerContainer = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.3
-            }
-        }
-    };
 
     return (
         <Authenticated
@@ -197,7 +52,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                     className="flex items-center justify-between"
                     initial="hidden"
                     animate="visible"
-                    // variants={headerVariants}
+                    variants={headerVariants}
                 >
                     <div className="flex items-center gap-4">
                         <motion.div 
@@ -240,17 +95,48 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                 </Button>
                             </motion.div>
                         </Link>
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }} 
+                            whileTap={{ scale: 0.98 }}
+                        >
                             <Button onClick={handleEdit} size="sm">
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Product
                             </Button>
                         </motion.div>
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button onClick={handleDelete} variant="destructive" size="sm">
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                            </Button>
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }} 
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button 
+                                        variant="destructive" 
+                                        size="sm"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to delete "{product.name}"? 
+                                            This action cannot be undone and will permanently remove this product.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => handleDeleteData(product.id, 'admin.products.destroy')}
+                                            className="bg-red-600 hover:bg-red-700"
+                                        >
+                                            Delete
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </motion.div>
                     </motion.div>
                 </motion.div>
@@ -303,7 +189,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                     >
                         <motion.div>
                             <motion.div
-                                // variants={cardVariants}
+                                variants={cardVariants}
                                 whileHover="hover"
                                 className="h-full"
                             >
@@ -482,7 +368,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
                                             <motion.div
-                                                animate={{ rotate: [0, 360] }}
+                                                // animate={{ rotate: [0, 360] }}
                                                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                                             >
                                                 <Tag className="w-5 h-5" />
@@ -559,10 +445,10 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
                                             <motion.div
-                                                animate={{ 
-                                                    y: [0, -5, 0],
-                                                    rotate: [0, 5, -5, 0]
-                                                }}
+                                                // animate={{ 
+                                                //     y: [0, -5, 0],
+                                                //     rotate: [0, 5, -5, 0]
+                                                // }}
                                                 transition={{ 
                                                     duration: 3,
                                                     repeat: Infinity,
@@ -631,10 +517,10 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
                                             <motion.div
-                                                animate={{ 
-                                                    x: [0, 2, -2, 0],
-                                                    scale: [1, 1.1, 1]
-                                                }}
+                                                // animate={{ 
+                                                //     x: [0, 2, -2, 0],
+                                                //     scale: [1, 1.1, 1]
+                                                // }}
                                                 transition={{ 
                                                     duration: 4,
                                                     repeat: Infinity,
@@ -714,7 +600,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                         <CardTitle className="flex items-center gap-2">
                                             <motion.div
                                                 animate={{ 
-                                                    rotate: [0, 360],
+                                                    // rotate: [0, 360],
                                                     scale: [1, 1.1, 1]
                                                 }}
                                                 transition={{ 
@@ -789,9 +675,9 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
                                             <motion.div
-                                                animate={{ 
-                                                    rotate: [0, 360]
-                                                }}
+                                                // animate={{ 
+                                                //     rotate: [0, 360]
+                                                // }}
                                                 transition={{ 
                                                     duration: 8,
                                                     repeat: Infinity,
