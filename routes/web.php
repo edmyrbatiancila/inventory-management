@@ -5,6 +5,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\StockTransferController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -79,6 +80,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
             'stock-adjustments' => 'stockAdjustment'
         ]);
         Route::get('/api/stock-adjustments/inventory/{inventoryId}', [StockAdjustmentController::class, 'getByInventory'])->name('api.stock-adjustments.by-inventory');
+
+        // Stock Transfer Routes:
+        Route::resource('stock-transfers', StockTransferController::class)->parameters([
+            'stock-transfers' => 'stockTransfer'
+        ]);
+
+        // Additional workflow routes
+        Route::patch('/stock-transfers/{stockTransfer}/approve', [StockTransferController::class, 'approve'])
+            ->name('stock-transfers.approve');
+        Route::patch('/stock-transfers/{stockTransfer}/mark-in-transit', [StockTransferController::class, 'markInTransit'])
+            ->name('stock-transfers.mark-in-transit');
+        Route::patch('/stock-transfers/{stockTransfer}/complete', [StockTransferController::class, 'complete'])
+            ->name('stock-transfers.complete');
     });
 });
 

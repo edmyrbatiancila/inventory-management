@@ -54,14 +54,14 @@ class InventoryMovementSeeder extends Seeder
 
             // Initial stock receipt
             $initialQuantity = fake()->numberBetween(50, 200);
-            $this->createMovement($inventory, 'in', $initialQuantity, $currentStock, $movementDate);
+            $this->createMovement($inventory, 'stock_in', $initialQuantity, $currentStock, $movementDate);
             $currentStock += $initialQuantity;
 
             // Create subsequent movements
             for ($i = 1; $i < $movementCount; $i++) {
                 $movementDate = $movementDate->addDays(fake()->numberBetween(1, 10));
                 
-                $movementType = fake()->randomElement(['in', 'out', 'adjustment']);
+                $movementType = fake()->randomElement(['stock_in', 'stock_out', 'adjustment_in', 'adjustment_out']);
                 $quantity = $this->getQuantityForMovement($movementType, $currentStock);
                 
                 $this->createMovement($inventory, $movementType, $quantity, $currentStock, $movementDate);
@@ -108,7 +108,7 @@ class InventoryMovementSeeder extends Seeder
             // MacBook movement history
             $movements = [
                 [
-                    'type' => 'in',
+                    'type' => 'stock_in',
                     'quantity' => 30,
                     'reference_type' => 'purchase_order',
                     'reference_id' => 12345,
@@ -116,7 +116,7 @@ class InventoryMovementSeeder extends Seeder
                     'movement_date' => Carbon::now()->subDays(45),
                 ],
                 [
-                    'type' => 'out',
+                    'type' => 'stock_out',
                     'quantity' => -5,
                     'reference_type' => 'sale',
                     'reference_id' => 67890,
@@ -124,7 +124,7 @@ class InventoryMovementSeeder extends Seeder
                     'movement_date' => Carbon::now()->subDays(30),
                 ],
                 [
-                    'type' => 'transfer',
+                    'type' => 'transfer_out',
                     'quantity' => -3,
                     'reference_type' => 'transfer',
                     'reference_id' => 11111,
@@ -132,7 +132,7 @@ class InventoryMovementSeeder extends Seeder
                     'movement_date' => Carbon::now()->subDays(15),
                 ],
                 [
-                    'type' => 'adjustment',
+                    'type' => 'adjustment_out',
                     'quantity' => 3,
                     'reference_type' => 'adjustment',
                     'notes' => 'Found missing units during cycle count',
@@ -169,7 +169,7 @@ class InventoryMovementSeeder extends Seeder
     {
         // Large outbound movement (potential issue)
         InventoryMovement::factory()->create([
-            'type' => 'out',
+            'type' => 'stock_out',
             'quantity' => -150,
             'reference_type' => 'damage',
             'notes' => 'Major shipment damaged in transit',
@@ -207,42 +207,55 @@ class InventoryMovementSeeder extends Seeder
     private function getQuantityForMovement($type, $currentStock): int
     {
         return match($type) {
-            'in' => fake()->numberBetween(10, 50),
-            'out' => -fake()->numberBetween(1, min($currentStock, 20)),
-            'adjustment' => fake()->numberBetween(-5, 5),
-            default => 0
+            'stock_in', 'adjustment_in', 'transfer_in' => fake()->numberBetween(10, 50),
+            'stock_out', 'adjustment_out', 'transfer_out' => -fake()->numberBetween(1, min($currentStock, 20)),
+            default => fake()->numberBetween(-5, 5),
         };
     }
 
     private function getReferenceType($type): string
     {
         return match($type) {
-            'in' => fake()->randomElement(['purchase_order', 'return', 'transfer']),
-            'out' => fake()->randomElement(['sale', 'damage', 'transfer']),
-            'adjustment' => 'adjustment',
-            default => 'other'
+            'stock_in', 'transfer_in' => fake()->randomElement(['purchase_order', 'return', 'transfer']),
+            'stock_out', 'transfer_out' => fake()->randomElement(['sale', 'damage', 'transfer']),
+            'adjustment_in', 'adjustment_out' => 'adjustment',
+            default => 'other',
         };
     }
 
     private function getNotesForMovement($type): string
     {
         $notes = match($type) {
-            'in' => fake()->randomElement([
+            'stock_in' => fake()->randomElement([
                 'Stock received from supplier',
                 'Customer return processed',
                 'Transfer from another location',
                 'Initial inventory setup'
             ]),
-            'out' => fake()->randomElement([
+            'stock_out' => fake()->randomElement([
                 'Product sold to customer',
                 'Damaged goods removed',
                 'Transfer to another location',
                 'Promotional giveaway'
             ]),
-            'adjustment' => fake()->randomElement([
-                'Cycle count adjustment',
-                'System correction',
-                'Found missing inventory',
+            'transfer_in' => fake()->randomElement([
+                'Stock transferred in from warehouse',
+                'Received from distribution center',
+                'Inventory moved from branch'
+            ]),
+            'transfer_out' => fake()->randomElement([
+                'Stock transferred out to warehouse',
+                'Sent to distribution center',
+                'Inventory moved to branch'
+            ]),
+            'adjustment_in' => fake()->randomElement([
+                'Cycle count adjustment - increase',
+                'System correction - positive',
+                'Found missing inventory'
+            ]),
+            'adjustment_out' => fake()->randomElement([
+                'Cycle count adjustment - decrease',
+                'System correction - negative',
                 'Damaged goods write-off'
             ]),
             default => 'Inventory movement'

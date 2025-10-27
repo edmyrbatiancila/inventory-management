@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inventory;
+use App\Models\InventoryMovement;
 use App\Models\StockAdjustment;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use App\Repositories\Interfaces\StockAdjustmentRepositoryInterface;
@@ -325,4 +326,122 @@ class InventoryService
         return $this->stockAdjustmentRepository->getAdjustmentsSummary($inventoryId);
     }
 
+    /**
+     * Increase stock quantity for a specific warehouse/product combination
+     */
+    public function increaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, string $notes = null): bool
+    {
+        try {
+            DB::beginTransaction();
+
+            // Find or create inventory record
+            $inventory = $this->inventoryRepository->findByProductAndWarehouse($productId, $warehouseId);
+
+            if (!$inventory) {
+                // Create new inventory record if doesn't exist
+                $inventory = $this->inventoryRepository->create([
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => $productId,
+                    'quantity_on_hand' => $quantity,
+                    'quantity_reserved' => 0,
+                    'quantity_available' => $quantity,
+                    'min_stock_level' => 0,
+                    'max_stock_level' => 0,
+                ]);
+            } else {
+                // Update existing inventory
+                $newQuantityOnHand = $inventory->quantity_on_hand + $quantity;
+                $newQuantityAvailable = $inventory->quantity_available + $quantity;
+
+                $this->inventoryRepository->update($inventory->id, [
+                    'quantity_on_hand' => $newQuantityOnHand,
+                    'quantity_available' => $newQuantityAvailable,
+                ]);
+
+                $inventory->refresh();
+            }
+
+            // Create inventory movement record
+            $this->createInventoryMovement([
+                'product_id' => $productId,
+                'warehouse_id' => $warehouseId,
+                'type' => 'increase',
+                'quantity' => $quantity,
+                'quantity_before' => $inventory->quantity_on_hand - $quantity,
+                'quantity_after' => $inventory->quantity_on_hand,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'notes' => $notes,
+                'movement_date' => now(),
+            ]);
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Decrease stock quantity for a specific warehouse/product combination
+     */
+    public function decreaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, string $notes = null): bool
+    {
+        try {
+            DB::beginTransaction();
+
+            // Find inventory record
+            $inventory = $this->inventoryRepository->findByProductAndWarehouse($productId, $warehouseId);
+
+            if (!$inventory) {
+                throw new ValidationException("Inventory record not found for product {$productId} in warehouse {$warehouseId}");
+            }
+
+            // Check if there's enough stock
+            if ($inventory->quantity_available < $quantity) {
+                throw new ValidationException("Insufficient stock. Available: {$inventory->quantity_available}, Requested: {$quantity}");
+            }
+
+            // Update inventory
+            $newQuantityOnHand = $inventory->quantity_on_hand - $quantity;
+            $newQuantityAvailable = $inventory->quantity_available - $quantity;
+
+            $this->inventoryRepository->update($inventory->id, [
+                'quantity_on_hand' => $newQuantityOnHand,
+                'quantity_available' => $newQuantityAvailable,
+            ]);
+
+            // Create inventory movement record
+            $this->createInventoryMovement([
+                'product_id' => $productId,
+                'warehouse_id' => $warehouseId,
+                'type' => 'decrease',
+                'quantity' => -$quantity, // Negative for decrease
+                'quantity_before' => $inventory->quantity_on_hand,
+                'quantity_after' => $newQuantityOnHand,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'notes' => $notes,
+                'movement_date' => now(),
+            ]);
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Create inventory movement record
+     */
+    private function createInventoryMovement(array $data): void
+    {
+        // Assuming you have an InventoryMovement model and repository
+        InventoryMovement::create($data);
+    }
 }

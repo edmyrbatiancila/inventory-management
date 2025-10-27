@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasSearchAndFilter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class StockAdjustment extends Model
 {
     /** @use HasFactory<\Database\Factories\StockAdjustmentFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasSearchAndFilter;
 
     protected $fillable = [
         'inventory_id',

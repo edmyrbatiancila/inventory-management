@@ -33,16 +33,14 @@ class InventoryMovementFactory extends Factory
             $warehouse = $inventory->warehouse;
         }
 
-        $movementType = $this->faker->randomElement(['in', 'out', 'adjustment', 'transfer']);
+        $movementType = $this->faker->randomElement(['stock_in', 'stock_out', 'adjustment_in', 'adjustment_out', 'transfer_in', 'transfer_out']);
         $quantity = $this->faker->numberBetween(1, 50);
         $quantityBefore = $inventory ? $inventory->quantity_on_hand : $this->faker->numberBetween(0, 100);
 
-        // Calculate quantity after based on movement type
+                // Calculate quantity after based on movement type
         $quantityAfter = match($movementType) {
-            'in' => $quantityBefore + $quantity,
-            'out' => max(0, $quantityBefore - $quantity),
-            'adjustment' => $this->faker->numberBetween(0, 200),
-            'transfer' => max(0, $quantityBefore - $quantity), // Transfer out
+            'stock_in', 'adjustment_in', 'transfer_in' => $quantityBefore + $quantity,
+            'stock_out', 'adjustment_out', 'transfer_out' => max(0, $quantityBefore - $quantity),
             default => $quantityBefore
         };
 
@@ -65,7 +63,7 @@ class InventoryMovementFactory extends Factory
     public function stockIn()
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'in',
+            'type' => 'stock_in',
             'quantity' => $this->faker->numberBetween(10, 100),
             'reference_type' => $this->faker->randomElement(['purchase_order', 'return', 'adjustment']),
             'notes' => 'Stock received - ' . $this->faker->sentence(3),
@@ -75,7 +73,7 @@ class InventoryMovementFactory extends Factory
     public function stockOut()
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'out',
+            'type' => 'stock_out',
             'quantity' => -$this->faker->numberBetween(1, 20),
             'reference_type' => $this->faker->randomElement(['sale', 'damage', 'theft']),
             'notes' => 'Stock removed - ' . $this->faker->sentence(3),
@@ -84,9 +82,12 @@ class InventoryMovementFactory extends Factory
 
     public function adjustment()
     {
+        $isIncrease = $this->faker->boolean();
         return $this->state(fn (array $attributes) => [
-            'type' => 'adjustment',
-            'quantity' => $this->faker->numberBetween(-10, 10),
+            'type' => $isIncrease ? 'adjustment_in' : 'adjustment_out',
+            'quantity' => $isIncrease ? 
+                $this->faker->numberBetween(1, 10) : 
+                -$this->faker->numberBetween(1, 10),
             'reference_type' => 'adjustment',
             'notes' => 'Inventory adjustment - ' . $this->faker->randomElement([
                 'Cycle count correction',
@@ -100,7 +101,7 @@ class InventoryMovementFactory extends Factory
     public function transfer()
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'transfer',
+            'type' => 'transfer_out',
             'quantity' => -$this->faker->numberBetween(5, 25),
             'reference_type' => 'transfer',
             'notes' => 'Stock transfer to ' . $this->faker->randomElement([

@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@gmail.com',
         ]);
 
-        // User::factory(10)->create();
+        User::factory(10)->create();
+
         $this->call([
             CategorySeeder::class,
             BrandSeeder::class,
@@ -27,6 +28,7 @@ class DatabaseSeeder extends Seeder
             InventorySeeder::class,
             StockAdjustmentSeeder::class,
             InventoryMovementSeeder::class,
+            StockTransferSeeder::class,
         ]);
 
     }
