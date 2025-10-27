@@ -12,12 +12,13 @@ import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { PaginatedResponse } from "@/types";
 import { StockAdjustment } from "@/types/StockAdjustment/IStockAdjustment";
 import { containerVariants } from "@/utils/animationVarians";
+import { formatDate } from "@/utils/date";
 import { Head, router } from "@inertiajs/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Edit2, Package, Plus, Trash2, TrendingDown, TrendingUp, View, X } from "lucide-react";
 import { useRef, useState } from "react";
 
-interface IInventoryIndexProps {
+interface IStockAdjustmentIndexProps {
     stockAdjustments: PaginatedResponse<StockAdjustment>;
     sort?: string;
 }
@@ -25,7 +26,7 @@ interface IInventoryIndexProps {
 const StockAdjustmentIndex = ({
     stockAdjustments,
     sort: initialSort = 'newest'
-}: IInventoryIndexProps) => {
+}: IStockAdjustmentIndexProps) => {
 
     const [search, setSearch] = useState<string>('');
     const [sort, setSort] = useState(initialSort);
@@ -141,11 +142,9 @@ const StockAdjustmentIndex = ({
                                             <SelectLabel>Select Filter</SelectLabel>
                                             <SelectItem value="newest">Newest First</SelectItem>
                                             <SelectItem value="oldest">Oldest First</SelectItem>
-                                            <SelectItem value="az">Product Name</SelectItem>
-                                            <SelectItem value="za">Warehouse Name</SelectItem>
-                                            <SelectItem value="quantity_high">Highest Stock</SelectItem>
-                                            <SelectItem value="quantity_low">Lowest Stock</SelectItem>
-                                            <SelectItem value="low_stock">Low Stock Alert</SelectItem>
+                                            <SelectItem value="quantity_high">Highest Quantity</SelectItem>
+                                            <SelectItem value="quantity_low">Lowest Quantity</SelectItem>
+                                            <SelectItem value="reference">Reference Number</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
@@ -154,7 +153,7 @@ const StockAdjustmentIndex = ({
 
                         <motion.div whileHover={{ scale: 1.04 }}>
                             <Button
-                                onClick={() => router.visit(route('admin.stock.create'))}
+                                onClick={() => router.visit(route('admin.stock-adjustments.create'))}
                                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-all duration-150"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -194,6 +193,7 @@ const StockAdjustmentIndex = ({
                                                     <TableHead className="text-center w-24">Quantity</TableHead>
                                                     <TableHead className="text-center w-32">Stock Levels</TableHead>
                                                     <TableHead className="w-24">Reason</TableHead>
+                                                    <TableHead className="w-20">Date</TableHead>
                                                     <TableHead className="w-32 text-center">Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -298,6 +298,18 @@ const StockAdjustmentIndex = ({
                                                             </Badge>
                                                         </TableCell>
 
+                                                        <TableCell>
+                                                            <div className="text-sm">
+                                                                <div>{formatDate(adjustment.adjusted_at)}</div>
+                                                                <div className="text-xs text-gray-500">
+                                                                    {new Date(adjustment.adjusted_at).toLocaleTimeString('en-US', { 
+                                                                        hour: '2-digit', 
+                                                                        minute: '2-digit' 
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+
                                                         {/* Actions */}
                                                         <TableCell className="w-32">
                                                             <div className="flex gap-2 justify-center">
@@ -318,35 +330,6 @@ const StockAdjustmentIndex = ({
                                                                 >
                                                                     <Edit2 className="w-4 h-4" />
                                                                 </motion.button>
-
-                                                                <AlertDialog>
-                                                                    <AlertDialogTrigger asChild>
-                                                                        <motion.button
-                                                                            whileHover={{ scale: 1.15 }}
-                                                                            className="p-2 rounded hover:bg-red-100 text-red-600"
-                                                                            title="Delete Stock Adjustment"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </motion.button>
-                                                                    </AlertDialogTrigger>
-                                                                    <AlertDialogContent>
-                                                                        <AlertDialogHeader>
-                                                                            <AlertDialogTitle>Delete Stock Adjustment</AlertDialogTitle>
-                                                                            <AlertDialogDescription>
-                                                                                Are you sure you want to delete this stock adjustment record for "{adjustment.inventory.product?.name}" in "{adjustment.inventory.warehouse?.name}"? This action cannot be undone and will permanently remove the stock adjustment data.
-                                                                            </AlertDialogDescription>
-                                                                        </AlertDialogHeader>
-                                                                        <AlertDialogFooter>
-                                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                            <AlertDialogAction
-                                                                                onClick={() => handleDeleteData(adjustment.id, 'admin.stock-adjustments.destroy')}
-                                                                                className="bg-red-600 hover:bg-red-700"
-                                                                            >
-                                                                                Delete Stock Adjustment
-                                                                            </AlertDialogAction>
-                                                                        </AlertDialogFooter>
-                                                                    </AlertDialogContent>
-                                                                </AlertDialog>
                                                             </div>
                                                         </TableCell>
                                                     </motion.tr>

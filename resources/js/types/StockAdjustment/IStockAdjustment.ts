@@ -11,14 +11,14 @@ export interface StockAdjustment {
     reason: string;
     notes?: string;
     reference_number: string;
-    adjusted_by: number;
+    // adjusted_by: number;
     adjusted_at: string;
     created_at: string;
     updated_at: string;
     
     // Relationships
     inventory: Inventory;
-    adjustedBy: User;
+    adjusted_by: User;
 }
 
 export interface StockAdjustmentFilters {

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import InputError from "@/Components/InputError";
 import { Input } from "@/Components/ui/input";
 import { Textarea } from "@/Components/ui/textarea";
+import { Spinner } from "@/Components/ui/spinner";
 
 interface ICreateInventoryProps {
     products: Product[];
@@ -317,7 +318,7 @@ const CreateInventory = ({
                                         >
                                             {processing ? (
                                                 <>
-                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                                    <Spinner />
                                                     Creating...
                                                 </>
                                             ) : (
