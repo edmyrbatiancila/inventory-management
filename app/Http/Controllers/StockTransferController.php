@@ -23,14 +23,29 @@ class StockTransferController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['status', 'warehouse_id', 'product_id', 'search', 'per_page']);
-        $transfers = $this->stockTransferService->searchTransfers($filters);
+        $filters = $request->only([
+            'status', 
+            'warehouse_id', 
+            'product_id', 
+            'search', 
+            'per_page',
+            'sort'
+        ]);
+
+        // Clean up filters
+        $filters = array_filter($filters, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $transfers = $this->stockTransferService->getAllStockTransfers($filters);
 
         return Inertia::render('admin/stock-transfers/Index', [
             'transfers' => $transfers,
             'filters' => $filters,
             'warehouses' => Warehouse::select('id', 'name')->get(),
+            'sort' => $request->get('sort', 'newest'),
             'products' => Product::select('id', 'name')->get(),
+            'transferStatus' => $request->get('status', '')
         ]);
     }
 

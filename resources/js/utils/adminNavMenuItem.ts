@@ -1,4 +1,4 @@
-import { BarChart3, Package, ShoppingCart, Tags, TrendingUp, WarehouseIcon } from "lucide-react";
+import { BarChart3, Package, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon } from "lucide-react";
 
 export const adminMenuItems = [
         {
@@ -40,7 +40,14 @@ export const adminMenuItems = [
             title: "Stock Adjustments",
             href: route('admin.stock-adjustments.index'),
             routePattern: 'admin.stock-adjustments.*',
-            icon: TrendingUp,
+            icon: TrendingUpDown,
             description: "Review and manage stock adjustments history"
+        },
+        {
+            title: "Stock Transfers",
+            href: route('admin.stock-transfers.index'),
+            routePattern: 'admin.stock-transfers.*',
+            icon: Split,
+            description: "Review and manage stock transfers history"
         }
     ];

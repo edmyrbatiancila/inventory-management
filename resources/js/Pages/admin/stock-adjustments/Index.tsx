@@ -15,7 +15,7 @@ import { containerVariants } from "@/utils/animationVarians";
 import { formatDate } from "@/utils/date";
 import { Head, router } from "@inertiajs/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Edit2, Package, Plus, Trash2, TrendingDown, TrendingUp, View, X } from "lucide-react";
+import { ArrowRight, Edit2, Package, Plus, Trash2, TrendingDown, TrendingUp, TrendingUpDown, View, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 interface IStockAdjustmentIndexProps {
@@ -86,7 +86,7 @@ const StockAdjustmentIndex = ({
                     transition={{ duration: 0.5 }}
                 >
                     <h2 className="text-2xl font-bold leading-tight text-blue-800 tracking-tight flex items-center gap-2">
-                        <TrendingUp className="w-7 h-7 text-blue-600" />
+                        <TrendingUpDown className="w-7 h-7 text-blue-600" />
                         Stock Adjustment Management
                     </h2>
                 </motion.div>

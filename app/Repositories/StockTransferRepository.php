@@ -36,12 +36,94 @@ class StockTransferRepository implements StockTransferRepositoryInterface
             $query->byProduct($filters['product_id']);
         }
 
+        // Comprehensive search implementation
+
         if (!empty($filters['search'])) {
-            $query->where('reference_number', 'like', '%' . $filters['search'] . '%');
+            $searchTerm = $filters['search'];
+
+            $query->where(function($q) use ($searchTerm) {
+                // Search in reference number
+                $q->where('reference_number', 'like', '%' . $searchTerm . '%')
+                
+                // Search in notes
+                ->orWhere('notes', 'like', '%' . $searchTerm . '%')
+                
+                // Search in cancellation reason
+                ->orWhere('cancellation_reason', 'like', '%' . $searchTerm . '%')
+                
+                // Search in related product name
+                ->orWhereHas('product', function($productQuery) use ($searchTerm) {
+                    $productQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('sku', 'like', '%' . $searchTerm . '%');
+                })
+                
+                // Search in from warehouse
+                ->orWhereHas('fromWarehouse', function($warehouseQuery) use ($searchTerm) {
+                    $warehouseQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('code', 'like', '%' . $searchTerm . '%');
+                })
+                
+                // Search in to warehouse
+                ->orWhereHas('toWarehouse', function($warehouseQuery) use ($searchTerm) {
+                    $warehouseQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('code', 'like', '%' . $searchTerm . '%');
+                })
+                
+                // Search in user who initiated
+                ->orWhereHas('initiatedBy', function($userQuery) use ($searchTerm) {
+                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                })
+                
+                // Search in user who approved
+                ->orWhereHas('approvedBy', function($userQuery) use ($searchTerm) {
+                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                })
+                
+                // Search in user who completed
+                ->orWhereHas('completedBy', function($userQuery) use ($searchTerm) {
+                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                });
+            });
         }
 
-        return $query->orderBy('created_at', 'desc')
-                    ->paginate($filters['per_page'] ?? 15);
+        // Apply sorting
+        $sortField = 'created_at';
+        $sortDirection = 'desc';
+        
+        if (!empty($filters['sort'])) {
+            switch ($filters['sort']) {
+                case 'oldest':
+                    $sortDirection = 'asc';
+                    break;
+                case 'reference':
+                    $sortField = 'reference_number';
+                    $sortDirection = 'asc';
+                    break;
+                case 'status':
+                    $sortField = 'transfer_status';
+                    $sortDirection = 'asc';
+                    break;
+                case 'quantity_high':
+                    $sortField = 'quantity_transferred';
+                    $sortDirection = 'desc';
+                    break;
+                case 'quantity_low':
+                    $sortField = 'quantity_transferred';
+                    $sortDirection = 'asc';
+                    break;
+                case 'newest':
+                default:
+                    $sortField = 'created_at';
+                    $sortDirection = 'desc';
+                    break;
+            }
+        }
+
+        return $query->orderBy($sortField, $sortDirection)
+            ->paginate($filters['per_page'] ?? 15);
     }
 
     public function findById(int $id): ?StockTransfer

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\StockTransfer;
 use App\Repositories\Interfaces\StockTransferRepositoryInterface;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,19 @@ class StockTransferService
         private StockTransferRepositoryInterface $stockTransferRepository,
         private InventoryService $inventoryService
     ) {}
+
+    /**
+     * Get all stock transfers with filtering and pagination
+     */
+    public function getAllStockTransfers(array $filters = []): LengthAwarePaginator
+    {
+        $filters = array_merge([
+            'per_page' => 15,
+        ], $filters);
+
+        return $this->stockTransferRepository->findAll($filters);
+
+    }
 
     // Core Transfer Operations
     public function initiateTransfer(array $data): StockTransfer
@@ -261,10 +275,10 @@ class StockTransferService
         return $this->stockTransferRepository->getTransferAnalytics($warehouseId);
     }
 
-    public function searchTransfers(array $filters, int $perPage = 15)
-    {
-        return $this->stockTransferRepository->searchTransfers($filters);
-    }
+    // public function searchTransfers(array $filters, int $perPage = 15)
+    // {
+    //     return $this->stockTransferRepository->searchTransfers($filters);
+    // }
 
     public function getPendingApprovals(int $perPage = 15)
     {
