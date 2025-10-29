@@ -46,17 +46,17 @@ const StockAdjustmentCreate = ({
     };
 
     // Helper function to calculate projected stock
-    const getProjectedStock = () => {
-        const selectedInventory = getSelectedInventory();
-        if (!selectedInventory || !data.quantity_adjusted || !data.adjustment_type) return null;
+    // const getProjectedStock = () => {
+    //     const selectedInventory = getSelectedInventory();
+    //     if (!selectedInventory || !data.quantity_adjusted || !data.adjustment_type) return null;
         
-        const currentStock = selectedInventory.quantity_on_hand;
-        const adjustment = parseInt(data.quantity_adjusted);
+    //     const currentStock = selectedInventory.quantity_on_hand;
+    //     const adjustment = parseInt(data.quantity_adjusted);
         
-        return data.adjustment_type === 'increase' 
-            ? currentStock + adjustment 
-            : currentStock - adjustment;
-    };
+    //     return data.adjustment_type === 'increase' 
+    //         ? currentStock + adjustment 
+    //         : currentStock - adjustment;
+    // };
 
     return (
         <Authenticated

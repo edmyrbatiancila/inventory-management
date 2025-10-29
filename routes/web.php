@@ -93,8 +93,21 @@ Route::middleware(['auth', 'admin'])->group(function () {
             ->name('stock-transfers.mark-in-transit');
         Route::patch('/stock-transfers/{stockTransfer}/complete', [StockTransferController::class, 'complete'])
             ->name('stock-transfers.complete');
+        
     });
 });
+
+// Inventory availability check route (moved outside admin middleware for AJAX accessibility)
+Route::middleware(['auth'])->group(function() {
+    Route::get('/api/stock-transfers/check-inventory', [StockTransferController::class, 'checkInventoryAvailability'])
+        ->name('api.stock-transfers.check-inventory');
+    Route::get('/api/stock-transfers/products-with-inventory', [StockTransferController::class, 'getProductsWithInventory'])
+        ->name('api.stock-transfers.products-with-inventory');
+});
+
+// Temporary test route without middleware for debugging
+Route::get('/test/inventory-check', [StockTransferController::class, 'checkInventoryAvailability'])
+    ->name('test.inventory-check');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

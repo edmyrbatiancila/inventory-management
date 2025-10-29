@@ -381,7 +381,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
             ->where('product_id', $productId)
             ->first();
 
-        return $inventory ? $inventory->quantity : 0;
+        return $inventory ? $inventory->quantity_available : 0;
     }
 
     public function checkForDuplicateTransfer(array $transferData): ?StockTransfer

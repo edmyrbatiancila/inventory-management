@@ -25,9 +25,9 @@ export default function CustomPagination<T>({ data, className }: CustomPaginatio
       return (
         <PaginationItem key={index}>
           {link.url ? (
-            <PaginationPrevious>
-              <Link href={link.url} preserveScroll />
-            </PaginationPrevious>
+            <Link href={link.url} preserveScroll>
+              <PaginationPrevious />
+            </Link>
           ) : (
             <PaginationPrevious className="pointer-events-none opacity-50" />
           )}
@@ -39,9 +39,9 @@ export default function CustomPagination<T>({ data, className }: CustomPaginatio
       return (
         <PaginationItem key={index}>
           {link.url ? (
-            <PaginationNext>
-              <Link href={link.url} preserveScroll />
-            </PaginationNext>
+            <Link href={link.url} preserveScroll>
+              <PaginationNext />
+            </Link>
           ) : (
             <PaginationNext className="pointer-events-none opacity-50" />
           )}
@@ -64,11 +64,11 @@ export default function CustomPagination<T>({ data, className }: CustomPaginatio
           whileTap={{ scale: 0.95 }}
         >
           {link.url ? (
-            <PaginationLinkComponent isActive={link.active}>
-              <Link href={link.url} preserveScroll>
+            <Link href={link.url} preserveScroll>
+              <PaginationLinkComponent isActive={link.active}>
                 {link.label}
-              </Link>
-            </PaginationLinkComponent>
+              </PaginationLinkComponent>
+            </Link>
           ) : (
             <PaginationLinkComponent isActive={link.active}>
               {link.label}

@@ -215,7 +215,7 @@ class StockTransferService
     {
         // Check if warehouses are different
         if ($data['from_warehouse_id'] === $data['to_warehouse_id']) {
-            throw new ValidationException('Source and destination warehouses must be different');
+            throw new \Exception('Source and destination warehouses must be different');
         }
 
         // Check inventory availability
@@ -228,7 +228,7 @@ class StockTransferService
         // Check for duplicate transfers
         $duplicate = $this->stockTransferRepository->checkForDuplicateTransfer($data);
         if ($duplicate) {
-            throw new ValidationException('A similar transfer request already exists');
+            throw new \Exception('A similar transfer request already exists');
         }
     }
 
@@ -237,7 +237,7 @@ class StockTransferService
         $available = $this->stockTransferRepository->getAvailableQuantity($warehouseId, $productId);
         
         if ($available < $quantity) {
-            throw new ValidationException("Insufficient inventory. Available: {$available}, Requested: {$quantity}");
+            throw new \Exception("Insufficient inventory. Available: {$available}, Requested: {$quantity}");
         }
     }
 
