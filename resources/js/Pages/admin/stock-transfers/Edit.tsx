@@ -3,30 +3,50 @@ import { Alert, AlertDescription } from "@/Components/ui/alert";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Separator } from "@/Components/ui/separator";
 import { Spinner } from "@/Components/ui/spinner";
 import { Textarea } from "@/Components/ui/textarea";
 import { getStatusBadgeColor } from "@/hooks/stock-transfers/statusBadgeColor";
+import { useInventoryAvailability } from "@/hooks/stock-transfers/useInventoryAvailability";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
+import { Product } from "@/types/Product/IProduct";
 import { StockTransfer, UpdateStockTransferData } from "@/types/StockTransfer/IStockTransfer";
+import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { containerVariants, headerVariants } from "@/utils/animationVarians";
 import { formatDate } from "@/utils/date";
 import { Head, router, useForm } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowLeft, ArrowRight, Calendar, FileText, Hash, Info, Package, Save, WarehouseIcon } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 interface IStockTransferEditProps {
     transfer: StockTransfer;
+    warehouses: Warehouse[];
+    products: Product[];
+    canEditCore: boolean;
 }
 
 const StockTransferEdit = ({
-    transfer
+    transfer,
+    warehouses,
+    products,
+    canEditCore
 }: IStockTransferEditProps) => {
 
+    const { checkInventory, inventoryData, isLoading: inventoryLoading } = useInventoryAvailability();
+
     const { data, setData, put, processing, errors, reset } = useForm<UpdateStockTransferData>({
+        // Core details
+        from_warehouse_id: transfer.from_warehouse_id,
+        to_warehouse_id: transfer.to_warehouse_id,
+        product_id: transfer.product_id,
+        quantity_transferred: transfer.quantity_transferred,
+
+        // Status fields
         transfer_status: transfer.transfer_status,
         notes: transfer.notes || '',
         cancellation_reason: transfer.cancellation_reason || ''
@@ -36,9 +56,24 @@ const StockTransferEdit = ({
         e.preventDefault();
         
         // If cancelling, ensure cancellation reason is provided
-        if (data.transfer_status === 'cancelled' && !data.cancellation_reason.trim()) {
+        if (data.transfer_status === 'cancelled' && !(data.cancellation_reason?.trim())) {
             toast.error('Cancellation reason is required when cancelling a transfer');
             return;
+        }
+
+        // Additional validation for core details if editable
+        if (canEditCore) {
+            if (!data.from_warehouse_id || !data.to_warehouse_id || !data.product_id) {
+                toast.error('All core transfer details are required');
+
+                return;
+            }
+            
+            if (data.from_warehouse_id === data.to_warehouse_id) {
+                toast.error('Source and destination warehouses must be different');
+
+                return;
+            }
         }
 
         put(route('admin.stock-transfers.update', transfer.id), {
@@ -87,6 +122,13 @@ const StockTransferEdit = ({
 
     // Check if transfer can be edited
     const canEdit = !['completed', 'cancelled'].includes(transfer.transfer_status);
+
+    // Check inventory when warehouse or product changes
+    useEffect(() => {
+        if (canEditCore && data.from_warehouse_id && data.product_id) {
+            checkInventory(data.from_warehouse_id, data.product_id);
+        }
+    }, [data.from_warehouse_id, data.product_id, canEditCore]);
 
     return (
         <Authenticated
@@ -175,6 +217,14 @@ const StockTransferEdit = ({
                                     <CardTitle className="flex items-center gap-2">
                                         <FileText className="w-5 h-5" />
                                         Update Transfer Details
+                                        {canEditCore && (
+                                            <Badge 
+                                                variant="secondary"
+                                                className="text-xs"
+                                            >
+                                                Editable
+                                            </Badge>
+                                        )}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -182,46 +232,233 @@ const StockTransferEdit = ({
                                         onSubmit={handleSubmit} 
                                         className="space-y-6"
                                     >
-
-                                        {/* Status Update */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="transfer_status">
-                                                Transfer Status <span className="text-destructive">*</span>
-                                            </Label>
-                                            <Select
-                                                value={data.transfer_status}
-                                                onValueChange={(value) => setData('transfer_status', value as any)}
-                                                disabled={!canEdit}
-                                            >
-                                                <SelectTrigger className={errors.transfer_status ? 'border-red-500' : ''}>
-                                                    <SelectValue placeholder="Select status..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                {availableStatuses.map((status) => (
-                                                    <SelectItem
-                                                        key={status.value} 
-                                                        value={status.value}
-                                                        className={status.current ? 'bg-muted' : ''}
+                                    {canEditCore ? (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* From Warehouse Dropdown */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="from_warehouse_id">From Warehouse</Label>
+                                                    <Select
+                                                        value={data.from_warehouse_id?.toString() || ''}
+                                                        onValueChange={(value) => setData('from_warehouse_id', parseInt(value))}
                                                     >
-                                                        <div className="flex items-center gap-2">
-                                                            <Badge 
-                                                                variant="outline" 
-                                                                className={`text-xs ${getStatusBadgeColor(status.value as any)}`}
-                                                            >
-                                                                {status.label}
-                                                            </Badge>
-                                                            {status.current && (
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    (Current)
-                                                                </span>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select source warehouse" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {warehouses.map((warehouse) => (
+                                                                <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                                                    {warehouse.name} ({warehouse.code})
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError message={errors.from_warehouse_id} />
+                                                </div>
+
+                                                {/* To Warehouse Dropdown */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="to_warehouse_id">To Warehouse</Label>
+                                                    <Select
+                                                        value={data.to_warehouse_id?.toString() || ''}
+                                                        onValueChange={(value) => setData('to_warehouse_id', parseInt(value))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select destination warehouse" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {warehouses.map((warehouse) => (
+                                                                <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                                                                    {warehouse.name} ({warehouse.code})
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError message={errors.to_warehouse_id} />
+                                                </div>
+
+                                                {/* Product Dropdown */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="product_id">Product</Label>
+                                                    <Select
+                                                        value={data.product_id?.toString() || ''}
+                                                        onValueChange={(value) => setData('product_id', parseInt(value))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select product" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                        {products.map((product) => (
+                                                            <SelectItem key={product.id} value={product.id.toString()}>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{product.name}</span>
+                                                                    <span className="text-sm text-muted-foreground">
+                                                                        SKU: {product.sku} | {product.category?.name}
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError message={errors.product_id} />
+                                                </div>
+
+                                                {/* Quantity Input */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="quantity_transferred">
+                                                        Quantity to Transfer <span className="text-destructive">*</span>
+                                                    </Label>
+                                                    <div className="relative">
+                                                        <Input 
+                                                            id="quantity_transferred"
+                                                            type="number"
+                                                            min="1"
+                                                            value={data.quantity_transferred || ''}
+                                                            onChange={(e) => setData('quantity_transferred', parseInt(e.target.value) || 1)}
+                                                            placeholder="Enter quantity"
+                                                            className={errors.quantity_transferred ? 'border-red-500' : ''}
+                                                        />
+                                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                                            <Package className="w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                    </div>
+                                                    <InputError message={errors.quantity_transferred} />
+
+                                                    {/* Inventory Availablity Display */}
+                                                    {inventoryData && data.from_warehouse_id && data.product_id && (
+                                                        <div className="p-3 bg-muted/50 rounded-lg border">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-sm font-medium">Available Stock:</span>
+                                                                <Badge 
+                                                                    variant={inventoryData.available_quantity > 0 ? "default" : "destructive"}
+                                                                    className="text-xs"
+                                                                >
+                                                                    {inventoryData.available_quantity} units
+                                                                </Badge>
+                                                            </div>
+                                                            {inventoryData.available_quantity > 0 && data.quantity_transferred && (
+                                                                <div className="mt-2 text-xs text-muted-foreground">
+                                                                    {data.quantity_transferred > inventoryData.available_quantity ? (
+                                                                        <span className="text-destructive">
+                                                                            ⚠️ Requested quantity exceeds available stock
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-green-600">
+                                                                            ✓ Sufficient stock available
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
-                                                    </SelectItem>
-                                                ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <InputError message={errors.transfer_status} />
-                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <Separator />
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="transfer_status">
+                                                        Transfer Status <span className="text-destructive">*</span>
+                                                    </Label>
+                                                    <Select
+                                                        value={data.transfer_status}
+                                                        onValueChange={(value) => setData('transfer_status', value as any)}
+                                                        disabled={!canEdit}
+                                                    >
+                                                        <SelectTrigger className={errors.transfer_status ? 'border-red-500' : ''}>
+                                                            <SelectValue placeholder="Select status..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                        {availableStatuses.map((status) => (
+                                                            <SelectItem
+                                                                key={status.value} 
+                                                                value={status.value}
+                                                                className={status.current ? 'bg-muted' : ''}
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <Badge 
+                                                                        variant="outline" 
+                                                                        className={`text-xs ${getStatusBadgeColor(status.value as any)}`}
+                                                                    >
+                                                                        {status.label}
+                                                                    </Badge>
+                                                                    {status.current && (
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            (Current)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <InputError message={errors.transfer_status} />
+                                                </div>
+
+                                                {/* Notes */}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="notes">Additional Notes</Label>
+                                                    <Textarea
+                                                        id="notes"
+                                                        value={data.notes}
+                                                        onChange={(e) => setData('notes', e.target.value)}
+                                                        placeholder="Add any additional notes about this transfer..."
+                                                        rows={4}
+                                                        className={errors.notes ? 'border-red-500' : ''}
+                                                        disabled={!canEdit}
+                                                    />
+                                                    <InputError message={errors.notes} />
+                                                </div>
+                                            </div>
+
+                                            {/* Cancellation Reason (shown when status is cancelled) */}
+                                            {}
+                                        </>
+                                        
+
+                                        
+                                    ) : (
+                                        <>
+                                            {/* Status Update */}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="transfer_status">
+                                                    Transfer Status <span className="text-destructive">*</span>
+                                                </Label>
+                                                <Select
+                                                    value={data.transfer_status}
+                                                    onValueChange={(value) => setData('transfer_status', value as any)}
+                                                    disabled={!canEdit}
+                                                >
+                                                    <SelectTrigger className={errors.transfer_status ? 'border-red-500' : ''}>
+                                                        <SelectValue placeholder="Select status..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                    {availableStatuses.map((status) => (
+                                                        <SelectItem
+                                                            key={status.value} 
+                                                            value={status.value}
+                                                            className={status.current ? 'bg-muted' : ''}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge 
+                                                                    variant="outline" 
+                                                                    className={`text-xs ${getStatusBadgeColor(status.value as any)}`}
+                                                                >
+                                                                    {status.label}
+                                                                </Badge>
+                                                                {status.current && (
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        (Current)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <InputError message={errors.transfer_status} />
+                                            </div>
 
                                         {/* Cancellation Reason (shown when status is cancelled) */}
                                         {data.transfer_status === 'cancelled' && (
@@ -260,6 +497,10 @@ const StockTransferEdit = ({
                                                 <p className="text-sm text-destructive">{errors.notes}</p>
                                             )}
                                         </div>
+                                        </>
+                                    )}
+
+                                        
 
                                         {/* Form Actions */}
                                         {canEdit && (

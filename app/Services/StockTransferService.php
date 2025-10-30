@@ -6,6 +6,7 @@ use App\Models\StockTransfer;
 use App\Repositories\Interfaces\StockTransferRepositoryInterface;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -293,5 +294,34 @@ class StockTransferService
     public function getOverdueTransfers(int $daysOverdue = 7)
     {
         return $this->stockTransferRepository->getOverdueTransfers($daysOverdue);
+    }
+
+    public function updateTransfer(int $transferId, array $data): StockTransfer
+    {
+        $transfer = $this->stockTransferRepository->findById($transferId);
+        
+        if (!$transfer) {
+            throw new ModelNotFoundException('Transfer not found');
+        }
+
+        // Only allow core detail updates for pending transfers
+        if ($transfer->transfer_status === 'pending' && isset($data['from_warehouse_id'])) {
+            // Validate inventory availability for new details
+            $this->validateInventoryAvailability(
+                $data['from_warehouse_id'],
+                $data['product_id'],
+                $data['quantity_transferred']
+            );
+        }
+
+        return DB::transaction(function () use ($transfer, $data, $transferId) {
+            $updated = $this->stockTransferRepository->update($transferId, $data);
+            
+            if (!$updated) {
+                throw new Exception('Failed to update transfer');
+            }
+            
+            return $this->stockTransferRepository->findById($transferId);
+        });
     }
 }

@@ -28,9 +28,6 @@ const StockTransferCreate = ({
     products
 }: IStockTransferCreateProps) => {
 
-    // Debug Purposes:
-
-
     const { data, setData, post, processing, errors, reset } = useForm<CreateStockTransferData>({
         from_warehouse_id: 0,
         to_warehouse_id: 0,

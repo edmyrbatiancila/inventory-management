@@ -24,7 +24,37 @@ class UpdateStockTransferRequest extends FormRequest
      */
     public function rules(): array
     {
+        $transfer = $this->route('stockTransfer');
+
         return [
+            // Core details (only for pending transfers)
+            'from_warehouse_id' => [
+                'sometimes',
+                'integer',
+                'exists:warehouses,id',
+                'different:to_warehouse_id',
+                Rule::requiredIf($transfer->transfer_status === 'pending')
+            ],
+            'to_warehouse_id' => [
+                'sometimes', 
+                'integer',
+                'exists:warehouses,id',
+                'different:from_warehouse_id',
+                Rule::requiredIf($transfer->transfer_status === 'pending')
+            ],
+            'product_id' => [
+                'sometimes',
+                'integer', 
+                'exists:products,id',
+                Rule::requiredIf($transfer->transfer_status === 'pending')
+            ],
+            'quantity_transferred' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                Rule::requiredIf($transfer->transfer_status === 'pending')
+            ],
+
             'transfer_status' => [
                 'sometimes',
                 'string',

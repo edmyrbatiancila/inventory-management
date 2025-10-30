@@ -120,9 +120,48 @@ class StockTransferController extends Controller
      */
     public function edit(StockTransfer $stockTransfer)
     {
-        return Inertia::render('admin/stock-transfers/Edit', [
-            'transfer' => $stockTransfer->load(['fromWarehouse', 'toWarehouse', 'product']),
-        ]);
+        try{
+            // Load relationships
+            $stockTransfer->load([
+                'fromWarehouse',
+                'toWarehouse', 
+                'product.category',
+                'product.brand',
+                'initiatedBy',
+                'approvedBy',
+                'completedBy'
+            ]);
+
+            // Get all warehouses and products for dropdowns (if pending)
+            $warehouses = [];
+            $products = [];
+
+            if ($stockTransfer->transfer_status === 'pending') {
+                $warehouses = Warehouse::where('is_active', true)
+                    ->orderBy('name')
+                    ->get();
+
+                $products = Product::where('is_active', true)
+                    ->with(['category', 'brand'])
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            return Inertia::render('admin/stock-transfers/Edit', [
+                'transfer' => $stockTransfer,
+                'warehouses' => $warehouses,
+                'products' => $products,
+                'canEditCore' => $stockTransfer->transfer_status === 'pending'
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error loading stock transfer for edit: ' . $e->getMessage());
+
+            return redirect()->route('admin.stock-transfers.index')
+                ->with('error', 'Failed to load transfer for editing');
+        }
+
+        
     }
 
     /**
@@ -132,8 +171,16 @@ class StockTransferController extends Controller
     {
         try {
             $data = $request->validated();
-            
-            if (isset($data['transfer_status'])) {
+
+            // Handle core detail updates for pending transfers
+            if ($stockTransfer->transfer_status === 'pending' && 
+                (isset($data['from_warehouse_id']) || isset($data['to_warehouse_id']) || 
+                isset($data['product_id']) || isset($data['quantity_transferred']))) {
+                
+                $stockTransfer = $this->stockTransferService->updateTransfer($stockTransfer->id, $data);
+            }
+
+            if (isset($data['transfer_status']) && $data['transfer_status'] !== $stockTransfer->transfer_status) {
                 switch ($data['transfer_status']) {
                     case StockTransfer::STATUS_APPROVED:
                         $stockTransfer = $this->stockTransferService->approveTransfer($stockTransfer->id, Auth::id());

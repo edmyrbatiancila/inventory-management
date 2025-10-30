@@ -60,6 +60,13 @@ export interface CreateStockTransferData {
 }
 
 export interface UpdateStockTransferData {
+    // Core transfer details (editable only for pending status)
+    from_warehouse_id?: number;
+    to_warehouse_id?: number;
+    product_id?: number;
+    quantity_transferred?: number;
+
+    // Status and workflow fields
     transfer_status?: StockTransferStatus;
     notes?: string;
     cancellation_reason?: string;
