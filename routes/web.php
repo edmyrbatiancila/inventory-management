@@ -93,6 +93,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
             ->name('stock-transfers.mark-in-transit');
         Route::patch('/stock-transfers/{stockTransfer}/complete', [StockTransferController::class, 'complete'])
             ->name('stock-transfers.complete');
+
+        Route::post('/stock-transfers/bulk-approve', [StockTransferController::class, 'bulkApprove'])
+            ->name('stock-transfers.bulk-approve');
+        Route::post('/stock-transfers/bulk-cancel', [StockTransferController::class, 'bulkCancel'])
+            ->name('stock-transfers.bulk-cancel');
         
     });
 });

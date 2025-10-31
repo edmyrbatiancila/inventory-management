@@ -130,6 +130,36 @@ class InventorySeeder extends Seeder
                 );
             }
         }
+
+        // Ensure all products have at least some inventory in at least one warehouse
+        $allProducts = Product::where('is_active', true)
+            ->where('track_quantity', true)
+            ->get();
+
+        $activeWarehouses = Warehouse::where('is_active', true)->get();
+
+        foreach ($allProducts as $product) {
+            $existingInventory = Inventory::where('product_id', $product->id)->count();
+            
+            if ($existingInventory < 2) {
+                // Give this product inventory in 1-2 warehouses
+                $warehouseCount = fake()->numberBetween(1, 2);
+                $selectedWarehouses = $activeWarehouses->random($warehouseCount);
+                
+                foreach ($selectedWarehouses as $warehouse) {
+                    Inventory::firstOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'warehouse_id' => $warehouse->id
+                        ],
+                        [
+                            'quantity_on_hand' => fake()->numberBetween(10, 200),
+                            'quantity_reserved' => fake()->numberBetween(0, 10),
+                        ]
+                    );
+                }
+            }
+        }
     }
 
     private function createRandomInventory(): void

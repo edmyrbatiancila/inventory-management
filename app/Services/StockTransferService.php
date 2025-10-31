@@ -324,4 +324,108 @@ class StockTransferService
             return $this->stockTransferRepository->findById($transferId);
         });
     }
+
+    public function bulkApproveTransfers(array $transferIds, int $approvedBy)
+    {
+        $approved = 0;
+        $failed = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($transferIds as $transferId) {
+                try {
+                    $transfer = $this->stockTransferRepository->findById($transferId);
+                
+                    if (!$transfer) {
+                        $errors[] = "Transfer ID {$transferId} not found";
+                        $failed++;
+                        continue;
+                    }
+
+                    if (!$transfer->canBeApproved()) {
+                        $errors[] = "Transfer {$transfer->reference_number} cannot be approved";
+                        $failed++;
+                        continue;
+                    }
+
+                    $this->approveTransfer($transferId, $approvedBy);
+                    $approved++;
+                } catch (Exception $e) {
+                    $errors[] = "Failed to approve transfer ID {$transferId}: " . $e->getMessage();
+                    $failed++;
+                }
+            }
+
+            if ($failed === 0) {
+                DB::commit();
+            } else {
+                DB::commit();
+            }
+
+            return [
+                'approved' => $approved,
+                'failed' => $failed,
+                'errors' => $errors
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function bulkCancelTransfers(array $transferIds, string $reason): array
+    {
+        $cancelled = 0;
+        $failed = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($transferIds as $transferId) {
+                try {
+                    $transfer = $this->stockTransferRepository->findById($transferId);
+
+                    if (!$transfer) {
+                        $errors[] = "Transfer ID {$transferId} not found";
+                        $failed++;
+                        continue;
+                    }
+
+                    if (!$transfer->canBeCancelled()) {
+                        $errors[] = "Transfer {$transfer->reference_number} cannot be cancelled";
+                        $failed++;
+                        continue;
+                    }
+
+                    $this->cancelTransfer($transferId, $reason);
+                    $cancelled++;
+
+                } catch (Exception $e) {
+                    $errors[] = "Failed to cancel transfer ID {$transferId}: " . $e->getMessage();
+                    $failed++;
+                }
+            }
+
+            if ($failed === 0) {
+                DB::commit();
+            } else {
+                DB::commit();
+            }
+
+            return [
+                'cancelled' => $cancelled,
+                'failed' => $failed,
+                'errors' => $errors
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    
 }

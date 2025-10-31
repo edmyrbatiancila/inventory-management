@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkStockTransferRequest;
 use App\Models\StockTransfer;
 use App\Http\Requests\StoreStockTransferRequest;
 use App\Http\Requests\UpdateStockTransferRequest;
@@ -402,6 +403,72 @@ class StockTransferController extends Controller
             return response()->json([
                 'error' => 'Failed to check inventory availability',
                 'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bulkApprove(BulkStockTransferRequest $request)
+    {
+        try {
+                $result = $this->stockTransferService->bulkApproveTransfers(
+                $request->validated()['transfer_ids'],
+                Auth::id()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully approved {$result['approved']} transfer(s).",
+                'data' => [
+                    'approved' => $result['approved'],
+                    'failed' => $result['failed'],
+                    'errors' => $result['errors']
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Bulk approve failed', [
+                'user_id' => Auth::id(),
+                'transfer_ids' => $request->validated()['transfer_ids'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk approval failed. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkCancel(BulkStockTransferRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+        
+            $result = $this->stockTransferService->bulkCancelTransfers(
+                $validated['transfer_ids'],
+                $validated['cancellation_reason']
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully cancelled {$result['cancelled']} transfer(s).",
+                'data' => [
+                    'cancelled' => $result['cancelled'],
+                    'failed' => $result['failed'],
+                    'errors' => $result['errors']
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Bulk cancel failed', [
+                'user_id' => Auth::id(),
+                'transfer_ids' => $request->validated()['transfer_ids'],
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk cancellation failed. Please try again.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

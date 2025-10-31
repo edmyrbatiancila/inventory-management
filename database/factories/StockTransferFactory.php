@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\StockTransfer;
 use App\Models\User;
@@ -22,37 +23,55 @@ class StockTransferFactory extends Factory
      */
     public function definition(): array
     {
+        // Get inventory records with available stock
+        $availableInventory = Inventory::where('quantity_available', '>', 5)
+            ->with(['product', 'warehouse'])
+            ->get();
+
+        if ($availableInventory->isEmpty()) {
+            throw new \Exception('No inventory with available stock found. Please run InventorySeeder first.');
+        }
+
+        $sourceInventory = $availableInventory->random();
+        
+        // Get a different warehouse for destination
+        $warehouses = Warehouse::where('is_active', true)
+            ->where('id', '!=', $sourceInventory->warehouse_id)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($warehouses)) {
+            throw new \Exception('Not enough warehouses available for transfers.');
+        }
+
+        $toWarehouseId = $this->faker->randomElement($warehouses);
+        
         $status = $this->faker->randomElement(StockTransfer::STATUSES);
         $initiatedAt = $this->faker->dateTimeBetween('-30 days', 'now');
 
         // Generate realistic reference number
         $referenceNumber = 'ST-' . strtoupper($this->faker->bothify('????-####'));
 
-        // Get random warehouses (ensure they're different)
-        $warehouses = Warehouse::pluck('id')->toArray();
-        $fromWarehouseId = $this->faker->randomElement($warehouses);
-        $toWarehouseId = $this->faker->randomElement(
-            array_filter($warehouses, fn($id) => $id !== $fromWarehouseId)
-        );
+        // Realistic transfer quantity based on available stock
+        $maxTransfer = min($sourceInventory->quantity_available, 100);
+        $transferQuantity = $this->faker->numberBetween(1, $maxTransfer);
 
         return [
-            'from_warehouse_id' => $fromWarehouseId,
+            'from_warehouse_id' => $sourceInventory->warehouse_id,
             'to_warehouse_id' => $toWarehouseId,
-            'product_id' => Product::factory(),
-            'quantity_transferred' => $this->faker->numberBetween(1, 100),
+            'product_id' => $sourceInventory->product_id,
+            'quantity_transferred' => $transferQuantity,
             'transfer_status' => $status,
             'reference_number' => $referenceNumber,
-            'initiated_by' => User::factory(),
-            'approved_by' => $this->shouldHaveApprover($status) ? User::factory() : null,
-            'completed_by' => $this->shouldHaveCompleter($status) ? User::factory() : null,
-            'notes' => $this->faker->optional(0.6)->paragraph(),
-            'cancellation_reason' => $status === StockTransfer::STATUS_CANCELLED ? 
-                $this->faker->sentence() : null,
+            'initiated_by' => User::inRandomOrder()->first()?->id ?? User::factory(),
+            'approved_by' => $this->shouldHaveApprover($status) ? (User::inRandomOrder()->first()?->id ?? User::factory()) : null,
+            'completed_by' => $this->shouldHaveCompleter($status) ? (User::inRandomOrder()->first()?->id ?? User::factory()) : null,
+            'notes' => $this->faker->optional(0.7)->sentence(),
+            'cancellation_reason' => $status === 'cancelled' ? $this->faker->sentence() : null,
             'initiated_at' => $initiatedAt,
             'approved_at' => $this->getApprovedAt($status, $initiatedAt),
             'completed_at' => $this->getCompletedAt($status, $initiatedAt),
-            'cancelled_at' => $status === StockTransfer::STATUS_CANCELLED ? 
-                $this->faker->dateTimeBetween($initiatedAt, 'now') : null,
+            'cancelled_at' => $status === 'cancelled' ? $this->faker->dateTimeBetween($initiatedAt, 'now') : null,
         ];
     }
 

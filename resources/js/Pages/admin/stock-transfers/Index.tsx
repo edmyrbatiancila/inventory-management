@@ -1,12 +1,16 @@
 import CustomPagination from "@/Components/CustomPagination";
+import BulkActionToolbar from "@/Components/Inventory/BulkActionToolbar";
+import BulkConfirmationDialog from "@/Components/Inventory/BulkConfirmationDialog";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Checkbox } from "@/Components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/Components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/Components/ui/empty";
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import { getStatusBadgeColor } from "@/hooks/stock-transfers/statusBadgeColor";
+import { useBulkSelection } from "@/hooks/useBulkSelection";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { PaginatedResponse } from "@/types";
 import { Product } from "@/types/Product/IProduct";
@@ -14,9 +18,10 @@ import { StockTransfer } from "@/types/StockTransfer/IStockTransfer";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { formatDate } from "@/utils/date";
 import { Head, Link, router } from "@inertiajs/react";
+import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, MoreHorizontal, Package, Plus, Split, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { ArrowRight, CheckCircle2, MoreHorizontal, Package, Plus, Split, X, XCircle } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface IStockTransfersIndexProps {
@@ -37,7 +42,39 @@ const StockTransfersIndex = ({
     const [sort, setSort] = useState(initialSort);
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [status, setStatus] = useState(transferStatus || 'all');
+    const [bulkAction, setBulkAction] = useState<'approve' | 'cancel' | null>(null);
+    const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
+    const [showBulkConfirmation, setShowBulkConfirmation] = useState<boolean>(false);
+
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    const selectAllCheckboxRef = useRef<HTMLButtonElement>(null);
+
+    const {
+        selectedIds,
+        selectedCount,
+        isSelected,
+        isAllSelected,
+        isIndeterminate,
+        toggleSelection,
+        toggleSelectAll,
+        clearSelection,
+        getSelectedItems,
+        selectableCount,
+    } = useBulkSelection({
+        items: transfers.data,
+        getItemId: (transfer) => transfer.id,
+        canSelectItem: (transfer) => ['pending', 'approved'].includes(transfer.transfer_status),
+    });
+
+    // Handle indeterminate state for select all checkbox
+    useEffect(() => {
+        if (selectAllCheckboxRef.current) {
+            const inputElement = selectAllCheckboxRef.current.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (inputElement) {
+                inputElement.indeterminate = isIndeterminate;
+            }
+        }
+    }, [isIndeterminate]);
     
 
     // Handle search input with debounce
@@ -140,6 +177,60 @@ const StockTransfersIndex = ({
                     toast.success('Transfer completed successfully');
                 }
             });
+        }
+    };
+
+    const handleBulkApprove = () => {
+        setBulkAction('approve');
+        setShowBulkConfirmation(true);
+    };
+
+    const handleBulkCancel = () => {
+        setBulkAction('cancel');
+        setShowBulkConfirmation(true);
+    };
+
+    const handleBulkConfirm = async (reason?: string) => {
+        if (!bulkAction) return;
+    
+        setIsBulkProcessing(true);
+
+        try {
+            const endpoint = bulkAction === 'approve' 
+                ? route('admin.stock-transfers.bulk-approve')
+                : route('admin.stock-transfers.bulk-cancel');
+                
+            const response = await axios.post(endpoint, {
+                transfer_ids: selectedIds,
+                action: bulkAction,
+                ...(reason && { cancellation_reason: reason })
+            });
+
+            if (response.data.success) {
+                toast.success(response.data.message, {
+                    duration: 4000,
+                    icon: bulkAction === 'approve' ? <CheckCircle2 className="text-green-600 w-5 h-5" /> : <XCircle className="text-red-600 w-5 h-5" />,
+                });
+
+                // Show errors if any
+                if (response.data.data.errors.length > 0) {
+                    response.data.data.errors.forEach((error: string) => {
+                        toast.error(error, { duration: 6000 });
+                    });
+                }
+
+                // Refresh the page
+                router.reload({ only: ['transfers'] });
+                clearSelection();
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Operation failed', {
+                duration: 4000,
+            });
+        } finally {
+            setIsBulkProcessing(false);
+            setShowBulkConfirmation(false);
+            setBulkAction(null);
         }
     };
 
@@ -272,6 +363,14 @@ const StockTransfersIndex = ({
                                         <Table className="min-w-full">
                                             <TableHeader>
                                                 <TableRow>
+                                                    <TableHead className="w-12">
+                                                        <Checkbox
+                                                            checked={isAllSelected}
+                                                            onCheckedChange={toggleSelectAll}
+                                                            ref={selectAllCheckboxRef}
+                                                            disabled={selectableCount === 0}
+                                                        />
+                                                    </TableHead>
                                                     <TableHead className="w-16">#</TableHead>
                                                     <TableHead className="w-32">Reference</TableHead>
                                                     <TableHead>Product</TableHead>
@@ -295,6 +394,14 @@ const StockTransfersIndex = ({
                                                         transition={{ duration: 0.3, delay: idx * 0.04 }}
                                                         className="hover:bg-blue-50/60 transition-colors"
                                                     >
+                                                        <TableCell className="w-12">
+                                                            <Checkbox
+                                                                checked={isSelected(transfer.id)}
+                                                                onCheckedChange={() => toggleSelection(transfer.id)}
+                                                                disabled={!['pending', 'approved'].includes(transfer.transfer_status)}
+                                                            />
+                                                        </TableCell>
+
                                                         <TableCell className="w-16 font-semibold text-blue-700">
                                                             { rowNumber }
                                                         </TableCell>
@@ -327,9 +434,9 @@ const StockTransfersIndex = ({
                                                             <div className="text-sm text-gray-900 flex items-center">
                                                                 <span
                                                                     className="truncate max-w-20" 
-                                                                    title={transfer.from_warehouse.name}
+                                                                    title={transfer.from_warehouse?.name}
                                                                 >
-                                                                    { transfer.from_warehouse.name }
+                                                                    { transfer.from_warehouse?.name || "No Warehouse" }
                                                                 </span>
                                                                 <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
                                                                 <span
@@ -468,6 +575,28 @@ const StockTransfersIndex = ({
                     </motion.div>
                 </div>
             </motion.div>
+
+            <BulkActionToolbar 
+                selectedCount={selectedCount}
+                onApprove={handleBulkApprove}
+                onCancel={handleBulkCancel}
+                onClear={clearSelection}
+                isProcessing={isBulkProcessing}
+                canApprove={getSelectedItems().some(t => t.transfer_status === 'pending')}
+                canCancel={getSelectedItems().some(t => ['pending', 'approved'].includes(t.transfer_status))}
+            />
+
+            <BulkConfirmationDialog
+                isOpen={showBulkConfirmation}
+                onClose={() => {
+                    setShowBulkConfirmation(false);
+                    setBulkAction(null);
+                }}
+                onConfirm={handleBulkConfirm}
+                action={bulkAction || 'approve'}
+                transfers={getSelectedItems()}
+                isProcessing={isBulkProcessing}
+            />
         </Authenticated>
     );
 }

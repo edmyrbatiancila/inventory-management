@@ -15,7 +15,8 @@ import {
     Clock,
     MapPin,
     DollarSign,
-    Tag
+    Tag,
+    PhilippinePeso
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
@@ -24,7 +25,7 @@ import { Separator } from "@/Components/ui/separator";
 import { Product, ProductAnalytics, ProductStockSummary } from "@/types/Product/IProduct";
 import { motion } from "framer-motion";
 import { Brand, Category } from "@/types";
-import { cardVariants, containerVariants, headerVariants, staggerContainer } from "@/utils/animationVarians";
+import { alertVariants, cardVariants, containerVariants, headerVariants, itemVariants, staggerContainer } from "@/utils/animationVarians";
 import { formatCurrency } from "@/utils/currency";
 import { formatDate } from "@/utils/date";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
@@ -155,7 +156,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                     {stockSummary.is_low_stock && (
                         <motion.div 
                             className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg"
-                            // variants={alertVariants}
+                            variants={alertVariants}
                             initial="hidden"
                             animate="visible"
                         >
@@ -287,7 +288,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                                 ease: "easeInOut"
                                             }}
                                         >
-                                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                            <PhilippinePeso className="h-4 w-4 text-muted-foreground" />
                                         </motion.div>
                                     </CardHeader>
                                     <CardContent>
@@ -455,7 +456,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                                     ease: "easeInOut"
                                                 }}
                                             >
-                                                <DollarSign className="w-5 h-5" />
+                                                <PhilippinePeso className="w-5 h-5" />
                                             </motion.div>
                                             Pricing & Costs
                                         </CardTitle>
@@ -543,7 +544,7 @@ const ProductDetailsView = ({ product, stockSummary, analytics }: ProductDetails
                                                 <motion.div 
                                                     key={location.warehouse_id} 
                                                     className="flex items-center justify-between p-3 border rounded-lg"
-                                                    // variants={itemVariants}
+                                                    variants={itemVariants}
                                                     whileHover={{ 
                                                         scale: 1.02,
                                                         backgroundColor: "rgba(59, 130, 246, 0.05)"

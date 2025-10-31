@@ -1,3 +1,5 @@
+import { StockTransferStatus } from "./StockTransfer/IStockTransfer";
+
 export interface User {
     id: number;
     name: string;
@@ -60,4 +62,49 @@ export interface PaginatedResponse<T> {
     prev_page_url: string | null;
     to: number;
     total: number;
+}
+
+export interface AdvancedFilters {
+     // Text Search
+    globalSearch?: string;
+    referenceNumber?: string;
+    notes?: string;
+    
+    // Status & Workflow
+    statuses?: StockTransferStatus[];
+    
+    // Location & Product
+    fromWarehouseIds?: number[];
+    toWarehouseIds?: number[];
+    productIds?: number[];
+    
+    // Quantity & Value
+    quantityMin?: number;
+    quantityMax?: number;
+    
+    // Date Ranges
+    createdAfter?: string;
+    createdBefore?: string;
+    initiatedAfter?: string;
+    initiatedBefore?: string;
+    completedAfter?: string;
+    completedBefore?: string;
+    
+    // User Actions
+    initiatedByIds?: number[];
+    approvedByIds?: number[];
+    
+    // Special Filters
+    isUrgent?: boolean;
+    isOverdue?: boolean;
+    hasNotes?: boolean;
+    myTransfers?: boolean;
+}
+
+export interface SavedFilter {
+    id: string;
+    name: string;
+    filters: AdvancedFilters;
+    createdAt: string;
+    usageCount: number;
 }

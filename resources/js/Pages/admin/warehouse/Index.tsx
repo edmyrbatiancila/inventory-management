@@ -238,9 +238,9 @@ const WarehouseIndex = ({
                                                                 </div>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="w-34 text-gray-600">
+                                                        <TableCell className=" text-gray-600">
                                                             <div
-                                                                className="truncate" 
+                                                                className="truncate sm:w-[200px] md:w-[300px] lg:w-[400px]" 
                                                                 title={warehouse.full_address || "No address available"}
                                                             >
                                                                 {warehouse.full_address || "No address available"}

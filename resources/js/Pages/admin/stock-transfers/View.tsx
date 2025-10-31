@@ -1,11 +1,11 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { StockTransfer } from "@/types/StockTransfer/IStockTransfer";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { containerVariants, headerVariants } from "@/utils/animationVarians";
 import { Button } from "@/Components/ui/button";
-import { ArrowLeft, ArrowRight, Calendar, CheckCircle, Clock, Edit, FileText, Hash, MapPin, MoreHorizontal, Package, Truck, User, WarehouseIcon, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, CheckCircle, CheckCircle2, Clock, Edit, FileText, Hash, MapPin, MoreHorizontal, Package, Truck, User, WarehouseIcon, XCircle } from "lucide-react";
 import { Separator } from "@/Components/ui/separator";
 import { Badge } from "@/Components/ui/badge";
 import { getStatusBadgeColor } from "@/hooks/stock-transfers/statusBadgeColor";
@@ -13,6 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Label } from "@/Components/ui/label";
 import { formatDate } from "@/utils/date";
+import { useEffect } from "react";
+import { PageProps } from "@/types";
 
 interface IStockTransferViewProps {
     transfer: StockTransfer;
@@ -22,6 +24,13 @@ interface IStockTransferViewProps {
     canCancel: boolean;
 }
 
+type InertiaPageProps = PageProps & {
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+};
+
 const StockTransferView = ({ 
     transfer, 
     canApprove, 
@@ -29,6 +38,7 @@ const StockTransferView = ({
     canComplete, 
     canCancel 
 }: IStockTransferViewProps) => {
+    const { props } = usePage<InertiaPageProps>();
 
     const getTimelineIcon = (status: string) => {
         switch (status) {
@@ -51,7 +61,9 @@ const StockTransferView = ({
 
     const handleApprove = () => {
         router.patch(route('admin.stock-transfers.approve', transfer.id), {}, {
-            onSuccess: () => toast.success('Transfer approved successfully'),
+            onSuccess: () => {
+                console.log('Transfer approved successfully');
+            },
             onError: () => toast.error('Failed to approve transfer')
         });
     };
@@ -77,6 +89,25 @@ const StockTransferView = ({
             onError: () => toast.error('Failed to cancel transfer')
         });
     };
+
+    useEffect(() => {
+        if (props.flash && props.flash.success) {
+            toast.success(props.flash.success, {
+                duration: 4000,
+                style: { fontWeight: 'bold', fontSize: '1.1rem' },
+                icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
+            });
+        }
+
+        if (props.flash && props.flash.error) {
+            toast.error(props.flash.error, {
+                description: 'Please try again or contact support if the problem persists.',
+                duration: 4000,
+                style: { fontWeight: 'bold', fontSize: '1.1rem' },
+            });
+        }
+
+    }, [props.flash]);
 
     return (
         <Authenticated
