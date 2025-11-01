@@ -1,6 +1,10 @@
 import CustomPagination from "@/Components/CustomPagination";
+import AdvancedSearchDialog from "@/Components/Inventory/AdvancedSearchDialog";
 import BulkActionToolbar from "@/Components/Inventory/BulkActionToolbar";
 import BulkConfirmationDialog from "@/Components/Inventory/BulkConfirmationDialog";
+import FilterChips from "@/Components/Inventory/FilterChips";
+import SearchStats from "@/Components/Inventory/SearchStats";
+import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Checkbox } from "@/Components/ui/checkbox";
@@ -10,17 +14,18 @@ import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import { getStatusBadgeColor } from "@/hooks/stock-transfers/statusBadgeColor";
+import { useAdvancedSearch } from "@/hooks/useAdvancedSearch";
 import { useBulkSelection } from "@/hooks/useBulkSelection";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { PaginatedResponse } from "@/types";
+import { AdvancedFilters, PaginatedResponse } from "@/types";
 import { Product } from "@/types/Product/IProduct";
-import { StockTransfer } from "@/types/StockTransfer/IStockTransfer";
+import { StockTransfer, StockTransferStatus } from "@/types/StockTransfer/IStockTransfer";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { formatDate } from "@/utils/date";
 import { Head, Link, router } from "@inertiajs/react";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CheckCircle2, MoreHorizontal, Package, Plus, Split, X, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Filter, MoreHorizontal, Package, Plus, Search, Split, X, XCircle } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -35,7 +40,9 @@ interface IStockTransfersIndexProps {
 const StockTransfersIndex = ({
     transfers,
     sort: initialSort = 'newest',
-    transferStatus
+    transferStatus,
+    warehouses,
+    products
 }: IStockTransfersIndexProps) => {
 
     const [search, setSearch] = useState<string>('');
@@ -45,6 +52,7 @@ const StockTransfersIndex = ({
     const [bulkAction, setBulkAction] = useState<'approve' | 'cancel' | null>(null);
     const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
     const [showBulkConfirmation, setShowBulkConfirmation] = useState<boolean>(false);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
     const selectAllCheckboxRef = useRef<HTMLButtonElement>(null);
@@ -65,6 +73,50 @@ const StockTransfersIndex = ({
         getItemId: (transfer) => transfer.id,
         canSelectItem: (transfer) => ['pending', 'approved'].includes(transfer.transfer_status),
     });
+
+    // Advanced Search hook
+    const {
+        filters: advancedFilters,
+        savedFilters,
+        isSearching: isAdvancedSearching,
+        applySearch,
+        removeFilter,
+        clearAllFilters,
+        saveFilter,
+        loadSavedFilter,
+        hasActiveFilters,
+    } = useAdvancedSearch({
+        currentRoute: route('admin.stock-transfers.index'),
+        initialFilters: {
+            // Parse initial filters from URL params if needed
+            globalSearch: new URLSearchParams(window.location.search).get('global_search') || undefined,
+            statuses: new URLSearchParams(window.location.search).get('statuses')?.split(',') as StockTransferStatus[] || undefined,
+            // Add other initial filters as needed
+        },
+    });
+
+    const handleAdvancedSearch = (filters: AdvancedFilters) => {
+        applySearch(filters);
+    };
+
+    const handleQuickSearch = (preset: string) => {
+        switch (preset) {
+            case 'urgent':
+                applySearch({ isUrgent: true });
+                break;
+            case 'pending':
+                applySearch({ statuses: ['pending'] });
+                break;
+            case 'overdue':
+                applySearch({ isOverdue: true });
+                break;
+            case 'my-transfers':
+                applySearch({ myTransfers: true });
+                break;
+            default:
+                break;
+        }
+    };
 
     // Handle indeterminate state for select all checkbox
     useEffect(() => {
@@ -265,7 +317,89 @@ const StockTransfersIndex = ({
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
                     >
-                        <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                        <div className="flex flex-col gap-4">
+                            {/* Enhanced Search Bar */}
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                    <Input
+                                        placeholder="Quick search transfers..."
+                                        value={search}
+                                        onChange={handleSearchChange}
+                                        className="pl-10 pr-4"
+                                    />
+                                    {isSearching && (
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowAdvancedSearch(true)}
+                                    className={hasActiveFilters ? 'border-blue-500 bg-blue-50' : ''}
+                                >
+                                    <Filter className="h-4 w-4 mr-2" />
+                                    Advanced
+                                    {hasActiveFilters && (
+                                        <Badge variant="secondary" className="ml-2">
+                                            {Object.keys(advancedFilters).length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </div>
+
+                            {/* Quick Filter Buttons */}
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleQuickSearch('urgent')}
+                                    className="text-xs"
+                                >
+                                    🔥 Urgent
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleQuickSearch('pending')}
+                                    className="text-xs"
+                                >
+                                    ⏳ Pending
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleQuickSearch('overdue')}
+                                    className="text-xs"
+                                >
+                                    ⏰ Overdue
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleQuickSearch('my-transfers')}
+                                    className="text-xs"
+                                >
+                                    👤 My Transfers
+                                </Button>
+                            </div>
+
+                            {/* Active Filter Chips */}
+                            <FilterChips
+                                filters={advancedFilters}
+                                onRemoveFilter={removeFilter}
+                                onClearAll={clearAllFilters}
+                                warehouses={warehouses}
+                                products={products}
+                            />
+                        </div>
+                        {/* <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                             <Input 
                                 type="text"
                                 placeholder="Search stock transfers..."
@@ -327,7 +461,7 @@ const StockTransfersIndex = ({
                                     </SelectContent>
                                 </Select>
                             </motion.div>
-                        </div>
+                        </div> */}
 
                         <motion.div whileHover={{ scale: 1.04 }}>
                             <Button
@@ -339,6 +473,21 @@ const StockTransfersIndex = ({
                             </Button>
                         </motion.div>
                     </motion.div>
+
+                    {/* Search Statistics */}
+                    <SearchStats
+                        totalResults={transfers.total}
+                        statusCounts={{
+                            pending: transfers.data.filter(t => t.transfer_status === 'pending').length,
+                            approved: transfers.data.filter(t => t.transfer_status === 'approved').length,
+                            in_transit: transfers.data.filter(t => t.transfer_status === 'in_transit').length,
+                            completed: transfers.data.filter(t => t.transfer_status === 'completed').length,
+                            cancelled: transfers.data.filter(t => t.transfer_status === 'cancelled').length,
+                        }}
+                        isFiltered={hasActiveFilters || search.length > 0}
+                        searchTime={undefined}
+                    />
+
                     <motion.div
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -596,6 +745,18 @@ const StockTransfersIndex = ({
                 action={bulkAction || 'approve'}
                 transfers={getSelectedItems()}
                 isProcessing={isBulkProcessing}
+            />
+
+            <AdvancedSearchDialog
+                isOpen={showAdvancedSearch}
+                onClose={() => setShowAdvancedSearch(false)}
+                onSearch={handleAdvancedSearch}
+                warehouses={warehouses}
+                products={products}
+                currentFilters={advancedFilters}
+                savedFilters={savedFilters}
+                onSaveFilter={saveFilter}
+                onLoadFilter={loadSavedFilter}
             />
         </Authenticated>
     );

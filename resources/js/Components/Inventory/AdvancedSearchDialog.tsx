@@ -290,33 +290,45 @@ const AdvancedSearchDialog = ({
                                 <CardContent className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <Label>Created After</Label>
-                                            <DatePicker
-                                                value={filters.createdAfter}
-                                                onChange={(date) => handleFilterChange('createdAfter', date)}
+                                            <Label htmlFor="createdAfter">Created After</Label>
+                                            <Input
+                                                id="createdAfter"
+                                                type="date"
+                                                value={filters.createdAfter || ''}
+                                                onChange={(e) => handleFilterChange('createdAfter', e.target.value || undefined)}
+                                                className="w-full"
                                             />
                                         </div>
                                         <div>
-                                            <Label>Created Before</Label>
-                                            <DatePicker
-                                                value={filters.createdBefore}
-                                                onChange={(date) => handleFilterChange('createdBefore', date)}
+                                            <Label htmlFor="createdBefore">Created Before</Label>
+                                            <Input
+                                                id="createdBefore"
+                                                type="date"
+                                                value={filters.createdBefore || ''}
+                                                onChange={(e) => handleFilterChange('createdBefore', e.target.value || undefined)}
+                                                className="w-full"
                                             />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <Label>Initiated After</Label>
-                                            <DatePicker
-                                                value={filters.initiatedAfter}
-                                                onChange={(date) => handleFilterChange('initiatedAfter', date)}
+                                            <Label htmlFor="initiatedAfter">Initiated After</Label>
+                                            <Input
+                                                id="initiatedAfter"
+                                                type="date"
+                                                value={filters.initiatedAfter || ''}
+                                                onChange={(e) => handleFilterChange('initiatedAfter', e.target.value || undefined)}
+                                                className="w-full"
                                             />
                                         </div>
                                         <div>
-                                            <Label>Initiated Before</Label>
-                                            <DatePicker
-                                                value={filters.initiatedBefore}
-                                                onChange={(date) => handleFilterChange('initiatedBefore', date)}
+                                            <Label htmlFor="initiatedBefore">Initiated Before</Label>
+                                            <Input
+                                                id="initiatedBefore"
+                                                type="date"
+                                                value={filters.initiatedBefore || ''}
+                                                onChange={(e) => handleFilterChange('initiatedBefore', e.target.value || undefined)}
+                                                className="w-full"
                                             />
                                         </div>
                                     </div>

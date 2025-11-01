@@ -28,12 +28,28 @@ class StockTransferController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only([
-            'status', 
-            'warehouse_id', 
-            'product_id', 
-            'search', 
+            'search',
+            'status',
+            'sort',
             'per_page',
-            'sort'
+            // New advanced filters
+            'global_search',
+            'reference_number',
+            'notes',
+            'statuses',
+            'from_warehouses',
+            'to_warehouses',
+            'products',
+            'quantity_min',
+            'quantity_max',
+            'created_after',
+            'created_before',
+            'initiated_after',
+            'initiated_before',
+            'is_urgent',
+            'is_overdue',
+            'has_notes',
+            'my_transfers',
         ]);
 
         // Clean up filters
@@ -45,11 +61,11 @@ class StockTransferController extends Controller
 
         return Inertia::render('admin/stock-transfers/Index', [
             'transfers' => $transfers,
-            'filters' => $filters,
-            'warehouses' => Warehouse::select('id', 'name')->get(),
+            'warehouses' => Warehouse::select('id', 'name', 'code', 'is_active')->get(),
+            'products' => Product::select('id', 'name', 'sku')->where('is_active', true)->get(),
             'sort' => $request->get('sort', 'newest'),
-            'products' => Product::select('id', 'name')->get(),
-            'transferStatus' => $request->get('status', '')
+            'transferStatus' => $request->get('status', ''),
+            'currentFilters' => $filters,
         ]);
     }
 

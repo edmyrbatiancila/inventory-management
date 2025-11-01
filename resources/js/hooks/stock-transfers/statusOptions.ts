@@ -27,3 +27,14 @@ export const statusOptions: { value: StockTransferStatus; label: string; color: 
         color: 'bg-red-500' 
     },
 ];
+
+export const getStatusSearchColor = (status: string) => {
+    switch (status) {
+        case 'pending': return 'bg-yellow-500';
+        case 'approved': return 'bg-blue-500';
+        case 'in_transit': return 'bg-purple-500';
+        case 'completed': return 'bg-green-500';
+        case 'cancelled': return 'bg-red-500';
+        default: return 'bg-gray-500';
+    }
+};
