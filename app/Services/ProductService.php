@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -401,7 +403,7 @@ class ProductService
      */
     public function getAllCategories(): Collection
     {
-        return \App\Models\Category::orderBy('name')->get();
+        return Category::orderBy('name')->get(['id', 'name']);
     }
 
     /**
@@ -409,8 +411,7 @@ class ProductService
      */
     public function getAllBrands(): Collection
     {
-        return \App\Models\Brand::where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        return Brand::orderBy('name')
+            ->get(['id', 'name']);
     }
 }

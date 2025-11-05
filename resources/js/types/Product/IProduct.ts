@@ -86,3 +86,20 @@ export interface ProductAnalytics {
     locations: number;
     last_movement?: string;
 }
+
+export interface ProductAdvancedSearchProps {
+    totalResults: number;
+    statusCounts: {
+        active: number;
+        inactive: number;
+        lowStock: number;
+        outOfStock: number;
+        overstock: number;
+    };
+    priceRanges: {
+        budget: number;    // < $50
+        moderate: number;  // $50-$200
+        premium: number;   // > $200
+    };
+    searchTime?: number;
+}

@@ -10,6 +10,7 @@ interface ProductRepositoryInterface
 {
     // Core CRUD Operations
     public function findAll(array $filters = []): LengthAwarePaginator;
+    public function getSearchStats(array $filters = []): array;
     public function findById(int $id): ?Product;
     public function create(array $data): Product;
     public function update(int $id, array $data): bool;

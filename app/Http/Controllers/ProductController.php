@@ -7,10 +7,12 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Repositories\ProductRepository;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,20 +20,37 @@ use Inertia\Response;
 class ProductController extends Controller
 {
     protected ProductService $productService;
+    protected ProductRepository $productRepository;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $productService, ProductRepository $productRepository)
     {
         $this->productService = $productService;
+        $this->productRepository = $productRepository;
     }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): Response
     {
-        $filters = $request->only(['search', 'category_id', 'brand_id', 'is_active', 'per_page']);
+        $startTime = microtime(true);
+
+        $filters = $request->only([
+            'search', 'category_id', 'brand_id', 'is_active', 'per_page',
+            'global_search', 'name', 'sku', 'description', 'barcode',
+            'categories', 'brands', 'price_min', 'price_max',
+            'cost_price_min', 'cost_price_max', 'min_stock_min', 'min_stock_max',
+            'is_active', 'track_quantity', 'created_after', 'created_before',
+            'has_inventory', 'is_low_stock', 'is_out_of_stock',
+            'sort', 'per_page'
+        ]);
         
         try {
             $products = $this->productService->getAllProducts($filters);
+            $searchStats = $this->productRepository->getSearchStats($filters);
+
+            $searchTime = round((microtime(true) - $startTime) * 1000, 2);
+            $searchStats['searchTime'] = $searchTime;
+
             $categories = $this->productService->getAllCategories();
             $brands = $this->productService->getAllBrands();
 
@@ -47,7 +66,8 @@ class ProductController extends Controller
                 'products' => $products,
                 'categories' => $categories,
                 'brands' => $brands,
-                'filters' => $filters
+                'searchStats' => $searchStats,
+                'currentFilters' => $filters
             ]);
         } catch (\Exception $e) {
             Log::error('ProductController@index - Error:', [
@@ -57,10 +77,12 @@ class ProductController extends Controller
             
             // Return empty data to prevent crashes
             return Inertia::render('admin/product/Index', [
-                'products' => collect()->paginate(15),
-                'categories' => collect(),
-                'brands' => collect(),
-                'filters' => $filters
+                'products' => new LengthAwarePaginator([], 0, 15),
+                'categories' => [],
+                'brands' => [],
+                'searchStats' => ['totalResults' => 0, 'statusCounts' => [], 'priceRanges' => []],
+                'currentFilters' => [],
+                'error' => 'Failed to load products. Please try again.'
             ]);
         }
     }
