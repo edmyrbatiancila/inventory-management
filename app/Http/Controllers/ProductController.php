@@ -46,10 +46,14 @@ class ProductController extends Controller
         
         try {
             $products = $this->productService->getAllProducts($filters);
-            $searchStats = $this->productRepository->getSearchStats($filters);
-
-            $searchTime = round((microtime(true) - $startTime) * 1000, 2);
-            $searchStats['searchTime'] = $searchTime;
+            
+            // Only calculate search stats if we have active filters (to improve performance)
+            $searchStats = null;
+            if (!empty(array_filter($filters))) {
+                $searchStats = $this->productRepository->getSearchStats($filters);
+                $searchTime = round((microtime(true) - $startTime) * 1000, 2);
+                $searchStats['searchTime'] = $searchTime;
+            }
 
             $categories = $this->productService->getAllCategories();
             $brands = $this->productService->getAllBrands();

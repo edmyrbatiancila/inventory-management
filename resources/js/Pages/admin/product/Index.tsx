@@ -1,16 +1,21 @@
 import CustomPagination from "@/Components/CustomPagination";
+import ProductAdvancedSearchDialog from "@/Components/Products/ProductAdvancedSearchDialog";
+import ProductFilterChips from "@/Components/Products/ProductFilterChips";
+import ProductSearchStats from "@/Components/Products/ProductSearchStats";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import { useProductAdvancedSearch } from "@/hooks/useProductAdvancedSearch";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Brand, Category, PageProps, PaginatedResponse } from "@/types";
-import { Product, ProductFilters } from "@/types/Product/IProduct";
+import { Product, ProductFilters, ProductAdvancedSearchProps } from "@/types/Product/IProduct";
+import { ProductAdvancedFilters } from "@/types/Product/IProductAdvancedFilters";
 import { Head, router, usePage } from "@inertiajs/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Barcode, CheckCircle2, Edit2, PhilippinePeso, Plus, Trash2, View, X } from "lucide-react";
+import { Barcode, CheckCircle2, Edit2, Filter, Plus, Search, Trash2, View, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +24,7 @@ interface IProductIndexProps {
     categories: Category[];
     brands: Brand[];
     sort?: string;
+    searchStats?: ProductAdvancedSearchProps;
 }
 
 type InertiaPageProps = PageProps & {
@@ -32,7 +38,8 @@ const ProductIndex = ({
     products,
     categories,
     brands,
-    sort: initialSort = 'newest'
+    sort: initialSort = 'newest',
+    searchStats
 }: IProductIndexProps) => {
 
     const { props } = usePage<InertiaPageProps>();
@@ -40,7 +47,49 @@ const ProductIndex = ({
     const [search, setSearch] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [sort, setSort] = useState(initialSort);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Advanced Search hook - get initial filters from URL parameters
+    const getInitialFilters = (): ProductAdvancedFilters => {
+        const params = new URLSearchParams(window.location.search);
+        const filters: ProductAdvancedFilters = {};
+        
+        if (params.get('global_search')) filters.globalSearch = params.get('global_search') || undefined;
+        if (params.get('name')) filters.name = params.get('name') || undefined;
+        if (params.get('sku')) filters.sku = params.get('sku') || undefined;
+        if (params.get('categories')) {
+            filters.categoryIds = params.get('categories')?.split(',').map(Number).filter(Boolean);
+        }
+        if (params.get('brands')) {
+            filters.brandIds = params.get('brands')?.split(',').map(Number).filter(Boolean);
+        }
+        if (params.get('price_min')) filters.priceMin = parseFloat(params.get('price_min') || '0');
+        if (params.get('price_max')) filters.priceMax = parseFloat(params.get('price_max') || '0');
+        if (params.get('is_active')) filters.isActive = params.get('is_active') === 'true';
+        
+        return filters;
+    };
+
+    const {
+        filters: advancedFilters,
+        savedFilters,
+        isSearching: isAdvancedSearching,
+        applySearch,
+        removeFilter,
+        clearAllFilters,
+        saveFilter,
+        loadSavedFilter,
+        hasActiveFilters,
+    } = useProductAdvancedSearch({
+        currentRoute: route('admin.products.index'),
+        initialFilters: getInitialFilters(),
+    });
+
+    const handleAdvancedSearch = (filters: ProductAdvancedFilters) => {
+        applySearch(filters);
+        setShowAdvancedSearch(false);
+    };
 
     // Handle search input with debounce
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +165,7 @@ const ProductIndex = ({
             )}
         >
             <Head title="Products" />
+
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -123,6 +173,42 @@ const ProductIndex = ({
                 className="py-12"
             >
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Search Stats */}
+                    {searchStats && hasActiveFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="mb-6"
+                        >
+                            <ProductSearchStats
+                                totalResults={searchStats.totalResults}
+                                statusCounts={searchStats.statusCounts}
+                                priceRanges={searchStats.priceRanges}
+                                isFiltered={hasActiveFilters}
+                                searchTime={searchStats.searchTime}
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* Filter Chips */}
+                    {hasActiveFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 }}
+                            className="mb-6"
+                        >
+                            <ProductFilterChips
+                                filters={advancedFilters}
+                                onRemoveFilter={removeFilter}
+                                onClearAll={clearAllFilters}
+                                categories={categories}
+                                brands={brands}
+                            />
+                        </motion.div>
+                    )}
+
                     {/* Filter/Search UI */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -146,6 +232,21 @@ const ProductIndex = ({
                                     </Button>
                                 </motion.div>
                             )}
+                            <motion.div whileHover={{ scale: 1.03 }}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowAdvancedSearch(true)}
+                                    className={`shadow-sm ${hasActiveFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}`}
+                                >
+                                    <Filter className="w-4 h-4 mr-2" />
+                                    Advanced Search
+                                    {hasActiveFilters && (
+                                        <span className="ml-2 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                            {Object.keys(advancedFilters).length}
+                                        </span>
+                                    )}
+                                </Button>
+                            </motion.div>
                             <motion.div whileHover={{ scale: 1.03 }}>
                                 <Select value={sort} onValueChange={handleSortChange}>
                                     <SelectTrigger className="w-[180px] shadow-sm focus:ring-2 focus:ring-blue-200">
@@ -344,6 +445,19 @@ const ProductIndex = ({
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Advanced Search Dialog */}
+            <ProductAdvancedSearchDialog
+                isOpen={showAdvancedSearch}
+                onClose={() => setShowAdvancedSearch(false)}
+                onSearch={handleAdvancedSearch}
+                categories={categories}
+                brands={brands}
+                currentFilters={advancedFilters}
+                savedFilters={savedFilters}
+                onSaveFilter={saveFilter}
+                onLoadFilter={loadSavedFilter}
+            />
         </AuthenticatedLayout>
     );
 };

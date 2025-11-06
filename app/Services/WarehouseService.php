@@ -25,9 +25,12 @@ class WarehouseService
     public function getAllWarehouses(array $filters = []): LengthAwarePaginator
     {
         // add default filters
-        $filters = array_merge([
+        $defaultFilters = [
+            'sort' => 'newest',
             'per_page' => 15,
-        ], $filters);
+        ];
+
+        $filters = array_merge($defaultFilters, $filters);
 
         return $this->warehouseRepository->findAll($filters);
         // try {
@@ -44,6 +47,14 @@ class WarehouseService
     }
 
     /**
+     * Get search statistics for warehouses
+     */
+    public function getSearchStats(array $filters = []): array
+    {
+        return $this->warehouseRepository->getOptimizedSearchStats($filters);
+    }
+
+    /**
      * Get warehouse by ID
      */
     public function getWarehouseById(int $id): ?Warehouse
@@ -56,29 +67,28 @@ class WarehouseService
      */
     public function createWarehouse(array $data): Warehouse
     {
-        try {
-            DB::beginTransaction();
 
-            // Generate unique code of not provided
+        DB::beginTransaction();
+
+        try {
+            // Generate warehouse code if not provided
             if (empty($data['code'])) {
                 $data['code'] = $this->generateWarehouseCode();
-            } else {
-                // Check if code already exists
-                if ($this->warehouseRepository->findByCode($data['code'])) {
-                    throw ValidationException::withMessages([
-                        'code' => ['The warehouse code has already been taken.']
-                    ]);
-                }
+            }
+
+            // Validate unique code
+            if ($this->warehouseRepository->findByCode($data['code'])) {
+                throw new ValidationException('Warehouse code already exists.');
             }
 
             $warehouse = $this->warehouseRepository->create($data);
 
             DB::commit();
-
+            
             return $warehouse;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error creating warehouse: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -87,32 +97,32 @@ class WarehouseService
      */
     public function updateWarehouse(int $id, array $data): bool
     {
-        try {
-            DB::beginTransaction();
 
-            $warehouse = $this->getWarehouseById($id);
+        DB::beginTransaction();
+
+        try {
+            // Check if warehouse exists
+            $warehouse = $this->warehouseRepository->findById($id);
             if (!$warehouse) {
-                throw new ModelNotFoundException('Warehouse not found');
+                throw new ModelNotFoundException('Warehouse not found.');
             }
 
-            // Check code uniqueness if being updated
+            // Validate unique code if changed
             if (isset($data['code']) && $data['code'] !== $warehouse->code) {
-                if ($this->warehouseRepository->findByCode($data['code'])) {
-                    throw ValidationException::withMessages([
-                        'code' => ['The warehouse code has already been taken.']
-                    ]);
+                $existingWarehouse = $this->warehouseRepository->findByCode($data['code']);
+                if ($existingWarehouse && $existingWarehouse->id !== $id) {
+                    throw new ValidationException('Warehouse code already exists.');
                 }
             }
 
             $result = $this->warehouseRepository->update($id, $data);
 
             DB::commit();
-
-            return $result;
             
+            return $result;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error updating warehouse: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -121,30 +131,30 @@ class WarehouseService
      */
     public function deleteWarehouse(int $id): bool
     {
+
+        DB::beginTransaction();
+
         try {
-            DB::beginTransaction();
-
-            $warehouse = $this->getWarehouseById($id);
-
+            // Check if warehouse exists
+            $warehouse = $this->warehouseRepository->findById($id);
             if (!$warehouse) {
-                throw new ModelNotFoundException('Warehouse not found');
+                throw new ModelNotFoundException('Warehouse not found.');
             }
 
-            // Check if warehouse has inventory
-            if ($warehouse->inventories()->exists()) {
-                throw ValidationException::withMessages([
-                    'warehouse' => ['Cannot delete warehouse with existing inventory.']
-                ]);
+            // Check if warehouse has inventory (optional business rule)
+            $warehouseWithInventories = $this->warehouseRepository->findWithInventories($id);
+            if ($warehouseWithInventories && $warehouseWithInventories->inventories->count() > 0) {
+                throw new ValidationException('Cannot delete warehouse with existing inventory.');
             }
 
             $result = $this->warehouseRepository->delete($id);
 
             DB::commit();
-
+            
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error deleting warehouse: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -153,11 +163,7 @@ class WarehouseService
      */
     public function getWarehouseAnalytics(int $id): array
     {
-        try {
-            return $this->warehouseRepository->getWarehouseCapacityAnalytics($id);
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching warehouse analytics: '. $e->getMessage());
-        }
+        return $this->warehouseRepository->getWarehouseCapacityAnalytics($id);
     }
 
     /**

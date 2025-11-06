@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Warehouse;
 use App\Http\Requests\StoreWarehouseRequest;
 use App\Http\Requests\UpdateWarehouseRequest;
+use App\Http\Requests\WarehouseAdvancedSearchRequest;
 use App\Services\WarehouseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,10 +35,40 @@ class WarehouseController extends Controller
                 'city' => $request->input('city'),
                 'country' => $request->input('country'),
                 'sort' => $request->input('sort', 'newest'),
-                'per_page' => $request->input('per_page', 15)
+                'per_page' => $request->input('per_page', 15),
+
+                // Advanced search filters
+                'globalSearch' => $request->get('globalSearch'),
+                'name' => $request->get('name'),
+                'code' => $request->get('code'),
+                'address' => $request->get('address'),
+                'state' => $request->get('state'),
+                'postalCode' => $request->get('postalCode'),
+                'phone' => $request->get('phone'),
+                'email' => $request->get('email'),
+                'isActive' => $request->get('isActive'),
+                'createdAfter' => $request->get('createdAfter'),
+                'createdBefore' => $request->get('createdBefore'),
+                'updatedAfter' => $request->get('updatedAfter'),
+                'updatedBefore' => $request->get('updatedBefore'),
+                'recentlyUpdated' => $request->boolean('recentlyUpdated'),
+                'newWarehouses' => $request->boolean('newWarehouses'),
             ];
 
+            // Remove null/emppty values
+            $filters = array_filter($filters, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
             $warehouses = $this->warehouseService->getAllWarehouses($filters);
+
+            // Get search statistics only if advanced filters are applied
+            $searchStats = null;
+            $hasAdvancedFilters = $this->hasAdvancedFilters($filters);
+
+            if ($hasAdvancedFilters) {
+                $searchStats = $this->warehouseService->getSearchStats($filters);
+            }
 
             $warehouses->getCollection()->transform(function ($warehouse) {
                 $warehouse->full_address = $warehouse->getFullAddressAttribute();
@@ -45,20 +76,82 @@ class WarehouseController extends Controller
             });
 
             return Inertia::render('admin/warehouse/Index', [
-                'warehouses'=> $warehouses,
-                'filters' => $filters,
-                'success' => session('success'),
-                'error' => session('error')
+                'warehouses' => $warehouses,
+                'sort' => $filters['sort'] ?? 'newest',
+                'searchStats' => $searchStats,
+                'hasAdvancedFilters' => $hasAdvancedFilters,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@index: ' . $e->getMessage());
+            Log::error('Error fetching warehouses: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return Inertia::render('admin/warehouse/Index', [
-                'warehouses' => collect([]),
-                'filters' => [],
-                'error' => 'Error loading warehouses. Please try again.'
+                'warehouses' => collect(),
+                'error' => 'Failed to load warehouses. Please try again.'
             ]);
+        }
+    }
+
+    /**
+     * Check if advanced filters are applied
+     */
+    private function hasAdvancedFilters(array $filters): bool
+    {
+        $advancedFilterKeys = [
+            'globalSearch', 'name', 'code', 'address', 'state', 'postalCode',
+            'phone', 'email', 'isActive', 'createdAfter', 'createdBefore',
+            'updatedAfter', 'updatedBefore', 'recentlyUpdated', 'newWarehouses'
+        ];
+
+        foreach ($advancedFilterKeys as $key) {
+            if (isset($filters[$key]) && $filters[$key] !== null && $filters[$key] !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Advanced search endpoint (AJAX)
+     */
+    public function advancedSearch(WarehouseAdvancedSearchRequest $request): JsonResponse
+    {
+        try {
+            $filters = $request->validated();
+            
+            // Remove null/empty values
+            $filters = array_filter($filters, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            $warehouses = $this->warehouseService->getAllWarehouses($filters);
+            $searchStats = $this->warehouseService->getSearchStats($filters);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'warehouses' => $warehouses,
+                    'searchStats' => $searchStats,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in warehouse advanced search: ' . $e->getMessage(), [
+                'filters' => $request->all(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Advanced search failed. Please try again.',
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
     }
 
@@ -103,7 +196,7 @@ class WarehouseController extends Controller
     public function show(int $id): Response|RedirectResponse
     {
         try {
-            $warehouse = $this->warehouseService->getWarehouseWithInventories($id);
+            $warehouse = $this->warehouseService->getWarehouseById($id);
 
             if (!$warehouse) {
                 return redirect()->route('admin.warehouses.index')

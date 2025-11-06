@@ -69,6 +69,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/warehouses/{id}/analytics', [WarehouseController::class, 'analytics'])
             ->name('warehouses.analytics');
 
+        // Warehouse Advanced Search Route:
+        Route::post('/warehouses/advanced-search', [WarehouseController::class, 'advancedSearch'])->name('warehouses.advanced-search');
+
         // Inventory Routes:
         Route::resource('inventories', InventoryController::class);
         Route::post('/inventories/{id}/adjust', [InventoryController::class, 'adjustStock'])->name('inventories.adjust');

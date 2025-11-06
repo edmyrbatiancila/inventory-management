@@ -50,4 +50,5 @@ export interface ProductSavedFilter {
     name: string;
     filters: ProductAdvancedFilters;
     createdAt: string;
+    usageCount?: number;
 }

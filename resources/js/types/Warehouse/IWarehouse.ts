@@ -45,3 +45,22 @@ export interface WarehouseWithAnalytics extends Warehouse {
     inventories_count?: number;
     total_stock?: number;
 }
+
+export interface WarehouseAdvancedSearchProps {
+    totalResults: number;
+    statusCounts: {
+        active: number;
+        inactive: number;
+        main: number;
+        branch: number;
+        withPhone?: number;
+        withEmail?: number;
+        withZones?: number;
+    };
+    capacityRanges: {
+        small: number;    // < 500
+        medium: number;   // 500-2000
+        large: number;    // > 2000
+    };
+    searchTime?: number;
+}

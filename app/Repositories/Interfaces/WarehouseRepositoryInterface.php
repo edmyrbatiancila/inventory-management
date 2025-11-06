@@ -26,4 +26,8 @@ interface WarehouseRepositoryInterface
     public function findWarehousesWithStock(): Collection;
     public function findWarehousesNeedingRestock(): Collection;
     public function getWarehouseCapacityAnalytics(int $id): array;
+
+    // Search Statistics Methods
+    public function getSearchStats(array $filters = []): array;
+    public function getOptimizedSearchStats(array $filters = []): array;
 }

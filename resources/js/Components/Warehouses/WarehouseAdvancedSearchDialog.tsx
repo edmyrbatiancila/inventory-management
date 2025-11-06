@@ -1,68 +1,46 @@
-import { Brand, Category } from "@/types";
-import { ProductAdvancedFilters, ProductSavedFilter } from "@/types/Product/IProductAdvancedFilters";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { BookmarkPlus, Package, PhilippinePeso, Save, Search, Settings, Tag, X } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { WarehouseAdvancedFilters, WarehouseSavedFilter } from "@/types/Warehouse/IWarehouseAdvancedFilters";
+import { BookmarkPlus, Building, MapPin, Package, Save, Search, Settings, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { Checkbox } from "../ui/checkbox";
-import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+import { Badge } from "../ui/badge";
 
-interface IProductAdvancedSearchDialogProps {
+interface IWarehouseAdvancedSearchDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onSearch: (filters: ProductAdvancedFilters) => void;
-    categories: Category[];
-    brands: Brand[];
-    currentFilters: ProductAdvancedFilters;
-    savedFilters: ProductSavedFilter[];
-    onSaveFilter: (name: string, filters: ProductAdvancedFilters) => void;
-    onLoadFilter: (filter: ProductSavedFilter) => void;
+    onSearch: (filters: WarehouseAdvancedFilters) => void;
+    currentFilters: WarehouseAdvancedFilters;
+    savedFilters: WarehouseSavedFilter[];
+    onSaveFilter: (name: string, filters: WarehouseAdvancedFilters) => void;
+    onLoadFilter: (filter: WarehouseSavedFilter) => void;
 }
 
-const ProductAdvancedSearchDialog = ({
+const WarehouseAdvancedSearchDialog = ({
     isOpen,
     onClose,
     onSearch,
-    categories,
-    brands,
     currentFilters,
     savedFilters,
     onSaveFilter,
     onLoadFilter
-}: IProductAdvancedSearchDialogProps) => {
-    const [filters, setFilters] = useState<ProductAdvancedFilters>(currentFilters);
+}: IWarehouseAdvancedSearchDialogProps) => {
+
+    const [filters, setFilters] = useState<WarehouseAdvancedFilters>(currentFilters);
     const [saveFilterName, setSaveFilterName] = useState('');
     const [showSaveFilter, setShowSaveFilter] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('search');
 
-    const handleFilterChange = (key: keyof ProductAdvancedFilters, value: any) => {
+    const handleFilterChange = (key: keyof WarehouseAdvancedFilters, value: any) => {
         setFilters(prev => ({
             ...prev,
             [key]: value
         }));
-    };
-
-    const handleCategoryToggle = (categoryId: number) => {
-        const currentCategories = filters.categoryIds || [];
-        const newCategories = currentCategories.includes(categoryId)
-            ? currentCategories.filter(id => id !== categoryId)
-            : [...currentCategories, categoryId];
-        
-        handleFilterChange('categoryIds', newCategories.length > 0 ? newCategories : undefined);
-    };
-
-    const handleBrandToggle = (brandId: number) => {
-        const currentBrands = filters.brandIds || [];
-        const newBrands = currentBrands.includes(brandId)
-            ? currentBrands.filter(id => id !== brandId)
-            : [...currentBrands, brandId];
-        
-        handleFilterChange('brandIds', newBrands.length > 0 ? newBrands : undefined);
     };
 
     const clearFilters = () => {
@@ -84,7 +62,7 @@ const ProductAdvancedSearchDialog = ({
         }
     };
 
-    const handleLoadFilter = (savedFilter: ProductSavedFilter) => {
+    const handleLoadFilter = (savedFilter: WarehouseSavedFilter) => {
         setFilters(savedFilter.filters);
         onLoadFilter(savedFilter);
     };
@@ -94,15 +72,15 @@ const ProductAdvancedSearchDialog = ({
     }, [currentFilters]);
 
     return (
-        <Dialog 
+        <Dialog
             open={isOpen} 
             onOpenChange={onClose}
         >
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-blue-600" />
-                        Advanced Product Search
+                        <Building className="h-5 w-5 text-blue-600" />
+                        Advanced Warehouse Search
                     </DialogTitle>
                 </DialogHeader>
 
@@ -111,22 +89,18 @@ const ProductAdvancedSearchDialog = ({
                     onValueChange={setActiveTab} 
                     className="w-full"
                 >
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="search" className="flex items-center gap-2">
                             <Search className="h-4 w-4" />
                             Basic Search
                         </TabsTrigger>
-                        <TabsTrigger value="categories" className="flex items-center gap-2">
-                            <Tag className="h-4 w-4" />
-                            Categories & Brands
+                        <TabsTrigger value="location" className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            Location & Contact
                         </TabsTrigger>
-                        <TabsTrigger value="pricing" className="flex items-center gap-2">
-                            <PhilippinePeso className="h-4 w-4" />
-                            Pricing
-                        </TabsTrigger>
-                        <TabsTrigger value="stock" className="flex items-center gap-2">
+                        <TabsTrigger value="capacity" className="flex items-center gap-2">
                             <Package className="h-4 w-4" />
-                            Stock & Inventory
+                            Capacity & Features
                         </TabsTrigger>
                         <TabsTrigger value="status" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
@@ -148,42 +122,39 @@ const ProductAdvancedSearchDialog = ({
                                 <Label htmlFor="globalSearch">Global Search</Label>
                                 <Input
                                     id="globalSearch"
-                                    placeholder="Search across name, SKU, description, barcode..."
+                                    placeholder="Search across name, code, address, contact..."
                                     value={filters.globalSearch || ''}
                                     onChange={(e) => handleFilterChange('globalSearch', e.target.value || undefined)}
                                 />
-                                <p className="text-xs text-gray-500">
-                                    Searches in product name, SKU, description, barcode, category, and brand
-                                </p>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="name">Product Name</Label>
+                                <Label htmlFor="name">Warehouse Name</Label>
                                 <Input
                                     id="name"
-                                    placeholder="Enter product name..."
+                                    placeholder="Enter warehouse name..."
                                     value={filters.name || ''}
                                     onChange={(e) => handleFilterChange('name', e.target.value || undefined)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="sku">SKU</Label>
+                                <Label htmlFor="code">Warehouse Code</Label>
                                 <Input
-                                    id="sku"
-                                    placeholder="Enter SKU..."
-                                    value={filters.sku || ''}
-                                    onChange={(e) => handleFilterChange('sku', e.target.value || undefined)}
+                                    id="code"
+                                    placeholder="Enter warehouse code..."
+                                    value={filters.code || ''}
+                                    onChange={(e) => handleFilterChange('code', e.target.value || undefined)}
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="barcode">Barcode</Label>
+                                <Label htmlFor="contactPerson">Contact Person</Label>
                                 <Input
-                                    id="barcode"
-                                    placeholder="Enter barcode..."
-                                    value={filters.barcode || ''}
-                                    onChange={(e) => handleFilterChange('barcode', e.target.value || undefined)}
+                                    id="contactPerson"
+                                    placeholder="Enter contact person name..."
+                                    value={filters.contactPerson || ''}
+                                    onChange={(e) => handleFilterChange('contactPerson', e.target.value || undefined)}
                                 />
                             </div>
 
@@ -191,7 +162,7 @@ const ProductAdvancedSearchDialog = ({
                                 <Label htmlFor="description">Description</Label>
                                 <Textarea
                                     id="description"
-                                    placeholder="Search in product descriptions..."
+                                    placeholder="Search in warehouse descriptions..."
                                     value={filters.description || ''}
                                     onChange={(e) => handleFilterChange('description', e.target.value || undefined)}
                                     rows={3}
@@ -200,318 +171,198 @@ const ProductAdvancedSearchDialog = ({
                         </div>
                     </TabsContent>
 
-                    {/* Categories & Brands Tab */}
+                    {/* Location & Contact Tab */}
                     <TabsContent
-                        value="categories" 
+                        value="location" 
                         className="space-y-4 max-h-[400px] overflow-y-auto"
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-3">
-                                <Label className="text-base font-semibold">
-                                    Categories
-                                </Label>
-                                <div className="border rounded-lg p-3 max-h-64 overflow-y-auto">
-                                    {categories.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {categories.map(category => (
-                                                <div 
-                                                    key={category.id} 
-                                                    className="flex items-center space-x-2"
-                                                >
-                                                    <Checkbox
-                                                        id={`category-${category.id}`}
-                                                        checked={filters.categoryIds?.includes(category.id) || false}
-                                                        onCheckedChange={() => handleCategoryToggle(category.id)}
-                                                    />
-                                                    <Label 
-                                                        htmlFor={`category-${category.id}`}
-                                                        className="text-sm cursor-pointer"
-                                                    >
-                                                        {category.name}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No categories available</p>
-                                    )}
-                                </div>
-                                {filters.categoryIds && filters.categoryIds.length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
-                                        {filters.categoryIds.map(id => {
-                                            const category = categories.find(c => c.id === id);
-                                            return category ? (
-                                                <Badge key={id} variant="secondary" className="text-xs">
-                                                    {category.name}
-                                                </Badge>
-                                            ) : null;
-                                        })}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Address & Location</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="address">Address</Label>
+                                        <Input
+                                            id="address"
+                                            placeholder="Street address..."
+                                            value={filters.address || ''}
+                                            onChange={(e) => handleFilterChange('address', e.target.value || undefined)}
+                                        />
                                     </div>
-                                )}
-                            </div>
 
-                            <div className="space-y-3">
-                                <Label className="text-base font-semibold">Brands</Label>
-                                <div className="border rounded-lg p-3 max-h-64 overflow-y-auto">
-                                    {brands.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
-                                            {brands.map(brand => (
-                                                <div key={brand.id} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={`brand-${brand.id}`}
-                                                        checked={filters.brandIds?.includes(brand.id) || false}
-                                                        onCheckedChange={() => handleBrandToggle(brand.id)}
-                                                    />
-                                                    <Label 
-                                                        htmlFor={`brand-${brand.id}`}
-                                                        className="text-sm cursor-pointer"
-                                                    >
-                                                        {brand.name}
-                                                    </Label>
-                                                </div>
-                                            ))}
+                                            <Label htmlFor="city">City</Label>
+                                            <Input
+                                                id="city"
+                                                placeholder="City name..."
+                                                value={filters.city || ''}
+                                                onChange={(e) => handleFilterChange('city', e.target.value || undefined)}
+                                            />
                                         </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No brands available</p>
-                                    )}
-                                </div>
-                                {filters.brandIds && filters.brandIds.length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
-                                        {filters.brandIds.map(id => {
-                                            const brand = brands.find(b => b.id === id);
-                                            return brand ? (
-                                                <Badge key={id} variant="secondary" className="text-xs">
-                                                    {brand.name}
-                                                </Badge>
-                                            ) : null;
-                                        })}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="state">State/Province</Label>
+                                            <Input
+                                                id="state"
+                                                placeholder="State..."
+                                                value={filters.state || ''}
+                                                onChange={(e) => handleFilterChange('state', e.target.value || undefined)}
+                                            />
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="country">Country</Label>
+                                            <Input
+                                                id="country"
+                                                placeholder="Country..."
+                                                value={filters.country || ''}
+                                                onChange={(e) => handleFilterChange('country', e.target.value || undefined)}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="postalCode">Postal Code</Label>
+                                            <Input
+                                                id="postalCode"
+                                                placeholder="ZIP/Postal code..."
+                                                value={filters.postalCode || ''}
+                                                onChange={(e) => handleFilterChange('postalCode', e.target.value || undefined)}
+                                            />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Contact Information</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <Input
+                                            id="phone"
+                                            placeholder="Phone number..."
+                                            value={filters.phone || ''}
+                                            onChange={(e) => handleFilterChange('phone', e.target.value || undefined)}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email Address</Label>
+                                        <Input
+                                            id="email"
+                                            placeholder="Email address..."
+                                            value={filters.email || ''}
+                                            onChange={(e) => handleFilterChange('email', e.target.value || undefined)}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     </TabsContent>
 
-                    {/* Pricing Tab */}
+                    {/* Capacity & Features Tab */}
                     <TabsContent
-                        value="pricing" 
+                        value="capacity" 
                         className="space-y-4 max-h-[400px] overflow-y-auto"
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Selling Price Range</CardTitle>
+                                    <CardTitle className="text-base">Storage Capacity</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
-                                            <Label htmlFor="priceMin">Minimum ($)</Label>
+                                            <Label htmlFor="capacityMin">Minimum Capacity</Label>
                                             <Input
-                                                id="priceMin"
+                                                id="capacityMin"
                                                 type="number"
-                                                placeholder="0.00"
-                                                value={filters.priceMin || ''}
-                                                onChange={(e) => handleFilterChange('priceMin', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                                placeholder="0"
+                                                value={filters.capacityMin || ''}
+                                                onChange={(e) => handleFilterChange('capacityMin', e.target.value ? parseInt(e.target.value) : undefined)}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="priceMax">Maximum ($)</Label>
+                                            <Label htmlFor="capacityMax">Maximum Capacity</Label>
                                             <Input
-                                                id="priceMax"
+                                                id="capacityMax"
                                                 type="number"
-                                                placeholder="999.99"
-                                                value={filters.priceMax || ''}
-                                                onChange={(e) => handleFilterChange('priceMax', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                                placeholder="10000"
+                                                value={filters.capacityMax || ''}
+                                                onChange={(e) => handleFilterChange('capacityMax', e.target.value ? parseInt(e.target.value) : undefined)}
                                             />
                                         </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                handleFilterChange('capacityMin', undefined);
+                                                handleFilterChange('capacityMax', 500);
+                                            }}
+                                            className="text-xs"
+                                        >
+                                            Small (&lt; 500)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                handleFilterChange('capacityMin', 500);
+                                                handleFilterChange('capacityMax', 2000);
+                                            }}
+                                            className="text-xs"
+                                        >
+                                            Medium (500-2000)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                handleFilterChange('capacityMin', 2000);
+                                                handleFilterChange('capacityMax', undefined);
+                                            }}
+                                            className="text-xs"
+                                        >
+                                            Large (&gt; 2000)
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Cost Price Range</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="costPriceMin">Minimum ($)</Label>
-                                            <Input
-                                                id="costPriceMin"
-                                                type="number"
-                                                placeholder="0.00"
-                                                value={filters.costPriceMin || ''}
-                                                onChange={(e) => handleFilterChange('costPriceMin', e.target.value ? parseFloat(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="costPriceMax">Maximum ($)</Label>
-                                            <Input
-                                                id="costPriceMax"
-                                                type="number"
-                                                placeholder="999.99"
-                                                value={filters.costPriceMax || ''}
-                                                onChange={(e) => handleFilterChange('costPriceMax', e.target.value ? parseFloat(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    handleFilterChange('priceMin', undefined);
-                                    handleFilterChange('priceMax', 50);
-                                }}
-                                className="text-xs"
-                            >
-                                Budget (&lt; $50)
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    handleFilterChange('priceMin', 50);
-                                    handleFilterChange('priceMax', 200);
-                                }}
-                                className="text-xs"
-                            >
-                                Moderate ($50-$200)
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    handleFilterChange('priceMin', 200);
-                                    handleFilterChange('priceMax', undefined);
-                                }}
-                                className="text-xs"
-                            >
-                                Premium (&gt; $200)
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    handleFilterChange('expensiveProducts', true);
-                                }}
-                                className="text-xs"
-                            >
-                                💎 Expensive Items
-                            </Button>
-                        </div>
-                    </TabsContent>
-
-                    {/* Stock & Inventory Tab */}
-                    <TabsContent
-                        value="stock" 
-                        className="space-y-4 max-h-[400px] overflow-y-auto"
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Stock Level Ranges</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="minStockMin">Min Stock Level</Label>
-                                            <Input
-                                                id="minStockMin"
-                                                type="number"
-                                                placeholder="Min"
-                                                value={filters.minStockMin || ''}
-                                                onChange={(e) => handleFilterChange('minStockMin', e.target.value ? parseInt(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="minStockMax">to</Label>
-                                            <Input
-                                                id="minStockMax"
-                                                type="number"
-                                                placeholder="Max"
-                                                value={filters.minStockMax || ''}
-                                                onChange={(e) => handleFilterChange('minStockMax', e.target.value ? parseInt(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="maxStockMin">Max Stock Level</Label>
-                                            <Input
-                                                id="maxStockMin"
-                                                type="number"
-                                                placeholder="Min"
-                                                value={filters.maxStockMin || ''}
-                                                onChange={(e) => handleFilterChange('maxStockMin', e.target.value ? parseInt(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="maxStockMax">to</Label>
-                                            <Input
-                                                id="maxStockMax"
-                                                type="number"
-                                                placeholder="Max"
-                                                value={filters.maxStockMax || ''}
-                                                onChange={(e) => handleFilterChange('maxStockMax', e.target.value ? parseInt(e.target.value) : undefined)}
-                                            />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                                
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Inventory Status</CardTitle>
+                                    <CardTitle className="text-base">Features & Zones</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-3">
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
-                                                id="hasInventory"
-                                                checked={filters.hasInventory === true}
+                                                id="hasZones"
+                                                checked={filters.hasZones === true}
                                                 onCheckedChange={(checked) => 
-                                                    handleFilterChange('hasInventory', checked ? true : undefined)
+                                                    handleFilterChange('hasZones', checked ? true : undefined)
                                                 }
                                             />
-                                            <Label htmlFor="hasInventory">📦 Has Inventory</Label>
+                                            <Label htmlFor="hasZones">🗂️ Has Zones</Label>
                                         </div>
 
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="isLowStock"
-                                                checked={filters.isLowStock || false}
-                                                onCheckedChange={(checked) => 
-                                                    handleFilterChange('isLowStock', checked || undefined)
-                                                }
+                                        <div className="space-y-2">
+                                            <Label htmlFor="zoneCount">Zone Count</Label>
+                                            <Input
+                                                id="zoneCount"
+                                                type="number"
+                                                placeholder="Number of zones..."
+                                                value={filters.zoneCount || ''}
+                                                onChange={(e) => handleFilterChange('zoneCount', e.target.value ? parseInt(e.target.value) : undefined)}
                                             />
-                                            <Label htmlFor="isLowStock">⚠️ Low Stock</Label>
-                                        </div>
-
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="isOutOfStock"
-                                                checked={filters.isOutOfStock || false}
-                                                onCheckedChange={(checked) => 
-                                                    handleFilterChange('isOutOfStock', checked || undefined)
-                                                }
-                                            />
-                                            <Label htmlFor="isOutOfStock">🔴 Out of Stock</Label>
-                                        </div>
-
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="isOverstock"
-                                                checked={filters.isOverstock || false}
-                                                onCheckedChange={(checked) => 
-                                                    handleFilterChange('isOverstock', checked || undefined)
-                                                }
-                                            />
-                                            <Label htmlFor="isOverstock">📈 Overstock</Label>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -527,7 +378,7 @@ const ProductAdvancedSearchDialog = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Product Status</CardTitle>
+                                    <CardTitle className="text-base">Warehouse Status</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-3">
@@ -539,7 +390,7 @@ const ProductAdvancedSearchDialog = ({
                                                     handleFilterChange('isActive', checked ? true : filters.isActive === false ? false : undefined)
                                                 }
                                             />
-                                            <Label htmlFor="isActive">✅ Active Products</Label>
+                                            <Label htmlFor="isActive">✅ Active Warehouses</Label>
                                         </div>
 
                                         <div className="flex items-center space-x-2">
@@ -550,18 +401,18 @@ const ProductAdvancedSearchDialog = ({
                                                     handleFilterChange('isActive', checked ? false : filters.isActive === true ? true : undefined)
                                                 }
                                             />
-                                            <Label htmlFor="isInactive">❌ Inactive Products</Label>
+                                            <Label htmlFor="isInactive">❌ Inactive Warehouses</Label>
                                         </div>
 
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
-                                                id="trackQuantity"
-                                                checked={filters.trackQuantity === true}
+                                                id="isMain"
+                                                checked={filters.isMain === true}
                                                 onCheckedChange={(checked) => 
-                                                    handleFilterChange('trackQuantity', checked ? true : undefined)
+                                                    handleFilterChange('isMain', checked ? true : undefined)
                                                 }
                                             />
-                                            <Label htmlFor="trackQuantity">📊 Track Quantity</Label>
+                                            <Label htmlFor="isMain">🏢 Main Warehouses</Label>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -575,13 +426,13 @@ const ProductAdvancedSearchDialog = ({
                                     <div className="space-y-3">
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
-                                                id="myProducts"
-                                                checked={filters.myProducts || false}
+                                                id="myWarehouses"
+                                                checked={filters.myWarehouses || false}
                                                 onCheckedChange={(checked) => 
-                                                    handleFilterChange('myProducts', checked || undefined)
+                                                    handleFilterChange('myWarehouses', checked || undefined)
                                                 }
                                             />
-                                            <Label htmlFor="myProducts">👤 My Products</Label>
+                                            <Label htmlFor="myWarehouses">👤 My Warehouses</Label>
                                         </div>
 
                                         <div className="flex items-center space-x-2">
@@ -597,13 +448,24 @@ const ProductAdvancedSearchDialog = ({
 
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
-                                                id="newProducts"
-                                                checked={filters.newProducts || false}
+                                                id="newWarehouses"
+                                                checked={filters.newWarehouses || false}
                                                 onCheckedChange={(checked) => 
-                                                    handleFilterChange('newProducts', checked || undefined)
+                                                    handleFilterChange('newWarehouses', checked || undefined)
                                                 }
                                             />
-                                            <Label htmlFor="newProducts">✨ New Products</Label>
+                                            <Label htmlFor="newWarehouses">✨ New Warehouses</Label>
+                                        </div>
+
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="largeWarehouses"
+                                                checked={filters.largeWarehouses || false}
+                                                onCheckedChange={(checked) => 
+                                                    handleFilterChange('largeWarehouses', checked || undefined)
+                                                }
+                                            />
+                                            <Label htmlFor="largeWarehouses">🏭 Large Warehouses</Label>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -776,7 +638,7 @@ const ProductAdvancedSearchDialog = ({
                         )}
                         <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
                             <Search className="h-4 w-4 mr-2" />
-                            Search Products
+                            Search Warehouses
                         </Button>
                     </div>
                 </DialogFooter>
@@ -785,4 +647,4 @@ const ProductAdvancedSearchDialog = ({
     );
 }
 
-export default ProductAdvancedSearchDialog;
+export default WarehouseAdvancedSearchDialog;

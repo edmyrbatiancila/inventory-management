@@ -8,16 +8,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { handleDeleteData } from "@/hooks/deleteFunction";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { PageProps, PaginatedResponse } from "@/types";
-import { Warehouse } from "@/types/Warehouse/IWarehouse";
+import { Warehouse, WarehouseAdvancedSearchProps } from "@/types/Warehouse/IWarehouse";
+import { WarehouseAdvancedFilters } from "@/types/Warehouse/IWarehouseAdvancedFilters";
 import { Head, router, usePage } from "@inertiajs/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Edit2, Plus, Trash2, View, WarehouseIcon, X } from "lucide-react";
+import { CheckCircle2, Edit2, Plus, Trash2, View, WarehouseIcon, X, Search, Filter } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+// Import warehouse-specific components and hooks
+import { useWarehouseAdvancedSearch } from "@/hooks/useWarehouseAdvancedSearch";
+import WarehouseAdvancedSearchDialog from "@/Components/Warehouses/WarehouseAdvancedSearchDialog";
+import WarehouseFilterChips from "@/Components/Warehouses/WarehouseFilterChips";
+import WarehouseSearchStats from "@/Components/Warehouses/WarehouseSearchStats";
 
 interface IWarehouseIndexProps {
     warehouses: PaginatedResponse<Warehouse>;
     sort?: string;
+    searchStats?: WarehouseAdvancedSearchProps;
+    hasAdvancedFilters?: boolean;
 }
 
 type InertiaPageProps = PageProps & {
@@ -29,38 +38,81 @@ type InertiaPageProps = PageProps & {
 
 const WarehouseIndex = ({
     warehouses,
-    sort: initialSort = 'newest'
+    sort: initialSort = 'newest',
+    searchStats,
+    hasAdvancedFilters = false
 }: IWarehouseIndexProps) => {
     const { props } = usePage<InertiaPageProps>();
 
     const [search, setSearch] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [sort, setSort] = useState(initialSort);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Handle search input with debounce
-        const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const value = e.target.value;
-            setSearch(value);
-            setIsSearching(true);
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-            debounceRef.current = setTimeout(() => {
-                router.get(route('admin.warehouses.index'), { search: value, sort }, { preserveState: true, replace: true });
-                setIsSearching(false);
-            }, 500);
-        };
+    // Advanced Search hook - get initial filters from URL parameters
+    const getInitialFilters = (): WarehouseAdvancedFilters => {
+        const params = new URLSearchParams(window.location.search);
+        const filters: WarehouseAdvancedFilters = {};
+        
+        // Parse URL parameters back to filters
+        if (params.get('globalSearch')) filters.globalSearch = params.get('globalSearch')!;
+        if (params.get('name')) filters.name = params.get('name')!;
+        if (params.get('code')) filters.code = params.get('code')!;
+        if (params.get('city')) filters.city = params.get('city')!;
+        if (params.get('state')) filters.state = params.get('state')!;
+        if (params.get('country')) filters.country = params.get('country')!;
+        if (params.get('isActive')) filters.isActive = params.get('isActive') === 'true';
+        // Add more parameter parsing as needed...
+        
+        return filters;
+    };
 
-    // Clear search
+    const {
+        filters: advancedFilters,
+        savedFilters,
+        isSearching: isAdvancedSearching,
+        applySearch,
+        removeFilter,
+        clearAllFilters,
+        saveFilter,
+        loadSavedFilter,
+        hasActiveFilters,
+    } = useWarehouseAdvancedSearch({
+        currentRoute: route('admin.warehouses.index'),
+        initialFilters: getInitialFilters(),
+    });
+
+    const handleAdvancedSearch = (filters: WarehouseAdvancedFilters) => {
+        applySearch(filters);
+        setShowAdvancedSearch(false);
+    };
+
+    // Handle search input with debounce
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        setIsSearching(true);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            const params = hasActiveFilters ? advancedFilters : {};
+            router.get(route('admin.warehouses.index'), { ...params, search: value, sort }, { preserveState: true, replace: true });
+            setIsSearching(false);
+        }, 500);
+    };
+
+    // Clear search and filters
     const handleClear = () => {
         setSearch('');
         setSort('newest');
-        router.get(route('admin.warehouses.index'), {}, { preserveState: true, replace: true });
+        clearAllFilters();
     };
 
     // Handle filter/sort change for shadcn UI Select
     const handleSortChange = (value: string) => {
         setSort(value);
-        router.get(route('admin.warehouses.index'), { search, sort: value }, { preserveState: true, replace: true });
+        const params = hasActiveFilters ? advancedFilters : { search };
+        router.get(route('admin.warehouses.index'), { ...params, sort: value }, { preserveState: true, replace: true });
     };
 
     // const handleDeleteWarehouse = (warehouseId: number) => {
@@ -119,6 +171,26 @@ const WarehouseIndex = ({
                 className="py-12"
             >
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Search Statistics */}
+                    {searchStats && hasActiveFilters && (
+                        <WarehouseSearchStats 
+                            totalResults={searchStats.totalResults || 0}
+                            statusCounts={searchStats.statusCounts}
+                            capacityRanges={searchStats.capacityRanges}
+                            isFiltered={hasActiveFilters}
+                            searchTime={searchStats.searchTime}
+                        />
+                    )}
+
+                    {/* Filter Chips */}
+                    {hasActiveFilters && (
+                        <WarehouseFilterChips 
+                            filters={advancedFilters}
+                            onRemoveFilter={removeFilter}
+                            onClearAll={clearAllFilters}
+                        />
+                    )}
+
                     {/* Filter/Search UI */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -127,41 +199,66 @@ const WarehouseIndex = ({
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
                     >
                         <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                            <Input
-                                type="text"
-                                placeholder="Search warehouses..."
-                                value={search}
-                                onChange={handleSearchChange}
-                                className="w-full max-w-xs shadow-sm focus:ring-2 focus:ring-blue-200"
-                                aria-label="Search brands"
-                            />
-                        {search && (
-                            <motion.div whileHover={{ scale: 1.1 }}>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search warehouses..."
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                    className="pl-10 w-full max-w-xs shadow-sm focus:ring-2 focus:ring-blue-200"
+                                    aria-label="Search warehouses"
+                                />
+                            </div>
+                            
+                            {search && (
+                                <motion.div whileHover={{ scale: 1.1 }}>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={handleClear}
+                                        title="Clear Search"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </motion.div>
+                            )}
+
+                            <motion.div whileHover={{ scale: 1.03 }}>
                                 <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={ handleClear }
-                                    title="Clear Search"
+                                    variant="outline"
+                                    onClick={() => setShowAdvancedSearch(true)}
+                                    className={`flex items-center gap-2 ${hasActiveFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : ''}`}
                                 >
-                                    <X className="w-4 h-4" />
+                                    <Filter className="w-4 h-4" />
+                                    Advanced Search
+                                    {hasActiveFilters && (
+                                        <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                                            {Object.keys(advancedFilters).length}
+                                        </span>
+                                    )}
                                 </Button>
                             </motion.div>
-                        )}
+
                             <motion.div whileHover={{ scale: 1.03 }}>
                                 <Select 
-                                    value={ sort } 
-                                    onValueChange={ handleSortChange }
+                                    value={sort} 
+                                    onValueChange={handleSortChange}
                                 >
                                     <SelectTrigger className="w-[180px] shadow-sm focus:ring-2 focus:ring-blue-200">
-                                        <SelectValue placeholder="Filter warehouses" />
+                                        <SelectValue placeholder="Sort warehouses" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectLabel>Select Filter</SelectLabel>
-                                            <SelectItem value="newest">Newest</SelectItem>
-                                            <SelectItem value="oldest">Oldest</SelectItem>
-                                            <SelectItem value="az">A-Z</SelectItem>
-                                            <SelectItem value="za">Z-A</SelectItem>
+                                            <SelectLabel>Sort Options</SelectLabel>
+                                            <SelectItem value="newest">Newest First</SelectItem>
+                                            <SelectItem value="oldest">Oldest First</SelectItem>
+                                            <SelectItem value="name_asc">Name A-Z</SelectItem>
+                                            <SelectItem value="name_desc">Name Z-A</SelectItem>
+                                            <SelectItem value="code_asc">Code A-Z</SelectItem>
+                                            <SelectItem value="code_desc">Code Z-A</SelectItem>
+                                            <SelectItem value="city_asc">City A-Z</SelectItem>
+                                            <SelectItem value="city_desc">City Z-A</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
@@ -346,6 +443,17 @@ const WarehouseIndex = ({
                             </CardContent>
                         </Card>
                     </motion.div>
+
+                    {/* Advanced Search Dialog */}
+                    <WarehouseAdvancedSearchDialog
+                        isOpen={showAdvancedSearch}
+                        onClose={() => setShowAdvancedSearch(false)}
+                        onSearch={handleAdvancedSearch}
+                        currentFilters={advancedFilters}
+                        savedFilters={savedFilters}
+                        onSaveFilter={saveFilter}
+                        onLoadFilter={loadSavedFilter}
+                    />
                 </div>
             </motion.div>
         </Authenticated>
