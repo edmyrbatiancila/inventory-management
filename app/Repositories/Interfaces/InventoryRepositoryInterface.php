@@ -25,4 +25,8 @@ interface InventoryRepositoryInterface
     public function getInventoryLevels(): Collection;
     public function getStockMovementHistory(int $inventoryId): Collection;
     public function getTotalStockValue(): float;
+
+    // Advanced Search Methods
+    public function getSearchStats(array $filters = []): array;
+    public function getOptimizedSearchStats(array $filters = []): array;
 }

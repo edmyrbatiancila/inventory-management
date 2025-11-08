@@ -78,6 +78,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/inventories/transfer', [InventoryController::class, 'transferStock'])->name('inventories.transfer');
         Route::get('/inventories/reports/low-stock', [InventoryController::class, 'lowStockReport'])->name('inventories.reports.low-stock');
 
+        // Inventory Advanced Search Route:
+        Route::post('/inventories/advanced-search', [InventoryController::class, 'advancedSearch'])->name('inventories.advanced-search');
+
         // Stock Adjustment Routes:
         Route::resource('stock-adjustments', StockAdjustmentController::class)->parameters([
             'stock-adjustments' => 'stockAdjustment'

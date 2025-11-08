@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\InventoryAdvancedSearchRequest;
 use App\Models\Inventory;
 use App\Http\Requests\StoreInventoryRequest;
 use App\Http\Requests\UpdateInventoryRequest;
 use App\Models\Product;
 use App\Models\Warehouse;
+use App\Models\Category;
+use App\Models\Brand;
 use App\Services\InventoryService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -30,13 +34,16 @@ class InventoryController extends Controller
     {
         try {
             $filters = $request->only([
-                'search',
-                'product_id',
-                'warehouse_id',
-                'low_stock',
-                'out_of_stock',
-                'sort',
-                'per_page'
+                // Legacy filters
+                'search', 'product_id', 'warehouse_id', 'low_stock', 'out_of_stock', 'sort', 'per_page',
+                // Advanced search filters
+                'globalSearch', 'productName', 'productSku', 'warehouseName', 'warehouseCode', 'notes',
+                'productIds', 'categoryIds', 'brandIds', 'warehouseIds', 'warehouseIsActive',
+                'quantityOnHandMin', 'quantityOnHandMax', 'quantityReservedMin', 'quantityReservedMax',
+                'quantityAvailableMin', 'quantityAvailableMax', 'stockStatus', 'isLowStock', 'isOutOfStock',
+                'hasReservedStock', 'createdAfter', 'createdBefore', 'updatedAfter', 'updatedBefore',
+                'stockValueMin', 'stockValueMax', 'myInventories', 'recentlyUpdated', 'newInventories',
+                'highValueInventories'
             ]);
 
             // Clean up filters
@@ -44,12 +51,46 @@ class InventoryController extends Controller
                 return $value !== null && $value !== '';
             });
 
+            // Check if advanced filters are being used
+            $hasAdvancedFilters = $this->hasAdvancedFilters($filters);
+
             $inventories = $this->inventoryService->getAllInventories($filters);
+
+            // Get search statistics if advanced filters are used
+            $searchStats = null;
+            if ($hasAdvancedFilters) {
+                $searchStats = $this->inventoryService->getSearchStats($filters);
+            }
+
+            // Get related data for advanced search
+            $products = Product::where('is_active', true)
+                ->select('id', 'name', 'sku', 'category_id', 'brand_id')
+                ->with(['category:id,name', 'brand:id,name'])
+                ->orderBy('name')
+                ->get();
+
+            $warehouses = Warehouse::where('is_active', true)
+                ->select('id', 'name', 'code', 'is_active')
+                ->orderBy('name')
+                ->get();
+
+            $categories = Category::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            $brands = Brand::select('id', 'name')
+                ->orderBy('name')
+                ->get();
 
             return Inertia::render('admin/inventory/Index', [
                 'inventories' => $inventories,
-                'filters' => $filters,
-                'sort' => $request->get('sort', 'newest')
+                'sort' => $request->get('sort', 'newest'),
+                'searchStats' => $searchStats,
+                'hasAdvancedFilters' => $hasAdvancedFilters,
+                'products' => $products,
+                'warehouses' => $warehouses,
+                'categories' => $categories,
+                'brands' => $brands,
             ]);
 
         } catch (\Exception $e) {
@@ -57,6 +98,57 @@ class InventoryController extends Controller
         
             return redirect()->back()
                 ->with('error', 'Error loading inventories.');
+        }
+    }
+
+    /**
+     * Check if advanced filters are being used
+     */
+    private function hasAdvancedFilters(array $filters): bool
+    {
+        $advancedFilterKeys = [
+            'globalSearch', 'productName', 'productSku', 'warehouseName', 'warehouseCode', 'notes',
+            'productIds', 'categoryIds', 'brandIds', 'warehouseIds', 'warehouseIsActive',
+            'quantityOnHandMin', 'quantityOnHandMax', 'quantityReservedMin', 'quantityReservedMax',
+            'quantityAvailableMin', 'quantityAvailableMax', 'stockStatus', 'isLowStock', 'isOutOfStock',
+            'hasReservedStock', 'createdAfter', 'createdBefore', 'updatedAfter', 'updatedBefore',
+            'stockValueMin', 'stockValueMax', 'myInventories', 'recentlyUpdated', 'newInventories',
+            'highValueInventories'
+        ];
+
+        foreach ($advancedFilterKeys as $key) {
+            if (isset($filters[$key]) && !empty($filters[$key])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle advanced search requests
+     */
+    public function advancedSearch(InventoryAdvancedSearchRequest $request): JsonResponse
+    {
+        try {
+            $filters = $request->validated();
+            
+            $inventories = $this->inventoryService->getAllInventories($filters);
+            $searchStats = $this->inventoryService->getSearchStats($filters);
+
+            return response()->json([
+                'inventories' => $inventories,
+                'searchStats' => $searchStats,
+                'hasAdvancedFilters' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in InventoryController@advancedSearch: ' . $e->getMessage());
+            
+            return response()->json([
+                'message' => 'Search failed. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

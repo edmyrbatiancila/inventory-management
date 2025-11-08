@@ -1,4 +1,7 @@
 import CustomPagination from "@/Components/CustomPagination";
+import InventoryAdvancedSearchDialog from "@/Components/Inventories/InventoryAdvancedSearchDialog";
+import InventoryFilterChips from "@/Components/Inventories/InventoryFilterChips";
+import InventorySearchStats from "@/Components/Inventories/InventorySearchStats";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
@@ -6,18 +9,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import { useInventoryAdvancedSearch } from "@/hooks/useInventoryAdvancedSearch";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { PageProps, PaginatedResponse } from "@/types";
+import { Brand, Category, PageProps, PaginatedResponse } from "@/types";
 import { Inventory, InventoryDeletionError } from "@/types/Inventory/IInventory";
+import { InventoryAdvancedFilters, InventoryAdvancedSearchProps } from "@/types/Inventory/IInventoryAdvancedFilters";
+import { Product } from "@/types/Product/IProduct";
+import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { Head, router, usePage } from "@inertiajs/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, ClipboardList, Edit2, Package, Plus, Trash2, View, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Edit2, Filter, Package, Plus, Search, Trash2, View, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface IInventoryIndexProps {
     inventories: PaginatedResponse<Inventory>;
     sort?: string;
+    searchStats?: InventoryAdvancedSearchProps;
+    hasAdvancedFilters?: boolean;
+    products?: Product[];
+    warehouses?: Warehouse[];
+    categories?: Category[];
+    brands?: Brand[];
 }
 
 type InertiaPageProps = PageProps & {
@@ -30,15 +43,63 @@ type InertiaPageProps = PageProps & {
 
 const InventoryIndex = ({
     inventories,
-    sort: initialSort = 'newest'
+    sort: initialSort = 'newest',
+    searchStats,
+    hasAdvancedFilters = false,
+    products = [],
+    warehouses = [],
+    categories = [],
+    brands = []
 }: IInventoryIndexProps) => {
     const { props } = usePage<InertiaPageProps>();
 
     const [search, setSearch] = useState<string>('');
     const [sort, setSort] = useState(initialSort);
     const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
+
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
-    
+
+    // Advanced Search hook - get initial filters from URL parameters
+    const getInitialFilters = (): InventoryAdvancedFilters => {
+        const params = new URLSearchParams(window.location.search);
+        const filters: InventoryAdvancedFilters = {};
+        
+        // Extract filters from URL params
+        if (params.get('globalSearch')) filters.globalSearch = params.get('globalSearch')!;
+        if (params.get('productName')) filters.productName = params.get('productName')!;
+        if (params.get('warehouseName')) filters.warehouseName = params.get('warehouseName')!;
+        if (params.get('productIds')) {
+            const productIds = params.get('productIds')!.split(',').map(id => parseInt(id));
+            if (productIds.length > 0 && !isNaN(productIds[0])) filters.productIds = productIds;
+        }
+        if (params.get('warehouseIds')) {
+            const warehouseIds = params.get('warehouseIds')!.split(',').map(id => parseInt(id));
+            if (warehouseIds.length > 0 && !isNaN(warehouseIds[0])) filters.warehouseIds = warehouseIds;
+        }
+        
+        return filters;
+    };
+
+    const {
+        filters: advancedFilters,
+        savedFilters,
+        isSearching: isAdvancedSearching,
+        applySearch,
+        removeFilter,
+        clearAllFilters,
+        saveFilter,
+        loadSavedFilter,
+        hasActiveFilters,
+    } = useInventoryAdvancedSearch({
+        currentRoute: route('admin.inventories.index'),
+        initialFilters: getInitialFilters(),
+    });
+
+    const handleAdvancedSearch = (filters: InventoryAdvancedFilters) => {
+        applySearch(filters);
+        setShowAdvancedSearch(false);
+    };
 
     // Handle search input with debounce
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,6 +201,43 @@ const InventoryIndex = ({
                 className="py-12"
             >
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Search Stats */}
+                    {searchStats && hasActiveFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="mb-6"
+                        >
+                            <InventorySearchStats 
+                                totalResults={searchStats?.totalResults}
+                                stockCounts={searchStats?.stockCounts}
+                                quantityRanges={searchStats?.quantityRanges}
+                                isFiltered={hasActiveFilters}
+                                searchTime={searchStats?.searchTime}
+                            />
+                        </motion.div>
+                    )}
+
+                    {/* Filter Chips */}
+                    {hasActiveFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 }}
+                            className="mb-6"
+                        >
+                            <InventoryFilterChips 
+                                filters={advancedFilters}
+                                onRemoveFilter={removeFilter}
+                                onClearAll={clearAllFilters}
+                                products={products}
+                                warehouses={warehouses}
+                                categories={categories}
+                                brands={brands}
+                            />
+                        </motion.div>
+                    )}
                     {/* Filter/Search UI */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -148,14 +246,23 @@ const InventoryIndex = ({
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
                     >
                         <div className="flex-1 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                            <Input 
-                                type="text"
-                                placeholder="Search inventories..."
-                                value={search}
-                                onChange={handleSearchChange}
-                                className="w-full max-w-xs shadow-sm focus:ring-2 focus:ring-blue-200"
-                                aria-label="Search inventories"
-                            />
+                            <div className="relative flex-1 max-w-md">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <Input 
+                                    type="text"
+                                    placeholder="Search inventories..."
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                    className="pl-10 w-full shadow-sm focus:ring-2 focus:ring-blue-200"
+                                    aria-label="Search inventories"
+                                />
+                                {(isSearching || isAdvancedSearching) && (
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                    </div>
+                                )}
+                            </div>
+                            
                         {search && (
                             <motion.div whileHover={{ scale: 1.1 }}>
                                 <Button
@@ -168,6 +275,23 @@ const InventoryIndex = ({
                                 </Button>
                             </motion.div>
                         )}
+
+                            <motion.div whileHover={{ scale: 1.02 }}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowAdvancedSearch(true)}
+                                    className={`shadow-sm ${hasActiveFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}`}
+                                >
+                                    <Filter className="h-4 w-4" />
+                                    Advanced Search
+                                    {hasActiveFilters && (
+                                        <span className="ml-2 bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                            {Object.keys(advancedFilters).length}
+                                        </span>
+                                    )}
+                                </Button>
+                            </motion.div>
+
                             <motion.div whileHover={{ scale: 1.03 }}>
                                 <Select
                                     value={ sort } 
@@ -181,8 +305,9 @@ const InventoryIndex = ({
                                             <SelectLabel>Select Filter</SelectLabel>
                                             <SelectItem value="newest">Newest First</SelectItem>
                                             <SelectItem value="oldest">Oldest First</SelectItem>
-                                            <SelectItem value="az">Product Name</SelectItem>
-                                            <SelectItem value="za">Warehouse Name</SelectItem>
+                                            <SelectItem value="az">Product Name A-Z</SelectItem>
+                                            <SelectItem value="za">Product Name Z-A</SelectItem>
+                                            <SelectItem value="warehouse_az">Warehouse Name A-Z</SelectItem>
                                             <SelectItem value="quantity_high">Highest Stock</SelectItem>
                                             <SelectItem value="quantity_low">Lowest Stock</SelectItem>
                                             <SelectItem value="low_stock">Low Stock Alert</SelectItem>
@@ -278,7 +403,7 @@ const InventoryIndex = ({
                                                                     {inventory.warehouse?.name || 'Unknown Warehouse'}
                                                                 </div>
                                                                 <div className="text-sm text-gray-500 truncate" title={inventory.warehouse?.code || 'No Code'}>
-                                                                    CODE: {inventory.warehouse?.code || 'N/A'}
+                                                                    {inventory.warehouse?.code || 'N/A'}
                                                                 </div>
                                                             </div>
                                                         </TableCell>
@@ -425,6 +550,21 @@ const InventoryIndex = ({
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Advanced Search Dialog */}
+            <InventoryAdvancedSearchDialog 
+                isOpen={ showAdvancedSearch }
+                onClose={ () => setShowAdvancedSearch(false) }
+                onSearch={ handleAdvancedSearch }
+                currentFilters={ advancedFilters }
+                savedFilters={savedFilters}
+                onSaveFilter={saveFilter}
+                onLoadFilter={loadSavedFilter}
+                products={products}
+                warehouses={warehouses}
+                categories={categories}
+                brands={brands}
+            />
         </Authenticated>
     );
 }

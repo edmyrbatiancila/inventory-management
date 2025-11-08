@@ -25,6 +25,14 @@ class InventoryService
     }
 
     /**
+     * Get search statistics for inventory filters
+     */
+    public function getSearchStats(array $filters = []): array
+    {
+        return $this->inventoryRepository->getOptimizedSearchStats($filters);
+    }
+
+    /**
      * Get all inventories with filtering and pagination
      */
     public function getAllInventories(array $filters = []): LengthAwarePaginator
