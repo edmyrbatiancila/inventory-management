@@ -5,11 +5,13 @@ namespace App\Providers;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\StockAdjustmentRepositoryInterface;
+use App\Repositories\Interfaces\StockMovementRepositoryInterface;
 use App\Repositories\Interfaces\StockTransferRepositoryInterface;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use App\Repositories\InventoryRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\StockAdjustmentRepository;
+use App\Repositories\StockMovementRepository;
 use App\Repositories\StockTransferRepository;
 use App\Repositories\WarehouseRepository;
 use App\Services\StockAdjustmentService;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StockAdjustmentService::class, StockAdjustmentService::class);
         $this->app->bind(StockTransferRepositoryInterface::class, StockTransferRepository::class);
         $this->app->bind(StockTransferService::class, StockTransferService::class);
+        $this->app->bind(StockMovementRepositoryInterface::class, StockMovementRepository::class);
     }
 
     /**

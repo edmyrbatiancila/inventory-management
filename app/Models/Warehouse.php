@@ -48,6 +48,11 @@ class Warehouse extends Model
             ->withTimestamps();
     }
 
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     public function getFullAddressAttribute()
     {
         $addressParts = array_filter([

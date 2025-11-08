@@ -45,4 +45,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Relationships
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function approvedStockMovements()
+    {
+        return $this->hasMany(StockMovement::class, 'approved_by');
+    }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTransferController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -108,6 +109,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/stock-transfers/bulk-cancel', [StockTransferController::class, 'bulkCancel'])
             ->name('stock-transfers.bulk-cancel');
         
+        // Stock Movement Routes:
+        Route::resource('stock-movements', StockMovementController::class)->parameters([
+            'stock-movements' => 'stockMovement'
+        ]);
+        Route::post('stock-movements/{id}/approve', [StockMovementController::class, 'approve'])->name('stock-movements.approve');
+        Route::post('stock-movements/{id}/reject', [StockMovementController::class, 'reject'])->name('stock-movements.reject');
+        Route::get('stock-movements/api/analytics', [StockMovementController::class, 'analytics'])->name('stock-movements.api.analytics');
     });
 });
 

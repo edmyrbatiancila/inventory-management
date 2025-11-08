@@ -68,4 +68,9 @@ class Product extends Model
     {
         return $this->inventories()->sum('quantity_available');
     }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
 }
