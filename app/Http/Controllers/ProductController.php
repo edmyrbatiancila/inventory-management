@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductAdvancedSearchRequest;
 use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,12 +49,18 @@ class ProductController extends Controller
         try {
             $products = $this->productService->getAllProducts($filters);
             
-            // Only calculate search stats if we have active filters (to improve performance)
+            // Calculate search stats for any search activity (to ensure frontend consistency)
             $searchStats = null;
-            if (!empty(array_filter($filters))) {
+            $hasFilters = !empty(array_filter($filters, function($value, $key) {
+                // Exclude pagination and sort from filter detection
+                return !in_array($key, ['per_page', 'sort']) && $value !== null && $value !== '';
+            }, ARRAY_FILTER_USE_BOTH));
+            
+            if ($hasFilters) {
                 $searchStats = $this->productRepository->getSearchStats($filters);
                 $searchTime = round((microtime(true) - $startTime) * 1000, 2);
                 $searchStats['searchTime'] = $searchTime;
+                $searchStats['totalResults'] = $products->total();
             }
 
             $categories = $this->productService->getAllCategories();
@@ -313,5 +321,82 @@ class ProductController extends Controller
         return response()->json([
             'products' => $products
         ]);
+    }
+
+    /**
+     * Advanced search for products with comprehensive filtering
+     */
+    public function advancedSearch(ProductAdvancedSearchRequest $request): JsonResponse
+    {
+        try {
+            $startTime = microtime(true);
+
+            // Get validated filters from request
+            $filters = $request->getFilters();
+            
+            // Set default pagination
+            $filters['per_page'] = $filters['per_page'] ?? 15;
+
+            Log::info('🔍 Product Advanced Search Request:', [
+                'filters' => $filters,
+                'user_id' => Auth::id(),
+                'timestamp' => now()
+            ]);
+
+            // Get products using repository with advanced filters
+            $products = $this->productRepository->findAll($filters);
+            
+            // Get search statistics
+            $searchStats = $this->productRepository->getSearchStats($filters);
+            
+            $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            Log::info('✅ Product Advanced Search Completed:', [
+                'total_results' => $products->total(),
+                'execution_time' => $executionTime . 'ms',
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'products' => $products,
+                    'searchStats' => array_merge($searchStats, [
+                        'totalResults' => $products->total(),
+                        'searchTime' => $executionTime,
+                        'isFiltered' => count(array_filter($filters)) > 1, // More than just per_page
+                        'appliedFilters' => array_keys(array_filter($filters))
+                    ]),
+                    'pagination' => [
+                        'current_page' => $products->currentPage(),
+                        'last_page' => $products->lastPage(),
+                        'per_page' => $products->perPage(),
+                        'total' => $products->total(),
+                        'from' => $products->firstItem(),
+                        'to' => $products->lastItem(),
+                    ]
+                ],
+                'message' => 'Products search completed successfully.',
+                'meta' => [
+                    'timestamp' => now(),
+                    'execution_time' => $executionTime,
+                    'api_version' => '1.0'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Product Advanced Search Error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'filters' => $filters ?? [],
+                'user_id' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to search products. Please try again.',
+                'error' => app()->environment('local') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

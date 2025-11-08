@@ -64,6 +64,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/products/reports/needing-reorder', [ProductController::class, 'needingReorder'])->name('products.reports.needing-reorder');
         Route::get('/products/{id}/check-availability', [ProductController::class, 'checkAvailability'])->name('products.check-availability');
 
+        // Product Advanced Search Route:
+        Route::post('/products/advanced-search', [ProductController::class, 'advancedSearch'])->name('products.advanced-search');
+
         // Warehouse Routes:
         Route::resource('warehouses', WarehouseController::class)->except(['analytics']);
         Route::get('/warehouses/{id}/analytics', [WarehouseController::class, 'analytics'])

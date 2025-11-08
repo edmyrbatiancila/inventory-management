@@ -1,6 +1,6 @@
 import { Brand, Category } from "@/types";
 import { ProductAdvancedFilters, ProductSavedFilter } from "@/types/Product/IProductAdvancedFilters";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { BookmarkPlus, Package, PhilippinePeso, Save, Search, Settings, Tag, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useEffect, useState } from "react";
@@ -104,6 +104,10 @@ const ProductAdvancedSearchDialog = ({
                         <Package className="h-5 w-5 text-blue-600" />
                         Advanced Product Search
                     </DialogTitle>
+                    <DialogDescription>
+                        Use the filters below to find products by name, category, price range, stock levels, and more. 
+                        You can save frequently used filter combinations for quick access.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <Tabs

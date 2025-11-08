@@ -6,6 +6,8 @@ use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -14,7 +16,24 @@ class ProductRepository implements ProductRepositoryInterface
         $query = Product::with(['category', 'brand'])
         ->withCount('inventories');
 
-        // Global search across multiple fields
+        // Basic search (from search input) across multiple fields
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('sku', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('barcode', 'like', "%{$search}%")
+                ->orWhereHas('category', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('brand', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Global search across multiple fields (from advanced search)
         if (!empty($filters['global_search'])) {
             $search = $filters['global_search'];
             $query->where(function ($q) use ($search) {
@@ -135,54 +154,122 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function getSearchStats(array $filters = []): array
     {
-        // If no filters are applied, return simple counts without heavy processing
-        if (empty($filters)) {
+        try {
+            $baseQuery = Product::with(['category', 'brand']);
+            
+            // Apply the same filters as findAll to get accurate stats
+            $filteredQuery = clone $baseQuery;
+            $this->applyFiltersToQuery($filteredQuery, $filters);
+            
+            // Status counts
+            $statusCounts = [
+                'active' => (clone $filteredQuery)->where('is_active', true)->count(),
+                'inactive' => (clone $filteredQuery)->where('is_active', false)->count(),
+                'lowStock' => (clone $filteredQuery)->where('min_stock_level', '>', 0)
+                    ->whereColumn('min_stock_level', '>', DB::raw('COALESCE((SELECT SUM(quantity_available) FROM inventories WHERE inventories.product_id = products.id), 0)'))
+                    ->count(),
+                'outOfStock' => (clone $filteredQuery)->where(function($q) {
+                    $q->whereNotExists(function($query) {
+                        $query->select(DB::raw(1))
+                              ->from('inventories')
+                              ->whereColumn('inventories.product_id', 'products.id')
+                              ->where('quantity_available', '>', 0);
+                    });
+                })->count(),
+                'overstock' => (clone $filteredQuery)->where('max_stock_level', '>', 0)
+                    ->whereColumn('max_stock_level', '<', DB::raw('COALESCE((SELECT SUM(quantity_available) FROM inventories WHERE inventories.product_id = products.id), 0)'))
+                    ->count(),
+            ];
+
+            // Price range analysis
+            $priceRanges = [
+                'budget' => (clone $filteredQuery)->where('price', '<', 50)->count(),        // Under $50
+                'moderate' => (clone $filteredQuery)->whereBetween('price', [50, 200])->count(), // $50-$200
+                'premium' => (clone $filteredQuery)->where('price', '>', 200)->count(),     // Over $200
+                'expensive' => (clone $filteredQuery)->where('price', '>', 500)->count(),  // Over $500
+            ];
+
+            // Stock level analysis
+            $stockAnalysis = [
+                'low_min_stock' => (clone $filteredQuery)->where('min_stock_level', '<=', 10)->count(),
+                'medium_min_stock' => (clone $filteredQuery)->whereBetween('min_stock_level', [11, 50])->count(),
+                'high_min_stock' => (clone $filteredQuery)->where('min_stock_level', '>', 50)->count(),
+            ];
+
+            // Category distribution (top 5)
+            $categoryStats = (clone $filteredQuery)
+                ->select('category_id', DB::raw('count(*) as count'))
+                ->with('category:id,name')
+                ->groupBy('category_id')
+                ->orderByDesc('count')
+                ->limit(5)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'category_name' => $item->category->name ?? 'Unknown',
+                        'count' => $item->count
+                    ];
+                });
+
+            // Brand distribution (top 5)
+            $brandStats = (clone $filteredQuery)
+                ->select('brand_id', DB::raw('count(*) as count'))
+                ->with('brand:id,name')
+                ->groupBy('brand_id')
+                ->orderByDesc('count')
+                ->limit(5)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'brand_name' => $item->brand->name ?? 'Unknown',
+                        'count' => $item->count
+                    ];
+                });
+
+            // Recent activity (products created/updated in last 30 days)
+            $recentActivity = [
+                'new_products' => (clone $filteredQuery)
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->count(),
+                'recently_updated' => (clone $filteredQuery)
+                    ->where('updated_at', '>=', now()->subDays(7))
+                    ->where('updated_at', '!=', DB::raw('created_at'))
+                    ->count(),
+            ];
+
             return [
-                'totalResults' => Product::count(),
+                'statusCounts' => $statusCounts,
+                'priceRanges' => $priceRanges,
+                'stockAnalysis' => $stockAnalysis,
+                'categoryStats' => $categoryStats,
+                'brandStats' => $brandStats,
+                'recentActivity' => $recentActivity,
+                'generatedAt' => now()->toISOString(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('❌ Product Search Stats Error:', [
+                'error' => $e->getMessage(),
+                'filters' => $filters
+            ]);
+
+            // Return empty stats structure on error
+            return [
                 'statusCounts' => [
-                    'active' => Product::where('is_active', true)->count(),
-                    'inactive' => Product::where('is_active', false)->count(),
-                    'lowStock' => 0,
-                    'outOfStock' => 0,
-                    'overstock' => 0,
+                    'active' => 0, 
+                    'inactive' => 0, 
+                    'lowStock' => 0, 
+                    'outOfStock' => 0, 
+                    'overstock' => 0
                 ],
-                'priceRanges' => [
-                    'budget' => Product::where('price', '<', 50)->count(),
-                    'moderate' => Product::whereBetween('price', [50, 200])->count(),
-                    'premium' => Product::where('price', '>', 200)->count(),
-                ],
+                'priceRanges' => ['budget' => 0, 'moderate' => 0, 'premium' => 0, 'expensive' => 0],
+                'stockAnalysis' => ['low_min_stock' => 0, 'medium_min_stock' => 0, 'high_min_stock' => 0],
+                'categoryStats' => [],
+                'brandStats' => [],
+                'recentActivity' => ['new_products' => 0, 'recently_updated' => 0],
+                'generatedAt' => now()->toISOString(),
+                'error' => 'Failed to generate statistics'
             ];
         }
-
-        // Use a single query with conditional aggregation for better performance
-        $baseQuery = Product::query();
-        $this->applyFiltersToQuery($baseQuery, $filters);
-
-        // Get all stats in a single query using conditional aggregation
-        $stats = $baseQuery->selectRaw('
-            COUNT(*) as total_results,
-            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_count,
-            SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive_count,
-            SUM(CASE WHEN price < 50 THEN 1 ELSE 0 END) as budget_count,
-            SUM(CASE WHEN price >= 50 AND price <= 200 THEN 1 ELSE 0 END) as moderate_count,
-            SUM(CASE WHEN price > 200 THEN 1 ELSE 0 END) as premium_count
-        ')->first();
-
-        return [
-            'totalResults' => (int) $stats->total_results,
-            'statusCounts' => [
-                'active' => (int) $stats->active_count,
-                'inactive' => (int) $stats->inactive_count,
-                'lowStock' => 0, // Skip expensive inventory joins for performance
-                'outOfStock' => 0, // Skip expensive inventory joins for performance  
-                'overstock' => 0, // Skip expensive inventory joins for performance
-            ],
-            'priceRanges' => [
-                'budget' => (int) $stats->budget_count,
-                'moderate' => (int) $stats->moderate_count,
-                'premium' => (int) $stats->premium_count,
-            ],
-        ];
     }
 
     /**
@@ -190,7 +277,24 @@ class ProductRepository implements ProductRepositoryInterface
      */
     private function applyFiltersToQuery($query, array $filters)
     {
-        // Global search across multiple fields
+        // Basic search (from search input) across multiple fields
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('sku', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('barcode', 'like', "%{$search}%")
+                ->orWhereHas('category', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('brand', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Global search across multiple fields (from advanced search)
         if (!empty($filters['global_search'])) {
             $search = $filters['global_search'];
             $query->where(function ($q) use ($search) {
