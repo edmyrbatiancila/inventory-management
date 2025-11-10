@@ -105,7 +105,7 @@ class StockMovementController extends Controller
             abort(404, 'Stock movement not found');
         }
 
-        return Inertia::render('admin/stock-movement/Show', [
+        return Inertia::render('admin/stock-movement/View', [
             'movement' => $movement
         ]);
     }

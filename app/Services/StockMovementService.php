@@ -31,6 +31,11 @@ class StockMovementService
         return $this->stockMovementRepository->findById($id);
     }
 
+    public function getSearchStats(array $filters = []): array
+    {
+        return $this->stockMovementRepository->getSearchStats($filters);
+    }
+
     public function createMovement(array $data): StockMovement
     {
         DB::beginTransaction();
