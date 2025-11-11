@@ -17,17 +17,23 @@ class StockMovementRepository implements StockMovementRepositoryInterface
         // Apply filters
         $this->applyFilters($query, $filters);
 
+        // Apply Advanced filters
+        $this->applyAdvancedFilters($query, $filters);
+
         // Sorting
         $sortBy = $filters['sort'] ?? 'newest';
         switch ($sortBy) {
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
             case 'oldest':
                 $query->orderBy('created_at', 'asc');
                 break;
             case 'quantity_high':
-                $query->orderBy(DB::raw('ABS(quantity_moved)'), 'desc');
+                $query->orderByRaw('ABS(quantity_moved) DESC');
                 break;
             case 'quantity_low':
-                $query->orderBy(DB::raw('ABS(quantity_moved)'), 'asc');
+                $query->orderByRaw('ABS(quantity_moved) ASC');
                 break;
             case 'value_high':
                 $query->orderBy('total_value', 'desc');
@@ -35,8 +41,18 @@ class StockMovementRepository implements StockMovementRepositoryInterface
             case 'value_low':
                 $query->orderBy('total_value', 'asc');
                 break;
+            case 'reference_number':
+                $query->orderBy('reference_number', 'asc');
+                break;
+            case 'movement_type':
+                $query->orderBy('movement_type', 'asc');
+                break;
+            case 'status':
+                $query->orderBy('status', 'asc');
+                break;
             default:
                 $query->orderBy('created_at', 'desc');
+                break;
         }
 
         return $query->paginate($filters['per_page'] ?? 15);
@@ -296,5 +312,280 @@ class StockMovementRepository implements StockMovementRepositoryInterface
             ->orderBy(DB::raw('ABS(total_value)'), 'desc')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Apply advanced search filters to query
+     */
+    private function applyAdvancedFilters($query, array $filters)
+    {
+        // Global search across multiple fields
+        if (!empty($filters['globalSearch'])) {
+            $globalSearch = $filters['globalSearch'];
+            $query->where(function($q) use ($globalSearch) {
+                $q->where('reference_number', 'like', "%{$globalSearch}%")
+                    ->orWhere('reason', 'like', "%{$globalSearch}%")
+                    ->orWhere('notes', 'like', "%{$globalSearch}%")
+                    ->orWhereHas('product', function($productQuery) use ($globalSearch) {
+                        $productQuery->where('name', 'like', "%{$globalSearch}%")
+                                    ->orWhere('sku', 'like', "%{$globalSearch}%");
+                    })
+                    ->orWhereHas('warehouse', function($warehouseQuery) use ($globalSearch) {
+                        $warehouseQuery->where('name', 'like', "%{$globalSearch}%");
+                    })
+                    ->orWhereHas('user', function($userQuery) use ($globalSearch) {
+                        $userQuery->where('name', 'like', "%{$globalSearch}%");
+                    });
+            });
+        }
+
+        // Text field filters
+        if (!empty($filters['referenceNumber'])) {
+            $query->where('reference_number', 'like', "%{$filters['referenceNumber']}%");
+        }
+
+        if (!empty($filters['reason'])) {
+            $query->where('reason', 'like', "%{$filters['reason']}%");
+        }
+
+        if (!empty($filters['notes'])) {
+            $query->where('notes', 'like', "%{$filters['notes']}%");
+        }
+
+        if (!empty($filters['productName'])) {
+            $query->whereHas('product', function($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['productName']}%");
+            });
+        }
+
+        if (!empty($filters['productSku'])) {
+            $query->whereHas('product', function($q) use ($filters) {
+                $q->where('sku', 'like', "%{$filters['productSku']}%");
+            });
+        }
+
+        if (!empty($filters['warehouseName'])) {
+            $query->whereHas('warehouse', function($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['warehouseName']}%");
+            });
+        }
+
+        if (!empty($filters['userName'])) {
+            $query->whereHas('user', function($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['userName']}%");
+            });
+        }
+
+        // Movement type filters
+        if (!empty($filters['movementTypes'])) {
+            $query->whereIn('movement_type', $filters['movementTypes']);
+        }
+
+        // Status filters
+        if (!empty($filters['statuses'])) {
+            $query->whereIn('status', $filters['statuses']);
+        }
+
+        // Entity ID filters
+        if (!empty($filters['productIds'])) {
+            $query->whereIn('product_id', $filters['productIds']);
+        }
+
+        if (!empty($filters['warehouseIds'])) {
+            $query->whereIn('warehouse_id', $filters['warehouseIds']);
+        }
+
+        if (!empty($filters['userIds'])) {
+            $query->whereIn('user_id', $filters['userIds']);
+        }
+
+        // Quantity filters
+        if (isset($filters['quantityMovedMin'])) {
+            $query->where(DB::raw('ABS(quantity_moved)'), '>=', $filters['quantityMovedMin']);
+        }
+
+        if (isset($filters['quantityMovedMax'])) {
+            $query->where(DB::raw('ABS(quantity_moved)'), '<=', $filters['quantityMovedMax']);
+        }
+
+        if (isset($filters['quantityBeforeMin'])) {
+            $query->where('quantity_before', '>=', $filters['quantityBeforeMin']);
+        }
+
+        if (isset($filters['quantityBeforeMax'])) {
+            $query->where('quantity_before', '<=', $filters['quantityBeforeMax']);
+        }
+
+        if (isset($filters['quantityAfterMin'])) {
+            $query->where('quantity_after', '>=', $filters['quantityAfterMin']);
+        }
+
+        if (isset($filters['quantityAfterMax'])) {
+            $query->where('quantity_after', '<=', $filters['quantityAfterMax']);
+        }
+
+        // Value filters
+        if (isset($filters['unitCostMin'])) {
+            $query->where('unit_cost', '>=', $filters['unitCostMin']);
+        }
+
+        if (isset($filters['unitCostMax'])) {
+            $query->where('unit_cost', '<=', $filters['unitCostMax']);
+        }
+
+        if (isset($filters['totalValueMin'])) {
+            $query->where('total_value', '>=', $filters['totalValueMin']);
+        }
+
+        if (isset($filters['totalValueMax'])) {
+            $query->where('total_value', '<=', $filters['totalValueMax']);
+        }
+
+        // Date filters
+        if (!empty($filters['createdAfter'])) {
+            $query->where('created_at', '>=', $filters['createdAfter']);
+        }
+
+        if (!empty($filters['createdBefore'])) {
+            $query->where('created_at', '<=', $filters['createdBefore']);
+        }
+
+        if (!empty($filters['approvedAfter'])) {
+            $query->where('approved_at', '>=', $filters['approvedAfter']);
+        }
+
+        if (!empty($filters['approvedBefore'])) {
+            $query->where('approved_at', '<=', $filters['approvedBefore']);
+        }
+
+        // Movement direction filters
+        if (!empty($filters['movementDirection'])) {
+            if ($filters['movementDirection'] === 'increase') {
+                $query->where('quantity_moved', '>', 0);
+            } elseif ($filters['movementDirection'] === 'decrease') {
+                $query->where('quantity_moved', '<', 0);
+            }
+        }
+
+        // Related document type filters
+        if (!empty($filters['relatedDocumentTypes'])) {
+            $query->whereIn('related_document_type', $filters['relatedDocumentTypes']);
+        }
+
+        // Quick filters
+        if (!empty($filters['myMovements'])) {
+            $query->where('user_id', auth()->id());
+        }
+
+        if (!empty($filters['recentMovements'])) {
+            $query->where('created_at', '>=', now()->subDays(7));
+        }
+
+        if (!empty($filters['pendingApproval'])) {
+            $query->where('status', 'pending');
+        }
+
+        if (!empty($filters['highValueMovements'])) {
+            $query->where('total_value', '>', 1000); // Adjust threshold as needed
+        }
+
+        if (!empty($filters['hasApprover'])) {
+            $query->whereNotNull('approved_by');
+        }
+
+        if (!empty($filters['hasDocumentReference'])) {
+            $query->whereNotNull('related_document_type')
+                ->whereNotNull('related_document_id');
+        }
+    }
+
+    /**
+     * Get advanced search statistics
+     */
+    public function getAdvancedSearchStats(array $filters = []): array
+    {
+        $baseQuery = StockMovement::with(['product', 'warehouse', 'user']);
+        $filteredQuery = clone $baseQuery;
+        $this->applyAdvancedFilters($filteredQuery, $filters);
+
+        // Movement type distribution
+        $movementTypes = (clone $filteredQuery)
+            ->select('movement_type', DB::raw('count(*) as count'))
+            ->groupBy('movement_type')
+            ->pluck('count', 'movement_type')
+            ->toArray();
+
+        // Status distribution
+        $statusCounts = (clone $filteredQuery)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Movement direction analysis
+        $directionStats = (clone $filteredQuery)
+            ->select(
+                DB::raw('SUM(CASE WHEN quantity_moved > 0 THEN 1 ELSE 0 END) as increases'),
+                DB::raw('SUM(CASE WHEN quantity_moved < 0 THEN 1 ELSE 0 END) as decreases'),
+                DB::raw('SUM(CASE WHEN quantity_moved > 0 THEN quantity_moved ELSE 0 END) as total_increase_quantity'),
+                DB::raw('SUM(CASE WHEN quantity_moved < 0 THEN ABS(quantity_moved) ELSE 0 END) as total_decrease_quantity')
+            )
+            ->first();
+
+        // Value analysis
+        $valueStats = (clone $filteredQuery)
+            ->select(
+                DB::raw('COUNT(*) as total_count'),
+                DB::raw('SUM(COALESCE(total_value, 0)) as total_value'),
+                DB::raw('AVG(COALESCE(total_value, 0)) as avg_value'),
+                DB::raw('MAX(COALESCE(total_value, 0)) as max_value'),
+                DB::raw('MIN(COALESCE(total_value, 0)) as min_value')
+            )
+            ->first();
+
+        // Recent activity (last 7 days)
+        $recentActivity = (clone $filteredQuery)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+
+        // Top products by movement count
+        $topProducts = (clone $filteredQuery)
+            ->select('product_id', DB::raw('count(*) as movement_count'))
+            ->with('product:id,name,sku')
+            ->groupBy('product_id')
+            ->orderByDesc('movement_count')
+            ->limit(5)
+            ->get();
+
+        // Top warehouses by movement count
+        $topWarehouses = (clone $filteredQuery)
+            ->select('warehouse_id', DB::raw('count(*) as movement_count'))
+            ->with('warehouse:id,name')
+            ->groupBy('warehouse_id')
+            ->orderByDesc('movement_count')
+            ->limit(5)
+            ->get();
+
+        return [
+            'totalResults' => $filteredQuery->count(),
+            'movementTypes' => $movementTypes,
+            'statusCounts' => $statusCounts,
+            'directionStats' => [
+                'increases' => $directionStats->increases ?? 0,
+                'decreases' => $directionStats->decreases ?? 0,
+                'totalIncreaseQuantity' => $directionStats->total_increase_quantity ?? 0,
+                'totalDecreaseQuantity' => $directionStats->total_decrease_quantity ?? 0,
+            ],
+            'valueStats' => [
+                'totalCount' => $valueStats->total_count ?? 0,
+                'totalValue' => $valueStats->total_value ?? 0,
+                'averageValue' => $valueStats->avg_value ?? 0,
+                'maxValue' => $valueStats->max_value ?? 0,
+                'minValue' => $valueStats->min_value ?? 0,
+            ],
+            'recentActivity' => $recentActivity,
+            'topProducts' => $topProducts,
+            'topWarehouses' => $topWarehouses,
+        ];
     }
 }

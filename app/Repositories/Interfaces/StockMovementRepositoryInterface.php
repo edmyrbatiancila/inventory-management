@@ -29,4 +29,7 @@ interface StockMovementRepositoryInterface
     public function getMovementSummaryByWarehouse(int $warehouseId): array;
     public function getMovementsByDateRange(string $startDate, string $endDate): Collection;
     public function getTopMovementsByValue(int $limit = 10): Collection;
+
+    // Advanced Search Stats
+    public function getAdvancedSearchStats(array $filters): array;
 }

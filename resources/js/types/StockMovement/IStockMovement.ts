@@ -236,3 +236,94 @@ export const StatusColors: Record<StockMovementStatus, string> = {
     rejected: 'bg-red-100 text-red-800',
     applied: 'bg-green-100 text-green-800',
 };
+
+export interface StockMovementAdvancedFilters {
+    // Text Search Filters
+    globalSearch?: string;
+    referenceNumber?: string;
+    reason?: string;
+    notes?: string;
+
+    // Movement Type Filters
+    movementTypes?: StockMovementType[];
+
+    // Status Filters
+    statuses?: StockMovementStatus[];
+
+    // Product & Warehouse Filters
+    productIds?: number[];
+    warehouseIds?: number[];
+    userIds?: number[];
+
+    // Quantity Filters
+    quantityMovedMin?: number;
+    quantityMovedMax?: number;
+    quantityBeforeMin?: number;
+    quantityBeforeMax?: number;
+    quantityAfterMin?: number;
+    quantityAfterMax?: number;
+
+    // Value Filters
+    unitCostMin?: number;
+    unitCostMax?: number;
+    totalValueMin?: number;
+    totalValueMax?: number;
+
+    // Date Filters
+    createdAfter?: string;
+    createdBefore?: string;
+    approvedAfter?: string;
+    approvedBefore?: string;
+
+    // Related Document Filters
+    relatedDocumentTypes?: string[];
+    relatedDocumentId?: number;
+
+    // Direction Filters
+    movementDirection?: 'increase' | 'decrease' | 'both';
+
+    // Quick Filters
+    myMovements?: boolean;
+    recentMovements?: boolean;
+    pendingApproval?: boolean;
+    highValue?: boolean;
+    largeQuantity?: boolean;
+
+    // Sorting and Pagination
+    sort?: string;
+    per_page?: number;
+}
+
+export interface StockMovementSavedFilter {
+    id: string;
+    name: string;
+    filters: StockMovementAdvancedFilters;
+    createdAt: string;
+    usageCount?: number;
+}
+
+export interface StockMovementAdvancedSearchStats {
+    totalResults: number;
+    movementTypeCounts: Record<StockMovementType, number>;
+    statusCounts: Record<StockMovementStatus, number>;
+    directionCounts: {
+        increases: number;
+        decreases: number;
+    };
+    valueSummary: {
+        totalValue: number;
+        averageValue: number;
+        maxValue: number;
+        minValue: number;
+    };
+    quantitySummary: {
+        totalQuantity: number;
+        averageQuantity: number;
+        maxQuantity: number;
+        minQuantity: number;
+    };
+    dateRange: {
+        earliest: string;
+        latest: string;
+    };
+}

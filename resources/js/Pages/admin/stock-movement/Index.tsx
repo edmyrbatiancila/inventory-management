@@ -1,4 +1,5 @@
 import CustomPagination from "@/Components/CustomPagination";
+import StockMovementAdvancedSearchDialog from "@/Components/StockMovement/AdvancedSearchDialog";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
@@ -6,8 +7,9 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import { useStockMovementAdvancedSearch } from "@/hooks/stock-transfers/useStockMovementAdvancedSearch";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { PaginatedResponse } from "@/types";
+import { PaginatedResponse, User } from "@/types";
 import { Product } from "@/types/Product/IProduct";
 import { 
     MovementTypeColors, 
@@ -18,8 +20,13 @@ import {
     StockMovementFilters, 
     StockMovementSearchStats 
 } from "@/types/StockMovement/IStockMovement";
+import { 
+    StockMovementAdvancedFilters, 
+    StockMovementAdvancedSearchProps as StockMovementAdvancedSearchStats 
+} from "@/types/StockMovement/IStockMovementAdvancedFilters";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { formatDate } from "@/utils/date";
+import { getInitialAdvancedFilters } from "@/utils/stock-movements/initialAdvancedFilters";
 import { Head, router } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { 
@@ -42,11 +49,14 @@ import { useRef, useState } from "react";
 interface IStockMovementsIndexProps {
     movements: PaginatedResponse<StockMovement>;
     searchStats?: StockMovementSearchStats;
+    advancedSearchStats?: StockMovementAdvancedSearchStats;
     products: Product[];
     warehouses: Warehouse[];
     currentFilters: StockMovementFilters;
     sort?: string;
     status?: string;
+    hasAdvancedFilters?: boolean;
+    users: User[];
 }
 
 const StockMovementsIndex = ({
@@ -56,7 +66,9 @@ const StockMovementsIndex = ({
     warehouses,
     currentFilters,
     sort: initialSort = 'newest',
-    status: initialStatus
+    status: initialStatus,
+    hasAdvancedFilters = false,
+    users,
 }: IStockMovementsIndexProps) => {
     const [search, setSearch] = useState<string>(currentFilters.search || '');
     const [sort, setSort] = useState(initialSort);
@@ -64,6 +76,27 @@ const StockMovementsIndex = ({
     const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Advanced Search hook
+    const { 
+        filters: advancedFilters,
+        savedFilters,
+        isSearching: isAdvancedSearching,
+        applySearch,
+        removeFilter,
+        clearAllFilters,
+        saveFilter,
+        loadSavedFilter,
+        deleteSavedFilter,
+        hasActiveFilters,
+    } = useStockMovementAdvancedSearch({
+        currentRoute: route('admin.stock-movements.index'),
+        initialFilters: getInitialAdvancedFilters(),
+    });
+
+    const handleAdvancedSearch = (filters: StockMovementAdvancedFilters) => {
+        applySearch(filters);
+    }
 
     // Handle search input with debounce
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,18 +282,98 @@ const StockMovementsIndex = ({
                                     </Select>
 
                                     {/* Advanced Search Button */}
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowAdvancedSearch(true)}
-                                        className="shrink-0"
-                                    >
-                                        <Filter className="w-4 h-4 mr-2" />
-                                        Advanced
-                                    </Button>
+                                    <motion.div whileHover={{ scale: 1.02 }}>
+                                        <Button
+                                            variant={hasActiveFilters ? "default" : "outline"}
+                                            onClick={() => setShowAdvancedSearch(true)}
+                                            className="shrink-0 gap-2"
+                                        >
+                                            <Filter className="w-4 h-4" />
+                                            Advanced Search
+                                            {hasActiveFilters && (
+                                                <Badge variant="secondary" className="ml-1 px-1 min-w-[1.25rem] h-5">
+                                                    {Object.keys(advancedFilters).length}
+                                                </Badge>
+                                            )}
+                                        </Button>
+                                    </motion.div>
+                                    
                                 </div>
                             </div>
                         </div>
                     </motion.div>
+
+                    {/* Active Filters Display */}
+                    {hasActiveFilters && (
+                        <motion.div 
+                            className="bg-white overflow-hidden shadow-sm rounded-lg mb-6"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                        >
+                            <div className="p-4 border-b border-gray-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-medium text-gray-700">Active Filters</h3>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={clearAllFilters}
+                                        className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                                    >
+                                        Clear All
+                                    </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(advancedFilters).map(([key, value]) => {
+                                        if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                                        
+                                        const getFilterLabel = (key: string, value: any) => {
+                                            switch(key) {
+                                                case 'globalSearch': return `Search: ${value}`;
+                                                case 'movementTypes': return `Types: ${Array.isArray(value) ? value.map(v => MovementTypeLabels[v as keyof typeof MovementTypeLabels] || v).join(', ') : value}`;
+                                                case 'statuses': return `Status: ${Array.isArray(value) ? value.map(v => StatusLabels[v as keyof typeof StatusLabels] || v).join(', ') : value}`;
+                                                case 'quantityMovedMin': return `Min Qty: ${value}`;
+                                                case 'quantityMovedMax': return `Max Qty: ${value}`;
+                                                case 'totalValueMin': return `Min Value: $${value}`;
+                                                case 'totalValueMax': return `Max Value: $${value}`;
+                                                case 'createdAfter': return `From: ${value}`;
+                                                case 'createdBefore': return `To: ${value}`;
+                                                case 'movementDirection': return `Direction: ${value}`;
+                                                case 'productIds': return `Products: ${Array.isArray(value) ? value.length + ' selected' : value}`;
+                                                case 'warehouseIds': return `Warehouses: ${Array.isArray(value) ? value.length + ' selected' : value}`;
+                                                case 'userIds': return `Users: ${Array.isArray(value) ? value.length + ' selected' : value}`;
+                                                case 'myMovements': return value ? 'My Movements' : '';
+                                                case 'pendingApproval': return value ? 'Pending Approval' : '';
+                                                case 'highValueMovements': return value ? 'High Value' : '';
+                                                default: return `${key}: ${value}`;
+                                            }
+                                        };
+
+                                        const filterLabel = getFilterLabel(key, value);
+                                        if (!filterLabel) return null;
+
+                                        return (
+                                            <Badge 
+                                                key={key} 
+                                                variant="secondary" 
+                                                className="gap-1 pr-1"
+                                            >
+                                                {filterLabel}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                                    onClick={() => removeFilter(key as keyof StockMovementAdvancedFilters)}
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </Button>
+                                            </Badge>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* Search Stats Cards */}
                     {searchStats && (
@@ -546,6 +659,21 @@ const StockMovementsIndex = ({
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Advanced Search Dialog */}
+            <StockMovementAdvancedSearchDialog
+                isOpen={showAdvancedSearch}
+                onClose={() => setShowAdvancedSearch(false)}
+                onSearch={handleAdvancedSearch}
+                products={products}
+                warehouses={warehouses}
+                users={users}
+                currentFilters={advancedFilters}
+                savedFilters={savedFilters}
+                onSaveFilter={saveFilter}
+                onLoadFilter={loadSavedFilter}
+                onDeleteFilter={deleteSavedFilter}
+            />
         </Authenticated>
     );
 }

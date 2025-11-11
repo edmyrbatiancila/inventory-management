@@ -116,6 +116,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('stock-movements/{id}/approve', [StockMovementController::class, 'approve'])->name('stock-movements.approve');
         Route::post('stock-movements/{id}/reject', [StockMovementController::class, 'reject'])->name('stock-movements.reject');
         Route::get('stock-movements/api/analytics', [StockMovementController::class, 'analytics'])->name('stock-movements.api.analytics');
+
+        // Stock Movement Advanced Search Route:
+        Route::post('stock-movements/advanced-search', [StockMovementController::class, 'advancedSearch'])->name('stock-movements.advanced-search');
     });
 });
 

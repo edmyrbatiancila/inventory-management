@@ -226,4 +226,9 @@ class StockMovementService
             'monthMovements' => StockMovement::whereMonth('created_at', now()->month)->count(),
         ];
     }
+
+    public function getAdvancedSearchStats(array $filters): array
+    {
+        return $this->stockMovementRepository->getAdvancedSearchStats($filters);
+    }
 }
