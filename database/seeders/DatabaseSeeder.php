@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             InventoryMovementSeeder::class,
             StockTransferSeeder::class,
             StockMovementSeeder::class,
+            PurchaseOrderSeeder::class,
         ]);
 
     }
