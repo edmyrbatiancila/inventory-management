@@ -54,6 +54,8 @@ export interface StockMovementAdvancedFilters {
     recentMovements?: boolean;
     pendingApproval?: boolean;
     highValueMovements?: boolean;
+    highValue?: boolean;
+    largeQuantity?: boolean;
     hasApprover?: boolean;
     hasDocumentReference?: boolean;
 

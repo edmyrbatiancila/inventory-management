@@ -7,7 +7,9 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Input } from "@/Components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
+import { getMovementIcon } from "@/hooks/stock-movements/movementIcon";
 import { useStockMovementAdvancedSearch } from "@/hooks/stock-transfers/useStockMovementAdvancedSearch";
+import { stockMovementUtils } from "@/utils/stockMovementHelpers";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { PaginatedResponse, User } from "@/types";
 import { Product } from "@/types/Product/IProduct";
@@ -27,6 +29,8 @@ import {
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { formatDate } from "@/utils/date";
 import { getInitialAdvancedFilters } from "@/utils/stock-movements/initialAdvancedFilters";
+import { getMovementTypeStats } from "@/utils/stock-movements/movementTypeStats";
+import { getValueDisplay } from "@/utils/stock-movements/valueDisplay";
 import { Head, router } from "@inertiajs/react";
 import { motion } from "framer-motion";
 import { 
@@ -71,10 +75,11 @@ const StockMovementsIndex = ({
     users,
 }: IStockMovementsIndexProps) => {
     const [search, setSearch] = useState<string>(currentFilters.search || '');
-    const [sort, setSort] = useState(initialSort);
+    const [sort, setSort] = useState<string>(initialSort);
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
-
+    
+    // Debounce ref for search functionality
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
     // Advanced Search hook
@@ -99,79 +104,46 @@ const StockMovementsIndex = ({
     }
 
     // Handle search input with debounce
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
+    // const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const value = e.target.value;
 
-        setSearch(value);
-        setIsSearching(true);
+    //     setSearch(value);
+    //     setIsSearching(true);
 
-        if (debounceRef.current) clearTimeout(debounceRef.current);
+    //     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-        debounceRef.current = setTimeout(() => {
-            router.get(
-                route('admin.stock-movements.index'), 
-                { search: value, sort }, 
-                { preserveState: true, replace: true }
-            );
-            setIsSearching(false);
-        }, 500);
-    };
+    //     debounceRef.current = setTimeout(() => {
+    //         router.get(
+    //             route('admin.stock-movements.index'), 
+    //             { search: value, sort }, 
+    //             { preserveState: true, replace: true }
+    //         );
+    //         setIsSearching(false);
+    //     }, 500);
+    // };
 
     // Clear search
-    const handleClear = () => {
-        setSearch('');
-        setSort('newest');
+    // const handleClear = () => {
+    //     setSearch('');
+    //     setSort('newest');
 
-        router.get(
-            route('admin.stock-movements.index'), 
-            {}, 
-            { preserveState: true, replace: true }
-        );
-    };
+    //     router.get(
+    //         route('admin.stock-movements.index'), 
+    //         {}, 
+    //         { preserveState: true, replace: true }
+    //     );
+    // };
 
     // Handle filter/sort change for shadcn UI Select
-    const handleSortChange = (value: string) => {
-        setSort(value);
+    // const handleSortChange = (value: string) => {
+    //     setSort(value);
 
-        router.get(
-            route('admin.stock-movements.index'), 
-            { search, sort: value }, 
-            { preserveState: true, replace: true }
-        );
-    };
-
-    // Get movement direction icon
-    const getMovementIcon = (movementType: string, quantityMoved: number) => {
-        if (movementType.includes('increase') || movementType === 'transfer_in' || movementType === 'purchase_receive' || movementType === 'return_customer') {
-            return <ArrowUpCircle className="w-4 h-4 text-green-600" />;
-        } else if (movementType.includes('decrease') || movementType === 'transfer_out' || movementType === 'sale_fulfill' || movementType.includes('write_off')) {
-            return <ArrowDownCircle className="w-4 h-4 text-red-600" />;
-        }
-        
-        return <Activity className="w-4 h-4 text-blue-600" />;
-    };
-
-    // Get value display
-    const getValueDisplay = (movement: StockMovement) => {
-        if (movement.total_value !== null && movement.total_value !== undefined) {
-            const value = typeof movement.total_value === 'string' 
-                ? parseFloat(movement.total_value) 
-                : movement.total_value;
-            return isNaN(value) || value === 0 ? '-' : `$${value.toFixed(2)}`;
-        }
-        return '-';
-    };
-
-    // Calculate increases and decreases from movement types
-    const getMovementTypeStats = (movementTypes: Record<string, number>) => {
-        const increaseTypes = ['adjustment_increase', 'transfer_in', 'purchase_receive', 'return_customer'];
-        const decreaseTypes = ['adjustment_decrease', 'transfer_out', 'sale_fulfill', 'return_supplier', 'damage_write_off', 'expiry_write_off'];
-        
-        const increases = increaseTypes.reduce((sum, type) => sum + (movementTypes[type] || 0), 0);
-        const decreases = decreaseTypes.reduce((sum, type) => sum + (movementTypes[type] || 0), 0);
-        
-        return { increases, decreases };
-    };
+    //     router.get(
+    //         route('admin.stock-movements.index'), 
+    //         { search, sort: value }, 
+    //         { preserveState: true, replace: true }
+    //     );
+    // };
 
     return (
         <Authenticated
@@ -250,12 +222,22 @@ const StockMovementsIndex = ({
                                             type="text"
                                             placeholder="Search movements by reference, product, warehouse, or user..."
                                             value={search}
-                                            onChange={handleSearchChange}
+                                            onChange={(e) => 
+                                                stockMovementUtils.handleSearch(
+                                                    e.target.value,
+                                                    sort,
+                                                    setSearch,
+                                                    setIsSearching,
+                                                    debounceRef
+                                                )
+                                            }
                                             className="pl-10 pr-10"
                                         />
                                         {search && (
                                             <button
-                                                onClick={handleClear}
+                                                onClick={() => 
+                                                    stockMovementUtils.clearFilters(setSearch, setSort)
+                                                }
                                                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                             >
                                                 <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
@@ -267,7 +249,16 @@ const StockMovementsIndex = ({
                                 {/* Controls */}
                                 <div className="flex items-center gap-3">
                                     {/* Sort */}
-                                    <Select value={sort} onValueChange={handleSortChange}>
+                                    <Select 
+                                        value={sort} 
+                                        onValueChange={(value) => 
+                                            stockMovementUtils.handleSort(
+                                                value,
+                                                search,
+                                                setSort
+                                            )
+                                        }
+                                    >
                                         <SelectTrigger className="w-[180px]">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -334,8 +325,8 @@ const StockMovementsIndex = ({
                                                 case 'statuses': return `Status: ${Array.isArray(value) ? value.map(v => StatusLabels[v as keyof typeof StatusLabels] || v).join(', ') : value}`;
                                                 case 'quantityMovedMin': return `Min Qty: ${value}`;
                                                 case 'quantityMovedMax': return `Max Qty: ${value}`;
-                                                case 'totalValueMin': return `Min Value: $${value}`;
-                                                case 'totalValueMax': return `Max Value: $${value}`;
+                                                case 'totalValueMin': return `Min Value: ₱${value}`;
+                                                case 'totalValueMax': return `Max Value: ₱${value}`;
                                                 case 'createdAfter': return `From: ${value}`;
                                                 case 'createdBefore': return `To: ${value}`;
                                                 case 'movementDirection': return `Direction: ${value}`;
@@ -580,7 +571,7 @@ const StockMovementsIndex = ({
                                                             </div>
                                                             {movement.unit_cost && (
                                                                 <div className="text-xs text-gray-500">
-                                                                    @${movement.unit_cost}/unit
+                                                                    @₱{movement.unit_cost}/unit
                                                                 </div>
                                                             )}
                                                         </TableCell>

@@ -95,7 +95,7 @@ trait HasPurchaseOrderItemStates
     /**
      * Generate data for discounted item
      */
-    public function withDiscount(float $discountPercentage = null): static
+    public function withDiscount(?float $discountPercentage = null): static
     {
         $discount = $discountPercentage ?? $this->faker->randomFloat(2, 5, 25);
         

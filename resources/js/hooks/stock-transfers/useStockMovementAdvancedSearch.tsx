@@ -123,9 +123,11 @@ export function useStockMovementAdvancedSearch({
         
         if (Array.isArray(newFilters[key]) && value !== undefined) {
             // For array filters, remove specific value
-            newFilters[key] = (newFilters[key] as any[]).filter((item: any) => item !== value);
-            if ((newFilters[key] as any[]).length === 0) {
+            const filteredArray = (newFilters[key] as any[]).filter((item: any) => item !== value);
+            if (filteredArray.length === 0) {
                 delete newFilters[key];
+            } else {
+                (newFilters as any)[key] = filteredArray;
             }
         } else {
             delete newFilters[key];

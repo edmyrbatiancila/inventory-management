@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTransferController;
@@ -119,6 +120,34 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
         // Stock Movement Advanced Search Route:
         Route::post('stock-movements/advanced-search', [StockMovementController::class, 'advancedSearch'])->name('stock-movements.advanced-search');
+
+        // =========== Purchase Order Routes ============
+
+        Route::resource('purchase-orders', PurchaseOrderController::class)->parameters([
+            'purchase-orders' => 'purchaseOrder'
+        ]);
+
+        // Purchase Order Status Actions
+        Route::prefix('purchase-orders/{purchaseOrder}')->name('purchase-orders.')->group(function () {
+            Route::post('approve', [PurchaseOrderController::class, 'approve'])->name('approve');
+            Route::post('send-to-supplier', [PurchaseOrderController::class, 'sendToSupplier'])->name('send-to-supplier');
+            Route::post('cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
+            Route::post('receive', [PurchaseOrderController::class, 'receive'])->name('receive');
+        });
+
+        // Purchase Order Item Actions
+        Route::prefix('purchase-orders/{purchaseOrder}/items')->name('purchase-orders.items.')->group(function () {
+            Route::post('/', [PurchaseOrderController::class, 'addItem'])->name('store');
+            Route::put('{item}', [PurchaseOrderController::class, 'updateItem'])->name('update');
+            Route::delete('{item}', [PurchaseOrderController::class, 'removeItem'])->name('destroy');
+        });
+
+        // Quick Actions & Reports
+        Route::prefix('purchase-orders-reports')->name('purchase-orders.reports.')->group(function () {
+            Route::get('pending-approvals', [PurchaseOrderController::class, 'pendingApprovals'])->name('pending-approvals');
+            Route::get('overdue', [PurchaseOrderController::class, 'overdue'])->name('overdue');
+            Route::get('statistics', [PurchaseOrderController::class, 'statistics'])->name('statistics');
+        });
     });
 });
 
