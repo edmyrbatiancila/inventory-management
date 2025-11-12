@@ -161,7 +161,7 @@ class PurchaseOrderService
     }
 
     /**
-     * Update item with business logic
+     * Update item in purchase order
      */
     public function updateItem(int $poId, int $itemId, array $itemData): bool
     {
@@ -172,6 +172,25 @@ class PurchaseOrderService
         }
 
         return $this->repository->updateItem($purchaseOrder, $itemId, $itemData);
+    }
+
+    /**
+     * Remove item from purchase order
+     */
+    public function removeItem(int $poId, int $itemId): bool
+    {
+        $purchaseOrder = $this->repository->find($poId);
+        
+        if (!$purchaseOrder) {
+            throw new InvalidArgumentException("Purchase order not found");
+        }
+
+        // Only allow item removal if PO is in draft status
+        if ($purchaseOrder->status !== PurchaseOrder::STATUS_DRAFT) {
+            throw new InvalidArgumentException("Can only remove items from draft purchase orders");
+        }
+
+        return $this->repository->removeItem($purchaseOrder, $itemId);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 use Inertia\Response;
 
 trait PurchaseOrderResponses
@@ -53,13 +54,12 @@ trait PurchaseOrderResponses
      */
     protected function renderIndex($purchaseOrders, array $additionalData = []): Response
     {
-        return inertia('Admin/PurchaseOrders/Index', array_merge([
+        return Inertia::render('admin/purchase-orders/Index', array_merge([
             'purchase_orders' => $purchaseOrders,
             'filters' => request()->only(['search', 'status', 'priority', 'warehouse_id']),
             'can' => [
                 'create' => auth()->user()->can('create', PurchaseOrder::class),
-                'update' => auth()->user()->can('update', PurchaseOrder::class),
-                'delete' => auth()->user()->can('delete', PurchaseOrder::class),
+                'viewAny' => auth()->user()->can('viewAny', PurchaseOrder::class),
             ]
         ], $additionalData));
     }
@@ -69,7 +69,7 @@ trait PurchaseOrderResponses
      */
     protected function renderShow(PurchaseOrder $purchaseOrder): Response
     {
-        return inertia('Admin/PurchaseOrders/Show', [
+        return Inertia::render('Admin/PurchaseOrders/Show', [
             'purchase_order' => $purchaseOrder->load(['items.product', 'warehouse', 'createdBy', 'approvedBy']),
             'can' => [
                 'approve' => $purchaseOrder->canBeApproved() && auth()->user()->can('approve', $purchaseOrder),

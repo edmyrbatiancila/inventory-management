@@ -49,6 +49,7 @@ import {
     X 
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { Spinner } from "@/Components/ui/spinner";
 
 interface IStockMovementsIndexProps {
     movements: PaginatedResponse<StockMovement>;
@@ -103,48 +104,6 @@ const StockMovementsIndex = ({
         applySearch(filters);
     }
 
-    // Handle search input with debounce
-    // const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     const value = e.target.value;
-
-    //     setSearch(value);
-    //     setIsSearching(true);
-
-    //     if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    //     debounceRef.current = setTimeout(() => {
-    //         router.get(
-    //             route('admin.stock-movements.index'), 
-    //             { search: value, sort }, 
-    //             { preserveState: true, replace: true }
-    //         );
-    //         setIsSearching(false);
-    //     }, 500);
-    // };
-
-    // Clear search
-    // const handleClear = () => {
-    //     setSearch('');
-    //     setSort('newest');
-
-    //     router.get(
-    //         route('admin.stock-movements.index'), 
-    //         {}, 
-    //         { preserveState: true, replace: true }
-    //     );
-    // };
-
-    // Handle filter/sort change for shadcn UI Select
-    // const handleSortChange = (value: string) => {
-    //     setSort(value);
-
-    //     router.get(
-    //         route('admin.stock-movements.index'), 
-    //         { search, sort: value }, 
-    //         { preserveState: true, replace: true }
-    //     );
-    // };
-
     return (
         <Authenticated
             header={
@@ -152,19 +111,13 @@ const StockMovementsIndex = ({
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                            <History className="w-6 h-6 text-blue-600" />
-                        </div>
                         <div>
-                            <h2 className="text-2xl font-bold leading-tight text-gray-800 tracking-tight">
-                                Stock Movement History
+                            <h2 className="text-2xl font-bold leading-tight text-blue-800 tracking-tight flex items-center gap-2">
+                                <PackageOpen className="w-7 h-7 text-blue-800" />
+                                Stock Movement
                             </h2>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Complete audit trail of all inventory transactions
-                            </p>
                         </div>
                     </div>
 
@@ -213,7 +166,8 @@ const StockMovementsIndex = ({
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             {isSearching ? (
-                                                <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                                                <Spinner />
+                                                // <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
                                             ) : (
                                                 <Search className="h-4 w-4 text-gray-400" />
                                             )}

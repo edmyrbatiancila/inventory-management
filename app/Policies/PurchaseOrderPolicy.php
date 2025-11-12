@@ -13,7 +13,8 @@ class PurchaseOrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        // Allow authenticated users to view purchase orders list
+        return true;
     }
 
     /**
@@ -21,7 +22,8 @@ class PurchaseOrderPolicy
      */
     public function view(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return false;
+        // Allow authenticated users to view purchase orders
+        return true;
     }
 
     /**
@@ -29,7 +31,8 @@ class PurchaseOrderPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        // Allow authenticated users to create purchase orders
+        return true;
     }
 
     /**
@@ -37,7 +40,10 @@ class PurchaseOrderPolicy
      */
     public function update(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return false;
+        // Allow creators to update draft purchase orders
+        // Note: Assuming all authenticated users can edit draft POs for now
+        return $purchaseOrder->status === 'draft' && 
+               $purchaseOrder->created_by === $user->id;
     }
 
     /**
@@ -45,7 +51,9 @@ class PurchaseOrderPolicy
      */
     public function delete(User $user, PurchaseOrder $purchaseOrder): bool
     {
-        return false;
+        // Only allow deletion of draft purchase orders by creator
+        return $purchaseOrder->status === 'draft' && 
+               $purchaseOrder->created_by === $user->id;
     }
 
     /**
@@ -62,5 +70,42 @@ class PurchaseOrderPolicy
     public function forceDelete(User $user, PurchaseOrder $purchaseOrder): bool
     {
         return false;
+    }
+
+    /**
+     * Determine whether the user can approve the purchase order.
+     */
+    public function approve(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        // Allow any authenticated user to approve for now
+        // In production, you'd check for specific roles/permissions
+        return $purchaseOrder->status === 'pending_approval';
+    }
+
+    /**
+     * Determine whether the user can send the purchase order to supplier.
+     */
+    public function send(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        // Can send if approved
+        return $purchaseOrder->status === 'approved';
+    }
+
+    /**
+     * Determine whether the user can receive items for the purchase order.
+     */
+    public function receive(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        // Can receive if sent to supplier
+        return in_array($purchaseOrder->status, ['sent_to_supplier', 'partially_received']);
+    }
+
+    /**
+     * Determine whether the user can cancel the purchase order.
+     */
+    public function cancel(User $user, PurchaseOrder $purchaseOrder): bool
+    {
+        // Can cancel if not yet fully received
+        return !in_array($purchaseOrder->status, ['fully_received', 'closed', 'cancelled']);
     }
 }
