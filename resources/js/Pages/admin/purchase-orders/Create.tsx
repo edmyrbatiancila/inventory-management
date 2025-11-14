@@ -37,6 +37,7 @@ const PurchaseOrderCreate = ({
 
     const { data, setData, post, processing, errors, reset } = useForm<CreatePurchaseOrderData>({
         po_number: nextPoNumber,
+        supplier_reference: '',
         supplier_name: '',
         supplier_email: '',
         supplier_phone: '',
@@ -46,8 +47,13 @@ const PurchaseOrderCreate = ({
         expected_delivery_date: '',
         priority: 'normal',
         currency: defaultCurrency,
+        tax_rate: 0,
+        shipping_cost: 0,
+        discount_amount: 0,
         notes: '',
         terms_and_conditions: '',
+        is_recurring: false,
+        metadata: {},
         items: []
     });
 
@@ -55,11 +61,18 @@ const PurchaseOrderCreate = ({
     const addItem = () => {
         const newItem: PurchaseOrderItems = {
             product_id: 0,
+            product_sku: '',
+            product_name: '',
+            product_description: '',
             quantity_ordered: 1,
             unit_cost: 0,
             discount_percentage: 0,
+            discount_amount: 0,
+            line_total: 0,
+            final_line_total: 0,
+            expected_delivery_date: '',
             notes: '',
-            line_total: 0
+            metadata: {}
         };
         setItems([...items, newItem]);
     };
@@ -235,7 +248,7 @@ const PurchaseOrderCreate = ({
 
                                         <div className="space-y-2">
                                             <Label htmlFor="priority">Priority</Label>
-                                            <Select value={data.priority || 'normal'} onValueChange={(value) => setData('priority', value)}>
+                                            <Select value={data.priority || 'normal'} onValueChange={(value) => setData('priority', value as any)}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select priority" />
                                                 </SelectTrigger>

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { Product } from "@/types/Product/IProduct";
-import { PurchaseOrder, CreatePurchaseOrderData, PurchaseOrderItems } from "@/types/PurchaseOrders/IPurchaseOrder";
+import { PurchaseOrder, CreatePurchaseOrderData, PurchaseOrderItems, PriorityPO } from "@/types/PurchaseOrders/IPurchaseOrder";
 
 interface IPurchaseOrderEditProps extends PageProps {
     purchase_order: PurchaseOrder;
@@ -43,11 +43,22 @@ const PurchaseOrderEdit = () => {
         
         return purchase_order.items.map(item => ({
             product_id: item.product_id,
+            product_sku: item.product_sku,
+            product_name: item.product_name,
+            product_description: item.product_description,
             quantity_ordered: getNumeric(item.quantity_ordered),
             unit_cost: getNumeric(item.unit_cost),
             discount_percentage: getNumeric(item.discount_percentage || 0),
+            discount_amount: getNumeric(item.discount_amount || 0),
+            line_total: getNumeric(item.line_total || 0),
+            final_line_total: getNumeric(item.final_line_total || item.line_total || 0),
+            expected_delivery_date: item.expected_delivery_date
+                ? (item.expected_delivery_date.includes('T') 
+                    ? new Date(item.expected_delivery_date).toISOString().split('T')[0]
+                    : item.expected_delivery_date.split(' ')[0])
+                : '',
             notes: item.notes || '',
-            line_total: getNumeric(item.final_line_total || item.line_total || 0),
+            metadata: item.metadata || {},
             product: item.product
         }));
     };
@@ -57,17 +68,27 @@ const PurchaseOrderEdit = () => {
 
     const { data, setData, put, processing, errors, reset } = useForm<CreatePurchaseOrderData>({
         po_number: purchase_order.po_number || '',
+        supplier_reference: purchase_order.supplier_reference || '',
         supplier_name: purchase_order.supplier_name || '',
         supplier_email: purchase_order.supplier_email || '',
         supplier_phone: purchase_order.supplier_phone || '',
         supplier_address: purchase_order.supplier_address || '',
         supplier_contact_person: purchase_order.supplier_contact_person || '',
         warehouse_id: purchase_order.warehouse?.id || 0,
-        expected_delivery_date: purchase_order.expected_delivery_date || '',
+        expected_delivery_date: purchase_order.expected_delivery_date 
+            ? (purchase_order.expected_delivery_date.includes('T') 
+                ? new Date(purchase_order.expected_delivery_date).toISOString().split('T')[0]
+                : purchase_order.expected_delivery_date.split(' ')[0])
+            : '',
         priority: purchase_order.priority || 'normal',
-        currency: defaultCurrency,
+        currency: purchase_order.currency || defaultCurrency,
+        tax_rate: purchase_order.tax_rate || 0,
+        shipping_cost: purchase_order.shipping_cost || 0,
+        discount_amount: purchase_order.discount_amount || 0,
         notes: purchase_order.notes || '',
         terms_and_conditions: purchase_order.terms_and_conditions || '',
+        is_recurring: purchase_order.is_recurring || false,
+        metadata: purchase_order.metadata || {},
         items: []
     });
 
@@ -95,13 +116,20 @@ const PurchaseOrderEdit = () => {
     const addItem = () => {
         const newItem: PurchaseOrderItems = {
             product_id: 0,
+            product_sku: '',
+            product_name: '',
+            product_description: '',
             quantity_ordered: 1,
             unit_cost: 0,
             discount_percentage: 0,
+            discount_amount: 0,
+            line_total: 0,
+            final_line_total: 0,
+            expected_delivery_date: '',
             notes: '',
-            line_total: 0
+            metadata: {}
         };
-        
+
         setItems([...items, newItem]);
     };
 
@@ -342,7 +370,7 @@ const PurchaseOrderEdit = () => {
                                             {/* Priority */}
                                             <div className="space-y-2">
                                                 <Label htmlFor="priority">Priority</Label>
-                                                <Select value={data.priority} onValueChange={(value) => setData('priority', value)}>
+                                                <Select value={data.priority} onValueChange={(value) => setData('priority', value as any)}>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select priority" />
                                                     </SelectTrigger>

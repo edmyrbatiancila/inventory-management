@@ -399,17 +399,17 @@ const PurchaseOrderView = () => {
                                             <User className="w-4 h-4" />
                                             Created By
                                         </label>
-                                        <p className="text-sm text-gray-900">{purchase_order.created_by.name}</p>
-                                        <p className="text-xs text-gray-500">{purchase_order.created_by.email}</p>
+                                        <p className="text-sm text-gray-900">{purchase_order.createdBy?.name || 'Unknown'}</p>
+                                        <p className="text-xs text-gray-500">{purchase_order.createdBy?.email || ''}</p>
                                     </div>
 
-                                    {purchase_order.approved_by && (
+                                    {purchase_order.approvedBy && (
                                         <div>
                                             <label className="text-sm font-medium text-gray-600 flex items-center gap-1">
                                                 <Check className="w-4 h-4" />
                                                 Approved By
                                             </label>
-                                            <p className="text-sm text-gray-900">{purchase_order.approved_by.name}</p>
+                                            <p className="text-sm text-gray-900">{purchase_order.approvedBy.name}</p>
                                             {purchase_order.approved_at && (
                                                 <p className="text-xs text-gray-500">
                                                     {new Date(purchase_order.approved_at).toLocaleString()}
