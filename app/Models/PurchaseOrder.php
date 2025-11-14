@@ -274,6 +274,11 @@ class PurchaseOrder extends Model
         return in_array($this->status, [self::STATUS_FULLY_RECEIVED, self::STATUS_PARTIALLY_RECEIVED]);
     }
 
+    public function canBeEdited(): bool
+    {
+        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING_APPROVAL]);
+    }
+
     public function getTotalItemsCount(): int
     {
         return $this->items()->count();

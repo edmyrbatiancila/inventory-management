@@ -5,6 +5,8 @@ namespace App\Traits;
 use App\Models\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,7 +15,7 @@ trait PurchaseOrderResponses
     /**
      * Success response for purchase order operations
      */
-    protected function successResponse(string $message, $data = null, string $route = 'admin.purchase-orders.index'): JsonResponse|RedirectResponse
+    protected function successResponse(string $message, $data = null, string $route = 'admin.purchase-orders.index', $routeParameters = []): JsonResponse|RedirectResponse
     {
         if (request()->expectsJson()) {
             return response()->json([
@@ -23,7 +25,7 @@ trait PurchaseOrderResponses
             ]);
         }
 
-        return redirect()->route($route)->with('success', $message);
+        return redirect()->route($route, $routeParameters)->with('success', $message);
     }
 
     /**
@@ -54,12 +56,13 @@ trait PurchaseOrderResponses
      */
     protected function renderIndex($purchaseOrders, array $additionalData = []): Response
     {
+        $user = Auth::user();
         return Inertia::render('admin/purchase-orders/Index', array_merge([
             'purchase_orders' => $purchaseOrders,
             'filters' => request()->only(['search', 'status', 'priority', 'warehouse_id']),
             'can' => [
-                'create' => auth()->user()->can('create', PurchaseOrder::class),
-                'viewAny' => auth()->user()->can('viewAny', PurchaseOrder::class),
+                'create' => Gate::allows('create', PurchaseOrder::class),
+                'viewAny' => Gate::allows('viewAny', PurchaseOrder::class),
             ]
         ], $additionalData));
     }
@@ -69,14 +72,46 @@ trait PurchaseOrderResponses
      */
     protected function renderShow(PurchaseOrder $purchaseOrder): Response
     {
-        return Inertia::render('Admin/PurchaseOrders/Show', [
-            'purchase_order' => $purchaseOrder->load(['items.product', 'warehouse', 'createdBy', 'approvedBy']),
+        $purchaseOrder->load([
+            'items.product.category',
+            'items.product.brand',
+            'warehouse',
+            'createdBy',
+            'approvedBy',
+            'receivedBy'
+        ]);
+
+        return Inertia::render('admin/purchase-orders/View', [
+            'purchase_order' => $purchaseOrder,
+            'statuses' => PurchaseOrder::STATUSES,
+            'priorities' => PurchaseOrder::PRIORITIES,
             'can' => [
-                'approve' => $purchaseOrder->canBeApproved() && auth()->user()->can('approve', $purchaseOrder),
-                'send' => $purchaseOrder->canBeSent() && auth()->user()->can('send', $purchaseOrder),
-                'receive' => $purchaseOrder->canBeReceived() && auth()->user()->can('receive', $purchaseOrder),
-                'cancel' => $purchaseOrder->canBeCancelled() && auth()->user()->can('cancel', $purchaseOrder),
-                'update' => auth()->user()->can('update', $purchaseOrder),
+                'view' => Gate::allows('view', $purchaseOrder),
+                'update' => Gate::allows('update', $purchaseOrder),
+                'delete' => Gate::allows('delete', $purchaseOrder),
+                'approve' => $purchaseOrder->canBeApproved() && Gate::allows('approve', $purchaseOrder),
+                'send' => $purchaseOrder->canBeSent() && Gate::allows('send', $purchaseOrder),
+                'receive' => $purchaseOrder->canBeReceived() && Gate::allows('receive', $purchaseOrder),
+                'cancel' => $purchaseOrder->canBeCancelled() && Gate::allows('cancel', $purchaseOrder),
+            ]
+        ]);
+    }
+
+    /**
+     * Render edit page for purchase order
+     */
+    protected function renderEdit(PurchaseOrder $purchaseOrder, $warehouses, $products): Response
+    {
+        return Inertia::render('admin/purchase-orders/Edit', [
+            'purchase_order' => $purchaseOrder,
+            'warehouses' => $warehouses,
+            'products' => $products,
+            'statuses' => PurchaseOrder::STATUSES,
+            'priorities' => PurchaseOrder::PRIORITIES,
+            'defaultCurrency' => 'USD',
+            'can' => [
+                'update' => Gate::allows('update', $purchaseOrder),
+                'delete' => Gate::allows('delete', $purchaseOrder),
             ]
         ]);
     }

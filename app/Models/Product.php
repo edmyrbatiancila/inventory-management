@@ -31,6 +31,10 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'min_stock_level' => 'integer',
+        'max_stock_level' => 'integer',
         'images' => 'array',
         'specifications' => 'array',
         'is_active' => 'boolean',

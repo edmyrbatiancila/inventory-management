@@ -24,9 +24,9 @@ import {
     Badge,
     MoreHorizontal,
     SlidersHorizontal,
-    User,
     Phone,
-    Mail
+    Mail,
+    User2Icon
 } from "lucide-react";
 
 // Advanced Search Components and Hooks
@@ -59,71 +59,10 @@ import {
     SelectValue,
 } from "@/Components/ui/select";
 import { cn } from "@/lib/utils";
-import { PaginatedResponse, PageProps } from "@/types";
-
-// Types
-interface PurchaseOrder {
-    id: number;
-    po_number: string;
-    supplier_name: string;
-    supplier_email?: string;
-    supplier_phone?: string;
-    supplier_address?: string;
-    supplier_contact_person?: string;
-    status: 'draft' | 'pending_approval' | 'approved' | 'sent_to_supplier' | 'partially_received' | 'fully_received' | 'cancelled' | 'closed';
-    priority: 'low' | 'normal' | 'high' | 'urgent';
-    warehouse: {
-        id: number;
-        name: string;
-        code: string;
-    };
-    created_by: {
-        id: number;
-        name: string;
-    };
-    approved_by?: {
-        id: number;
-        name: string;
-    };
-    subtotal: number;
-    tax_amount: number;
-    shipping_cost: number;
-    discount_amount: number;
-    total_amount: number;
-    expected_delivery_date?: string;
-    created_at: string;
-    updated_at: string;
-    approved_at?: string;
-    sent_at?: string;
-    received_at?: string;
-    cancelled_at?: string;
-    notes?: string;
-    terms_and_conditions?: string;
-    cancellation_reason?: string;
-    items_count: number;
-    status_label: string;
-    priority_label: string;
-    status_color: string;
-    priority_color: string;
-    formatted_total_amount: string;
-    days_until_delivery?: number;
-    is_overdue: boolean;
-}
-
-interface Warehouse {
-    id: number;
-    name: string;
-    code: string;
-}
-
-interface PurchaseOrderFilters {
-    search?: string;
-    status?: string;
-    priority?: string;
-    warehouse_id?: number;
-    sort_by?: string;
-    sort_order?: 'asc' | 'desc';
-}
+import { PaginatedResponse, PageProps, User } from "@/types";
+import { priorityConfig, statusConfig } from "@/utils/purchase-orders/statusConfig";
+import { PurchaseOrder, PurchaseOrderFilters } from "@/types/PurchaseOrders/IPurchaseOrder";
+import { Warehouse } from "@/types/Warehouse/IWarehouse";
 
 interface IPurchaseOrderIndexProps {
     purchase_orders: PaginatedResponse<PurchaseOrder>;
@@ -134,10 +73,7 @@ interface IPurchaseOrderIndexProps {
         viewAny: boolean;
     };
     hasAdvancedFilters?: boolean;
-    users?: Array<{
-        id: number;
-        name: string;
-    }>;
+    users?: User[];
 }
 
 type InertiaPageProps = PageProps & {
@@ -145,24 +81,6 @@ type InertiaPageProps = PageProps & {
         success?: string;
         error?: string;
     };
-};
-
-const statusConfig = {
-    draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: FileText },
-    pending_approval: { label: 'Pending Approval', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-    approved: { label: 'Approved', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-    sent_to_supplier: { label: 'Sent to Supplier', color: 'bg-blue-100 text-blue-800', icon: Send },
-    partially_received: { label: 'Partially Received', color: 'bg-orange-100 text-orange-800', icon: PackagePlus },
-    fully_received: { label: 'Fully Received', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: X },
-    closed: { label: 'Closed', color: 'bg-slate-100 text-slate-800', icon: CheckCircle },
-};
-
-const priorityConfig = {
-    low: { label: 'Low', color: 'bg-green-100 text-green-700' },
-    normal: { label: 'Normal', color: 'bg-gray-100 text-gray-700' },
-    high: { label: 'High', color: 'bg-orange-100 text-orange-700' },
-    urgent: { label: 'Urgent', color: 'bg-red-100 text-red-700' },
 };
 
 const PurchaseOrderIndex = ({
@@ -339,7 +257,7 @@ const PurchaseOrderIndex = ({
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'PHP'
         }).format(amount);
     };
 
@@ -809,7 +727,7 @@ const PurchaseOrderIndex = ({
                                                                 <div className="flex flex-col gap-1 mt-1">
                                                                     {po.supplier_contact_person && (
                                                                         <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                                            <User className="w-3 h-3" />
+                                                                            <User2Icon className="w-3 h-3" />
                                                                             {po.supplier_contact_person}
                                                                         </span>
                                                                     )}

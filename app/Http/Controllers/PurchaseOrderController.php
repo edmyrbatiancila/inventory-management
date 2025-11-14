@@ -8,6 +8,7 @@ use App\Models\PurchaseOrder;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Http\Requests\UpdatePurchaseOrderRequest;
 use App\Models\PurchaseOrderItem;
+use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\PurchaseOrderService;
 use App\Traits\PurchaseOrderResponses;
@@ -15,7 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class PurchaseOrderController extends Controller
@@ -44,9 +47,34 @@ class PurchaseOrderController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response|RedirectResponse
     {
-        //
+        try {
+            // Get all necessary data for the create form
+            $warehouses = Warehouse::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'address']);
+
+            $products = Product::where('is_active', true)
+                ->with(['category:id,name', 'brand:id,name'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'sku', 'price', 'min_stock_level', 'category_id', 'brand_id']);
+
+            return Inertia::render('admin/purchase-orders/Create', [
+                'warehouses' => $warehouses,
+                'products' => $products,
+                'statuses' => PurchaseOrder::STATUSES,
+                'priorities' => PurchaseOrder::PRIORITIES,
+                'defaultCurrency' => 'USD',
+                'nextPoNumber' => PurchaseOrder::generatePoNumber(),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error loading Purchase Order create page: ' . $e->getMessage());
+            return redirect()
+                ->route('admin.purchase-orders.index')
+                ->with('error', 'Unable to load create form. Please try again.');
+        }
     }
 
     /**
@@ -55,15 +83,45 @@ class PurchaseOrderController extends Controller
     public function store(StorePurchaseOrderRequest $request): JsonResponse|RedirectResponse
     {
         try {
-            $purchaseOrder = $this->purchaseOrderService->createPurchaseOrder($request->validated());
-            
+            // Validate that we have items
+            if (empty($request->items) || count($request->items) === 0) {
+                return $this->errorResponse('Purchase order must have at least one item.');
+            }
+
+            // Prepare purchase order data
+            $purchaseOrderData = [
+                'purchase_order' => [
+                    'po_number' => $request->po_number ?: PurchaseOrder::generatePoNumber(),
+                    'supplier_name' => $request->supplier_name,
+                    'supplier_email' => $request->supplier_email,
+                    'supplier_phone' => $request->supplier_phone,
+                    'supplier_address' => $request->supplier_address,
+                    'supplier_contact_person' => $request->supplier_contact_person,
+                    'warehouse_id' => $request->warehouse_id,
+                    'expected_delivery_date' => $request->expected_delivery_date,
+                    'priority' => $request->priority ?: PurchaseOrder::PRIORITY_NORMAL,
+                    'status' => PurchaseOrder::STATUS_DRAFT,
+                    'currency' => $request->currency ?: 'PHP',
+                    'notes' => $request->notes,
+                    'terms_and_conditions' => $request->terms_and_conditions,
+                    'created_by' => Auth::id(),
+                ],
+                'items' => $request->items
+            ];
+
+            // Create the purchase order through the service
+            $purchaseOrder = $this->purchaseOrderService->createPurchaseOrder($purchaseOrderData);
+
             return $this->successResponse(
-                'Purchase order created successfully', 
+                'Purchase order created successfully!',
                 $purchaseOrder,
-                'admin.purchase-orders.show'
+                'admin.purchase-orders.show',
+                $purchaseOrder->id
             );
+
         } catch (\Exception $e) {
-            return $this->errorResponse($e->getMessage());
+            Log::error('Error creating purchase order: ' . $e->getMessage());
+            return $this->errorResponse('Failed to create purchase order. Please try again.');
         }
     }
 
@@ -76,11 +134,45 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified purchase order
      */
-    public function edit(PurchaseOrder $purchaseOrder)
+    public function edit(PurchaseOrder $purchaseOrder): Response|RedirectResponse
     {
-        //
+        try {
+            // Check if the purchase order can be edited
+            if (!$purchaseOrder->canBeEdited()) {
+                return redirect()
+                    ->route('admin.purchase-orders.show', $purchaseOrder)
+                    ->with('error', 'This purchase order cannot be edited in its current status.');
+            }
+
+            // Get all necessary data for the edit form (same as create)
+            $warehouses = Warehouse::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'address']);
+
+            $products = Product::where('is_active', true)
+                ->with(['category:id,name', 'brand:id,name'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'sku', 'price', 'min_stock_level', 'category_id', 'brand_id']);
+
+            // Load the purchase order with its relationships
+            $purchaseOrderWithItems = $purchaseOrder->load([
+                'items.product.category',
+                'items.product.brand',
+                'warehouse',
+                'createdBy:id,name',
+                'approvedBy:id,name'
+            ]);
+
+            return $this->renderEdit($purchaseOrderWithItems, $warehouses, $products);
+
+        } catch (\Exception $e) {
+            Log::error('Error loading Purchase Order edit page: ' . $e->getMessage());
+            return redirect()
+                ->route('admin.purchase-orders.index')
+                ->with('error', 'Unable to load edit form. Please try again.');
+        }
     }
 
     /**
@@ -93,10 +185,19 @@ class PurchaseOrderController extends Controller
                 $purchaseOrder->id, 
                 $request->validated()
             );
+
+            if ($updated) {
+                return redirect()->route('admin.purchase-orders.edit', $purchaseOrder->id)->with('success', 'Purchase order updated successfully');
+            }
             
-            return $this->successResponse('Purchase order updated successfully', $updated);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update inventory.');
+
         } catch (\Exception $e) {
-            return $this->errorResponse($e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating inventory: ' . $e->getMessage());
         }
     }
 

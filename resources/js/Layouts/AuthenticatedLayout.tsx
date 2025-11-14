@@ -43,7 +43,8 @@ export default function Authenticated({
             route().current('admin.inventories.*') ||
             route().current('admin.stock-adjustments.*') ||
             route().current('admin.stock-transfers.*') ||
-            route().current('admin.stock-movements.*');
+            route().current('admin.stock-movements.*') ||
+            route().current('admin.purchase-orders.*');;
     };
 
     // Helper function to check if a specific admin route is active
