@@ -26,7 +26,8 @@ import {
     SlidersHorizontal,
     Phone,
     Mail,
-    User2Icon
+    User2Icon,
+    CheckCircle2
 } from "lucide-react";
 
 // Advanced Search Components and Hooks
@@ -63,6 +64,10 @@ import { PaginatedResponse, PageProps, User } from "@/types";
 import { priorityConfig, statusConfig } from "@/utils/purchase-orders/statusConfig";
 import { PurchaseOrder, PurchaseOrderFilters } from "@/types/PurchaseOrders/IPurchaseOrder";
 import { Warehouse } from "@/types/Warehouse/IWarehouse";
+import CustomPagination from "@/Components/CustomPagination";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/Components/ui/alert-dialog";
+import { toast } from "sonner";
+import ConfirmationDialog from "@/Components/admin/purchase-orders/ConfirmationDialog";
 
 interface IPurchaseOrderIndexProps {
     purchase_orders: PaginatedResponse<PurchaseOrder>;
@@ -100,6 +105,17 @@ const PurchaseOrderIndex = ({
     const [sortBy, setSortBy] = useState<string>(filters.sort_by || 'created_at');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(filters.sort_order || 'desc');
     const [showAdvancedSearch, setShowAdvancedSearch] = useState<boolean>(false);
+    const [confirmationDialog, setConfirmationDialog] = useState<{
+        isOpen: boolean; 
+        type: 'delete' | 'cancel' | 'approve' | 'send_to_supplier'; 
+        po: PurchaseOrder | null;
+        isProcessing: boolean;
+    }>({
+        isOpen: false,
+        type: 'delete',
+        po: null,
+        isProcessing: false
+    });
     
     // Advanced Search hook - get initial filters from URL parameters
     const getInitialAdvancedFilters = () => {
@@ -214,42 +230,129 @@ const PurchaseOrderIndex = ({
     };
 
     const handleDelete = (id: number, poNumber: string) => {
-        if (confirm(`Are you sure you want to delete Purchase Order ${poNumber}? This action cannot be undone.`)) {
-            router.delete(route('admin.purchase-orders.destroy', id), {
-                onSuccess: () => {
-                    console.log("Purchase order deleted successfully.");
-                },
-                onError: () => {
-                    console.error("Failed to delete purchase order.");
-                }
-            });
-        }
+        setConfirmationDialog(prev => ({ ...prev, isProcessing: true }));
+        
+        router.delete(route('admin.purchase-orders.destroy', id), {
+            onSuccess: () => {
+                console.log("Purchase order deleted successfully.");
+                toast.success(`Purchase order ${poNumber} deleted successfully`);
+                closeConfirmationDialog();
+            },
+            onError: () => {
+                console.error("Failed to delete purchase order.");
+                toast.error("Failed to delete purchase order");
+                setConfirmationDialog(prev => ({ ...prev, isProcessing: false }));
+            }
+        });
+    };
+
+    const handleCancel = (id: number, reason: string) => {
+        setConfirmationDialog(prev => ({ ...prev, isProcessing: true }));
+        
+        router.post(route('admin.purchase-orders.cancel', id), { reason }, {
+            onSuccess: () => {
+                console.log("Purchase order cancelled successfully.");
+                toast.success("Purchase order cancelled successfully");
+                closeConfirmationDialog();
+            },
+            onError: () => {
+                console.error("Failed to cancel purchase order.");
+                toast.error("Failed to cancel purchase order");
+                setConfirmationDialog(prev => ({ ...prev, isProcessing: false }));
+            }
+        });
     };
 
     const handleApprove = (id: number) => {
+        setConfirmationDialog(prev => ({ ...prev, isProcessing: true }));
+        
         router.post(route('admin.purchase-orders.approve', id), {}, {
             onSuccess: () => {
                 console.log("Purchase order approved successfully.");
+                toast.success("Purchase order approved successfully");
+                closeConfirmationDialog();
+            },
+            onError: () => {
+                console.error("Failed to approve purchase order.");
+                toast.error("Failed to approve purchase order");
+                setConfirmationDialog(prev => ({ ...prev, isProcessing: false }));
             }
         });
     };
 
     const handleSendToSupplier = (id: number) => {
+        setConfirmationDialog(prev => ({ ...prev, isProcessing: true }));
+        
         router.post(route('admin.purchase-orders.send-to-supplier', id), {}, {
             onSuccess: () => {
                 console.log("Purchase order sent to supplier successfully.");
+                toast.success("Purchase order sent to supplier successfully");
+                closeConfirmationDialog();
+            },
+            onError: () => {
+                console.error("Failed to send purchase order to supplier.");
+                toast.error("Failed to send purchase order to supplier");
+                setConfirmationDialog(prev => ({ ...prev, isProcessing: false }));
             }
         });
     };
 
-    const handleCancel = (id: number) => {
-        const reason = prompt('Please provide a reason for cancellation:');
-        if (reason) {
-            router.post(route('admin.purchase-orders.cancel', id), { reason }, {
-                onSuccess: () => {
-                    console.log("Purchase order cancelled successfully.");
-                }
-            });
+    const openDeleteDialog = (po: PurchaseOrder) => {
+        setConfirmationDialog({ 
+            isOpen: true, 
+            type: 'delete', 
+            po, 
+            isProcessing: false 
+        });
+    };
+
+    const openCancelDialog = (po: PurchaseOrder) => {
+        setConfirmationDialog({ 
+            isOpen: true, 
+            type: 'cancel', 
+            po, 
+            isProcessing: false 
+        });
+    };
+
+    const openApproveDialog = (po: PurchaseOrder) => {
+        setConfirmationDialog({ 
+            isOpen: true, 
+            type: 'approve', 
+            po, 
+            isProcessing: false 
+        });
+    };
+
+    const openSendToSupplierDialog = (po: PurchaseOrder) => {
+        setConfirmationDialog({ 
+            isOpen: true, 
+            type: 'send_to_supplier', 
+            po, 
+            isProcessing: false 
+        });
+    };
+
+    const closeConfirmationDialog = () => {
+        setConfirmationDialog({ 
+            isOpen: false, 
+            type: 'delete', 
+            po: null, 
+            isProcessing: false 
+        });
+    };
+
+    const handleConfirmAction = (data?: { reason?: string }) => {
+        if (!confirmationDialog.po) return;
+        
+        if (confirmationDialog.type === 'delete') {
+            handleDelete(confirmationDialog.po.id, confirmationDialog.po.po_number);
+        } else if (confirmationDialog.type === 'cancel' && data?.reason) {
+            handleCancel(confirmationDialog.po.id, data.reason);
+        } else if (confirmationDialog.type === 'approve') {
+            handleApprove(confirmationDialog.po.id);
+        } else if (confirmationDialog.type === 'send_to_supplier') {
+            handleSendToSupplier(confirmationDialog.po.id);
         }
     };
 
@@ -292,11 +395,20 @@ const PurchaseOrderIndex = ({
 
     // Show flash messages
     useEffect(() => {
-        if (props.flash?.success) {
-            console.log("Success:", props.flash.success);
+        if (props.flash && props.flash.success) {
+            toast.success(props.flash.success, {
+                duration: 4000,
+                style: { fontWeight: 'bold', fontSize: '1.1rem' },
+                icon: <CheckCircle2 className="text-green-600 w-6 h-6" />,
+            });
         }
-        if (props.flash?.error) {
-            console.error("Error:", props.flash.error);
+    
+        if (props.flash && props.flash.error) {
+            toast.error(props.flash.error, {
+                description: 'Please try again or contact support if the problem persists.',
+                duration: 4000,
+                style: { fontWeight: 'bold', fontSize: '1.1rem' },
+            });
         }
     }, [props.flash]);
 
@@ -810,14 +922,14 @@ const PurchaseOrderIndex = ({
                                                                     )}
                                                                     
                                                                     {po.status === 'pending_approval' && (
-                                                                        <DropdownMenuItem onClick={() => handleApprove(po.id)}>
+                                                                        <DropdownMenuItem onClick={() => openApproveDialog(po)}>
                                                                             <CheckCircle className="mr-2 h-4 w-4" />
                                                                             Approve
                                                                         </DropdownMenuItem>
                                                                     )}
                                                                     
                                                                     {po.status === 'approved' && (
-                                                                        <DropdownMenuItem onClick={() => handleSendToSupplier(po.id)}>
+                                                                        <DropdownMenuItem onClick={() => openSendToSupplierDialog(po)}>
                                                                             <Send className="mr-2 h-4 w-4" />
                                                                             Send to Supplier
                                                                         </DropdownMenuItem>
@@ -827,7 +939,7 @@ const PurchaseOrderIndex = ({
                                                                         <>
                                                                             <DropdownMenuSeparator />
                                                                             <DropdownMenuItem 
-                                                                                onClick={() => handleCancel(po.id)}
+                                                                                onClick={() => openCancelDialog(po)}
                                                                                 className="text-orange-600"
                                                                             >
                                                                                 <X className="mr-2 h-4 w-4" />
@@ -840,7 +952,7 @@ const PurchaseOrderIndex = ({
                                                                         <>
                                                                             <DropdownMenuSeparator />
                                                                             <DropdownMenuItem 
-                                                                                onClick={() => handleDelete(po.id, po.po_number)}
+                                                                                onClick={() => openDeleteDialog(po)}
                                                                                 className="text-red-600"
                                                                             >
                                                                                 <Trash2 className="mr-2 h-4 w-4" />
@@ -856,43 +968,25 @@ const PurchaseOrderIndex = ({
                                             )}
                                         </TableBody>
                                     </Table>
-                                </div>
-
-                                {/* Pagination */}
-                                {purchase_orders.last_page > 1 && (
-                                    <div className="flex items-center justify-between px-2 py-4">
-                                        <div className="flex-1 text-sm text-gray-700">
-                                            Showing {purchase_orders.from} to {purchase_orders.to} of{' '}
-                                            {purchase_orders.total} results
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            {purchase_orders.links.map((link, index) => (
-                                                <Button
-                                                    key={index}
-                                                    variant={link.active ? "default" : "outline"}
-                                                    size="sm"
-                                                    disabled={!link.url}
-                                                    onClick={() => {
-                                                        if (link.url) {
-                                                            router.get(link.url, {}, {
-                                                                preserveState: true,
-                                                                preserveScroll: true,
-                                                            });
-                                                        }
-                                                    }}
-                                                    dangerouslySetInnerHTML={{ 
-                                                        __html: link.label 
-                                                    }}
-                                                />
-                                            ))}
-                                        </div>
+                                    <div className="mt-6">
+                                        <CustomPagination data={ purchase_orders } />
                                     </div>
-                                )}
+                                </div>
                             </CardContent>
                         </Card>
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Confirmation Dialog for Delete and Cancel */}
+            <ConfirmationDialog
+                isOpen={confirmationDialog.isOpen}
+                onClose={closeConfirmationDialog}
+                onConfirm={handleConfirmAction}
+                type={confirmationDialog.type}
+                purchaseOrder={confirmationDialog.po}
+                isProcessing={confirmationDialog.isProcessing}
+            />
 
             {/* Advanced Search Dialog */}
             <PurchaseOrderAdvancedSearchDialog

@@ -115,7 +115,7 @@ class PurchaseOrderController extends Controller
             return $this->successResponse(
                 'Purchase order created successfully!',
                 $purchaseOrder,
-                'admin.purchase-orders.show',
+                'admin.purchase-orders.edit',
                 $purchaseOrder->id
             );
 
