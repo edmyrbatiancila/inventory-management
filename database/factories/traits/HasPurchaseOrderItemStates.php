@@ -97,7 +97,7 @@ trait HasPurchaseOrderItemStates
      */
     public function withDiscount(?float $discountPercentage = null): static
     {
-        $discount = $discountPercentage ?? $this->faker->randomFloat(2, 5, 25);
+        $discount = $discountPercentage ?? $this->faker->randomFloat(4, 0.05, 0.15); // 5% to 15% as decimal
         
         return $this->state(function (array $attributes) use ($discount) {
             $unitCost = $attributes['unit_cost'] ?? $this->faker->randomFloat(2, 10, 1000);

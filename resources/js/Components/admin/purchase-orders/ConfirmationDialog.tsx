@@ -4,7 +4,7 @@ import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { PurchaseOrder } from "@/types/PurchaseOrders/IPurchaseOrder";
 
-type ConfirmationType = 'delete' | 'cancel' | 'approve' | 'send_to_supplier';
+type ConfirmationType = 'delete' | 'cancel' | 'approve' | 'send_to_supplier' | 'receive';
 
 interface IConfirmationDialogProps {
     isOpen: boolean;
@@ -55,6 +55,8 @@ const ConfirmationDialog = ({
                 return 'Approve Purchase Order';
             case 'send_to_supplier':
                 return 'Send Purchase Order to Supplier';
+            case 'receive':
+                return 'Receive Purchase Order Items';
             default:
                 return 'Confirm Action';
         }
@@ -72,6 +74,8 @@ const ConfirmationDialog = ({
                 return `Are you sure you want to approve purchase order "${purchaseOrder.po_number}"? This will change the status to approved and allow it to proceed to the next stage.`;
             case 'send_to_supplier':
                 return `Are you sure you want to send purchase order "${purchaseOrder.po_number}" to the supplier? This will notify the supplier and change the status to sent.`;
+            case 'receive':
+                return `You will be redirected to the receiving page for purchase order "${purchaseOrder.po_number}" where you can specify quantities received for each item.`;
             default:
                 return 'Are you sure you want to proceed?';
         }
@@ -84,6 +88,7 @@ const ConfirmationDialog = ({
                 case 'cancel': return 'Cancelling...';
                 case 'approve': return 'Approving...';
                 case 'send_to_supplier': return 'Sending...';
+                case 'receive': return 'Redirecting...';
                 default: return 'Processing...';
             }
         }
@@ -92,6 +97,7 @@ const ConfirmationDialog = ({
             case 'cancel': return 'Cancel Purchase Order';
             case 'approve': return 'Approve Purchase Order';
             case 'send_to_supplier': return 'Send to Supplier';
+            case 'receive': return 'Go to Receiving Page';
             default: return 'Confirm';
         }
     };
@@ -107,6 +113,8 @@ const ConfirmationDialog = ({
                 return `bg-green-600 hover:bg-green-700 focus:ring-green-600 ${baseStyle}`;
             case 'send_to_supplier':
                 return `bg-blue-600 hover:bg-blue-700 focus:ring-blue-600 ${baseStyle}`;
+            case 'receive':
+                return `bg-purple-600 hover:bg-purple-700 focus:ring-purple-600 ${baseStyle}`;
             default:
                 return `bg-gray-600 hover:bg-gray-700 focus:ring-gray-600 ${baseStyle}`;
         }

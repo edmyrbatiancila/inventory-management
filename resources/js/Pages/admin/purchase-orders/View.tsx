@@ -34,6 +34,7 @@ import { Separator } from "@/Components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import { useState } from "react";
 import { PageProps } from "@/types";
+import ConfirmationDialog from "@/Components/admin/purchase-orders/ConfirmationDialog";
 
 interface IPurchaseOrderViewProps extends PageProps {
     purchase_order: PurchaseOrder;
@@ -54,53 +55,127 @@ const PurchaseOrderView = () => {
     const { props } = usePage<IPurchaseOrderViewProps>();
     const { purchase_order, statuses, priorities, can } = props;
     
-    const [isProcessing, setIsProcessing] = useState<string | null>(null);
+    const [confirmationDialog, setConfirmationDialog] = useState<{
+        isOpen: boolean;
+        type: 'delete' | 'cancel' | 'approve' | 'send_to_supplier' | 'receive';
+        isProcessing: boolean;
+    }>({
+        isOpen: false,
+        type: 'delete',
+        isProcessing: false
+    });
 
     const handleEdit = () => {
         router.visit(route('admin.purchase-orders.edit', purchase_order.id));
     };
 
-    const handleDelete = () => {
-        if (window.confirm('Are you sure you want to delete this purchase order?')) {
-            setIsProcessing('delete');
+    // Dialog open handlers
+    const openDeleteDialog = () => {
+        setConfirmationDialog({
+            isOpen: true,
+            type: 'delete',
+            isProcessing: false
+        });
+    };
+
+    const openCancelDialog = () => {
+        setConfirmationDialog({
+            isOpen: true,
+            type: 'cancel',
+            isProcessing: false
+        });
+    };
+
+    const openApproveDialog = () => {
+        setConfirmationDialog({
+            isOpen: true,
+            type: 'approve',
+            isProcessing: false
+        });
+    };
+
+    const openSendToSupplierDialog = () => {
+        setConfirmationDialog({
+            isOpen: true,
+            type: 'send_to_supplier',
+            isProcessing: false
+        });
+    };
+
+    const openReceiveDialog = () => {
+        setConfirmationDialog({
+            isOpen: true,
+            type: 'receive',
+            isProcessing: false
+        });
+    };
+
+    // Close confirmation dialog
+    const closeConfirmationDialog = () => {
+        setConfirmationDialog(prev => ({
+            ...prev,
+            isOpen: false
+        }));
+    };
+
+    // Handle confirmation action
+    const handleConfirmAction = (data?: { reason?: string }) => {
+        setConfirmationDialog(prev => ({
+            ...prev,
+            isProcessing: true
+        }));
+
+        const { type } = confirmationDialog;
+
+        if (type === 'delete') {
             router.delete(route('admin.purchase-orders.destroy', purchase_order.id), {
-                onFinish: () => setIsProcessing(null)
+                onFinish: () => {
+                    setConfirmationDialog(prev => ({
+                        ...prev,
+                        isProcessing: false,
+                        isOpen: false
+                    }));
+                }
             });
-        }
-    };
-
-    const handleApprove = () => {
-        if (window.confirm('Are you sure you want to approve this purchase order?')) {
-            setIsProcessing('approve');
-            router.post(route('admin.purchase-orders.approve', purchase_order.id), {}, {
-                onFinish: () => setIsProcessing(null)
-            });
-        }
-    };
-
-    const handleSendToSupplier = () => {
-        if (window.confirm('Are you sure you want to send this purchase order to the supplier?')) {
-            setIsProcessing('send');
-            router.post(route('admin.purchase-orders.send-to-supplier', purchase_order.id), {}, {
-                onFinish: () => setIsProcessing(null)
-            });
-        }
-    };
-
-    const handleCancel = () => {
-        const reason = window.prompt('Please provide a reason for cancellation:');
-        if (reason) {
-            setIsProcessing('cancel');
+        } else if (type === 'cancel') {
             router.post(route('admin.purchase-orders.cancel', purchase_order.id), {
-                reason
+                reason: data?.reason
             }, {
-                onFinish: () => setIsProcessing(null)
+                onFinish: () => {
+                    setConfirmationDialog(prev => ({
+                        ...prev,
+                        isProcessing: false,
+                        isOpen: false
+                    }));
+                }
             });
+        } else if (type === 'approve') {
+            router.post(route('admin.purchase-orders.approve', purchase_order.id), {}, {
+                onFinish: () => {
+                    setConfirmationDialog(prev => ({
+                        ...prev,
+                        isProcessing: false,
+                        isOpen: false
+                    }));
+                }
+            });
+        } else if (type === 'send_to_supplier') {
+            router.post(route('admin.purchase-orders.send-to-supplier', purchase_order.id), {}, {
+                onFinish: () => {
+                    setConfirmationDialog(prev => ({
+                        ...prev,
+                        isProcessing: false,
+                        isOpen: false
+                    }));
+                }
+            });
+        } else if (type === "receive") {
+            router.visit(route('admin.purchase-orders.receive', purchase_order.id));
         }
     };
 
     const handleReceive = () => {
-        router.visit(route('admin.purchase-orders.receive', purchase_order.id));
+        openReceiveDialog();
     };
 
     const getStatusIcon = (status: string) => {
@@ -186,32 +261,32 @@ const PurchaseOrderView = () => {
                         </Link>
                         {can.approve && (
                             <Button
-                                onClick={handleApprove}
-                                disabled={isProcessing !== null}
+                                onClick={openApproveDialog}
+                                disabled={confirmationDialog.isProcessing}
                                 className="bg-green-600 hover:bg-green-700"
                                 size="sm"
                             >
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                {isProcessing === 'approve' ? 'Approving...' : 'Approve'}
+                                Approve
                             </Button>
                         )}
                         
                         {can.send && (
                             <Button
-                                onClick={handleSendToSupplier}
-                                disabled={isProcessing !== null}
+                                onClick={openSendToSupplierDialog}
+                                disabled={confirmationDialog.isProcessing}
                                 className="bg-blue-600 hover:bg-blue-700"
                                 size="sm"
                             >
                                 <Send className="w-4 h-4 mr-2" />
-                                {isProcessing === 'send' ? 'Sending...' : 'Send to Supplier'}
+                                Send to Supplier
                             </Button>
                         )}
                         
                         {can.receive && (
                             <Button
                                 onClick={handleReceive}
-                                disabled={isProcessing !== null}
+                                disabled={confirmationDialog.isProcessing}
                                 className="bg-purple-600 hover:bg-purple-700"
                                 size="sm"
                             >
@@ -223,7 +298,7 @@ const PurchaseOrderView = () => {
                         {can.update && (
                             <Button
                                 onClick={handleEdit}
-                                disabled={isProcessing !== null}
+                                disabled={confirmationDialog.isProcessing}
                                 variant="outline"
                                 size="sm"
                             >
@@ -234,27 +309,27 @@ const PurchaseOrderView = () => {
                         
                         {can.cancel && (
                             <Button
-                                onClick={handleCancel}
-                                disabled={isProcessing !== null}
+                                onClick={openCancelDialog}
+                                disabled={confirmationDialog.isProcessing}
                                 variant="outline"
                                 className="border-red-300 text-red-700 hover:bg-red-50"
                                 size="sm"
                             >
                                 <X className="w-4 h-4 mr-2" />
-                                {isProcessing === 'cancel' ? 'Cancelling...' : 'Cancel'}
+                                Cancel
                             </Button>
                         )}
                         
                         {can.delete && (
                             <Button
-                                onClick={handleDelete}
-                                disabled={isProcessing !== null}
+                                onClick={openDeleteDialog}
+                                disabled={confirmationDialog.isProcessing}
                                 variant="outline"
                                 className="border-red-300 text-red-700 hover:bg-red-50"
                                 size="sm"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                {isProcessing === 'delete' ? 'Deleting...' : 'Delete'}
+                                Delete
                             </Button>
                         )}
                     </motion.div>
@@ -568,7 +643,7 @@ const PurchaseOrderView = () => {
                                                                     className="text-xs"
                                                                 >
                                                                     {(item.quantity_received || 0) === item.quantity_ordered ? 'Received' : 
-                                                                     (item.quantity_received || 0) > 0 ? 'Partial' : 'Pending'}
+                                                                        (item.quantity_received || 0) > 0 ? 'Partial' : 'Pending'}
                                                                 </Badge>
                                                             </TableCell>
                                                         )}
@@ -662,6 +737,16 @@ const PurchaseOrderView = () => {
                     </motion.div>
                 </div>
             </motion.div>
+
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={confirmationDialog.isOpen}
+                onClose={closeConfirmationDialog}
+                onConfirm={handleConfirmAction}
+                type={confirmationDialog.type}
+                purchaseOrder={purchase_order}
+                isProcessing={confirmationDialog.isProcessing}
+            />
         </Authenticated>
     );
 }

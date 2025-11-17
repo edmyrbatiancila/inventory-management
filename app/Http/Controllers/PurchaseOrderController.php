@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
@@ -263,6 +264,25 @@ class PurchaseOrderController extends Controller
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
+    }
+
+    /**
+     * Show receive items form
+     */
+    public function showReceive(PurchaseOrder $purchaseOrder): Response|RedirectResponse
+    {
+        // Check authorization
+        Gate::authorize('receive', $purchaseOrder);
+
+        // Load relationships
+        $purchaseOrder->load(['items.product', 'warehouse', 'createdBy']);
+
+        return Inertia::render('admin/purchase-orders/Receive', [
+            'purchase_order' => $purchaseOrder,
+            'can' => [
+                'receive' => Auth::user()->can('receive', $purchaseOrder),
+            ],
+        ]);
     }
 
     /**

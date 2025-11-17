@@ -132,7 +132,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
             Route::post('approve', [PurchaseOrderController::class, 'approve'])->name('approve');
             Route::post('send-to-supplier', [PurchaseOrderController::class, 'sendToSupplier'])->name('send-to-supplier');
             Route::post('cancel', [PurchaseOrderController::class, 'cancel'])->name('cancel');
-            Route::post('receive', [PurchaseOrderController::class, 'receive'])->name('receive');
+            Route::get('receive', [PurchaseOrderController::class, 'showReceive'])->name('receive'); // GET for show receive page
+            Route::post('receive', [PurchaseOrderController::class, 'receive'])->name('receive.submit'); // POST for processing
         });
 
         // Purchase Order Item Actions
