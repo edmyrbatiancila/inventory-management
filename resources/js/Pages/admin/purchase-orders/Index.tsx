@@ -662,14 +662,14 @@ const PurchaseOrderIndex = ({
                                         )}
                                     </div>
                                     
-                                    {can.create && (
+                                    {/* {can.create && (
                                         <Button asChild className="bg-blue-600 hover:bg-blue-700">
                                             <Link href={route('admin.purchase-orders.create')}>
                                                 <Plus className="w-4 h-4 mr-2" />
                                                 Create Purchase Order
                                             </Link>
                                         </Button>
-                                    )}
+                                    )} */}
                                 </div>
 
                                 {/* Active Filters Display */}

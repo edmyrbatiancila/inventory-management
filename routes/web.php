@@ -5,6 +5,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTransferController;
@@ -149,6 +150,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
             Route::get('overdue', [PurchaseOrderController::class, 'overdue'])->name('overdue');
             Route::get('statistics', [PurchaseOrderController::class, 'statistics'])->name('statistics');
         });
+
+        // ===================== Sales Order Routes =====================
+        Route::resource('sales-orders', SalesOrderController::class)->parameters([
+            'sales-orders' => 'salesOrder'
+        ]);
+
     });
 });
 

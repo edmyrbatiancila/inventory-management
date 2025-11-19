@@ -13,7 +13,7 @@ class SalesOrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -21,7 +21,7 @@ class SalesOrderPolicy
      */
     public function view(User $user, SalesOrder $salesOrder): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -29,7 +29,7 @@ class SalesOrderPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -37,7 +37,8 @@ class SalesOrderPolicy
      */
     public function update(User $user, SalesOrder $salesOrder): bool
     {
-        return false;
+        return $salesOrder->status === 'draft' &&
+                $salesOrder->created_by === $user->id;
     }
 
     /**
@@ -45,7 +46,8 @@ class SalesOrderPolicy
      */
     public function delete(User $user, SalesOrder $salesOrder): bool
     {
-        return false;
+        return $salesOrder->status === 'draft' &&
+                $salesOrder->created_by === $user->id;
     }
 
     /**
