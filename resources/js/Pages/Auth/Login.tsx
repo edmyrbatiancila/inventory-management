@@ -1,11 +1,9 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { motion } from "framer-motion";
+import { Package, Building2 } from "lucide-react";
+import { fadeIn, fadeInUp } from '@/utils/welcome/animationVariants';
+import LoginCard from '@/Components/Login/LoginCard';
+
 
 export default function Login({
     status,
@@ -14,97 +12,58 @@ export default function Login({
     status?: string;
     canResetPassword: boolean;
 }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-        password: '',
-        remember: false as boolean,
-    });
-
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-
-        post(route('login'), {
-            onFinish: () => reset('password'),
-        });
-    };
 
     return (
-        <GuestLayout>
-            <Head title="Log in" />
-
-            {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
-                            }
-                        />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Remember me
-                        </span>
-                    </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
-                        <Link
-                            href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        <>
+            <Head title="Sign In - InvenTrack" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 bg-[size:20px_20px] opacity-20" />
+                
+                <div className="relative w-full max-w-md">
+                    {/* Header Section */}
+                    <motion.div 
+                        className="text-center mb-8"
+                        variants={fadeIn}
+                        initial="initial"
+                        animate="animate"
+                    >
+                        <motion.div 
+                            className="flex items-center justify-center mb-6"
+                            variants={fadeInUp}
                         >
-                            Forgot your password?
-                        </Link>
-                    )}
+                            <Link href="/" className="flex items-center space-x-3 group transition-transform hover:scale-105">
+                                <div className="p-2 bg-slate-900 dark:bg-white rounded-lg group-hover:shadow-lg transition-shadow">
+                                    <Package className="h-8 w-8 text-white dark:text-slate-900" />
+                                </div>
+                                <div className="text-left">
+                                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">InvenTrack</h1>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Inventory Management</p>
+                                </div>
+                            </Link>
+                        </motion.div>
+                    </motion.div>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
-                    </PrimaryButton>
+                    {/* Forms for logging in */}
+                    <LoginCard 
+                        status={status}
+                        isResetPassword={canResetPassword}
+                    />
+
+                    {/* Security Notice */}
+                    <motion.div 
+                        className="mt-6 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.6 }}
+                    >
+                        <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+                            <Building2 className="h-3 w-3" />
+                            <span>Enterprise-grade security for your business data</span>
+                        </div>
+                    </motion.div>
                 </div>
-            </form>
-        </GuestLayout>
+            </div>
+        </>
     );
 }

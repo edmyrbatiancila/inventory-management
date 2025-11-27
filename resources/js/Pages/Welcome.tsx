@@ -6,95 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Com
 import { Badge } from "@/Components/ui/badge";
 import { 
     Package, 
-    BarChart3, 
-    Shield, 
-    Zap, 
-    Users, 
-    Globe,
     CheckCircle,
     ArrowRight,
-    Building2,
-    Truck,
-    PieChart,
-    Settings
 } from "lucide-react";
+import { benefits, features, stats } from '@/utils/welcome/welcome-utils';
+import { fadeInUp, staggerContainer } from '@/utils/welcome/animationVariants';
 
-// Animation variants
-const fadeInUp = {
-    initial: { opacity: 0, y: 60 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
-};
-
-const staggerContainer = {
-    initial: {},
-    animate: {
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
-
-const fadeIn = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    transition: { duration: 0.8 }
-};
 
 export default function Welcome({
     auth,
     laravelVersion,
     phpVersion,
 }: PageProps<{ laravelVersion: string; phpVersion: string }>) {
-
-    const features = [
-        {
-            icon: Package,
-            title: "Smart Inventory Tracking",
-            description: "Real-time monitoring of stock levels across multiple warehouses with automated alerts and reorder points."
-        },
-        {
-            icon: BarChart3,
-            title: "Advanced Analytics",
-            description: "Data-driven insights with comprehensive reporting, forecasting, and inventory optimization recommendations."
-        },
-        {
-            icon: Shield,
-            title: "Complete Audit Trail",
-            description: "Detailed history of every inventory movement, transaction, and adjustment for full transparency."
-        },
-        {
-            icon: Zap,
-            title: "Automated Workflows",
-            description: "Streamline operations with intelligent automation for purchase orders, stock transfers, and notifications."
-        },
-        {
-            icon: Users,
-            title: "Multi-User Collaboration",
-            description: "Role-based access control with seamless team collaboration and approval workflows."
-        },
-        {
-            icon: Globe,
-            title: "Multi-Location Support",
-            description: "Manage inventory across warehouses, stores, and distribution centers from a single platform."
-        }
-    ];
-
-    const benefits = [
-        "Reduce stockouts by up to 75%",
-        "Optimize inventory costs",
-        "Improve order fulfillment speed",
-        "Enhance operational efficiency",
-        "Real-time inventory visibility",
-        "Automated compliance tracking"
-    ];
-
-    const stats = [
-        { label: "Active Warehouses", value: "50+" },
-        { label: "Products Tracked", value: "10K+" },
-        { label: "Daily Transactions", value: "5K+" },
-        { label: "Cost Savings", value: "30%" }
-    ];
 
     return (
         <>
