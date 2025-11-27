@@ -1,121 +1,66 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { motion } from "framer-motion";
+import { Package, Building2 } from "lucide-react";
+import { fadeIn, fadeInUp } from '@/utils/welcome/animationVariants';
+import RegisterCard from '@/Components/Register/RegisterCard';
 
-export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-    });
 
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-
-        post(route('register'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
-    };
+export default function Register({
+    status,
+}: {
+    status?: string;
+}) {
 
     return (
-        <GuestLayout>
-            <Head title="Register" />
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        <>
+            <Head title="Create Account - InvenTrack" />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 bg-[size:20px_20px] opacity-20" />
+                
+                <div className="relative w-full max-w-md">
+                    {/* Header Section */}
+                    <motion.div 
+                        className="text-center mb-8"
+                        variants={fadeIn}
+                        initial="initial"
+                        animate="animate"
                     >
-                        Already registered?
-                    </Link>
+                        <motion.div 
+                            className="flex items-center justify-center mb-6"
+                            variants={fadeInUp}
+                        >
+                            <Link href="/" className="flex items-center space-x-3 group transition-transform hover:scale-105">
+                                <div className="p-2 bg-slate-900 dark:bg-white rounded-lg group-hover:shadow-lg transition-shadow">
+                                    <Package className="h-8 w-8 text-white dark:text-slate-900" />
+                                </div>
+                                <div className="text-left">
+                                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">InvenTrack</h1>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Inventory Management</p>
+                                </div>
+                            </Link>
+                        </motion.div>
+                    </motion.div>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
+                    {/* Registration Form */}
+                    <RegisterCard 
+                        status={status}
+                    />
+
+                    {/* Security Notice */}
+                    <motion.div 
+                        className="mt-6 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.6 }}
+                    >
+                        <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
+                            <Building2 className="h-3 w-3" />
+                            <span>Join thousands of businesses managing their inventory</span>
+                        </div>
+                    </motion.div>
                 </div>
-            </form>
-        </GuestLayout>
+            </div>
+        </>
     );
 }
