@@ -13,6 +13,7 @@ import { Warehouse } from "@/types/Warehouse/IWarehouse";
 import { Product } from "@/types/Product/IProduct";
 import { CreatePurchaseOrderData, PriorityPO, PurchaseOrderItems, StatusPO } from "@/types/PurchaseOrders/IPurchaseOrder";
 import { useState } from "react";
+import { Spinner } from "@/Components/ui/spinner";
 
 interface IPurchaseOrderCreateProps {
     warehouses: Warehouse[];
@@ -194,7 +195,10 @@ const PurchaseOrderCreate = ({
                             </Button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-8">
+                        <form 
+                            onSubmit={handleSubmit} 
+                            className="space-y-8"
+                        >
                             {/* Purchase Order Information Card */}
                             <Card>
                                 <CardHeader>
@@ -552,7 +556,7 @@ const PurchaseOrderCreate = ({
                                     >
                                         {processing ? (
                                             <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                <Spinner />
                                                 Creating...
                                             </>
                                         ) : (

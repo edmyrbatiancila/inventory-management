@@ -44,9 +44,9 @@ export interface SalesOrder {
     shippedBy?: User; // Relationship object (when loaded)
     shipped_by_user?: User; // For backward compatibility
     subtotal: number;
-    tax_rate: number;
+    tax_rate: number | null;
     tax_amount: number;
-    shipping_cost: number;
+    shipping_cost: number | null;
     discount_amount: number;
     total_amount: number;
     requested_delivery_date?: string;
@@ -155,7 +155,7 @@ export interface SalesOrderItems {
     product_description?: string;
     quantity_ordered: number;
     unit_price: number;
-    discount_percentage: number;
+    discount_percentage: number | string;
     discount_amount?: number;
     line_total: number;
     final_line_total?: number;
@@ -182,9 +182,9 @@ export interface CreateSalesOrderData {
     priority?: PrioritySO;
     payment_status?: PaymentStatusSO;
     currency?: string;
-    tax_rate?: number;
-    shipping_cost?: number;
-    discount_amount?: number;
+    tax_rate?: number | string;
+    shipping_cost?: number | string;
+    discount_amount?: number | string;
     shipping_address?: string;
     shipping_method?: string;
     payment_terms?: string;

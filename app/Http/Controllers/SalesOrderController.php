@@ -106,6 +106,9 @@ class SalesOrderController extends Controller
                     'payment_status' => $request->payment_status ?: 'pending',
                     'payment_terms' => $request->payment_terms,
                     'currency' => $request->currency ?: 'USD',
+                    'tax_rate' => $request->tax_rate !== '' ? (float)$request->tax_rate / 100 : null,
+                    'shipping_cost' => $request->shipping_cost !== '' ? (float)$request->shipping_cost : null,
+                    'discount_amount' => $request->discount_amount !== '' ? (float)$request->discount_amount : null,
                     'shipping_address' => $request->shipping_address,
                     'shipping_method' => $request->shipping_method,
                     'notes' => $request->notes,
@@ -113,7 +116,15 @@ class SalesOrderController extends Controller
                     'terms_and_conditions' => $request->terms_and_conditions,
                     'created_by' => Auth::id(),
                 ],
-                'items' => $request->items
+                'items' => collect($request->items)->map(function ($item) {
+                    // Convert discount percentage from percentage to decimal
+                    if (isset($item['discount_percentage']) && $item['discount_percentage'] !== '') {
+                        $item['discount_percentage'] = (float)$item['discount_percentage'] / 100;
+                    } else {
+                        $item['discount_percentage'] = null;
+                    }
+                    return $item;
+                })->toArray()
             ];
 
             // Create the sales order through the service

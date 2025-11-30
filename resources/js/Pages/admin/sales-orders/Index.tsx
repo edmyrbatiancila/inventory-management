@@ -20,12 +20,12 @@ import {
     CheckCircle,
     XCircle,
     Clock,
-    AlertTriangle,
     ChevronUp,
     ChevronDown,
     X,
     SlidersHorizontal,
-    Calendar
+    Calendar,
+    ShoppingBasket
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { usePage, router, Head } from "@inertiajs/react";
@@ -366,7 +366,7 @@ const SalesOrderIndex = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-100 rounded-lg">
-                                <Store className="w-6 h-6 text-blue-600" />
+                                <ShoppingBasket className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold leading-tight text-blue-800 tracking-tight">

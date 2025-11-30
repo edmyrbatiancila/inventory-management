@@ -1,4 +1,4 @@
-import { BarChart3, Package, PackageOpen, PackagePlus, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon } from "lucide-react";
+import { BarChart3, Package, PackageOpen, PackagePlus, ShoppingBasket, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon } from "lucide-react";
 
 export const adminMenuItems = [
         {
@@ -63,5 +63,12 @@ export const adminMenuItems = [
             routePattern: 'admin.purchase-orders.*',
             icon: PackagePlus,
             description: "Review and manage purchase orders history"
+        },
+        {
+            title: "Sales Orders",
+            href: route('admin.sales-orders.index'),
+            routePattern: 'admin.sales-orders.*',
+            icon: ShoppingBasket,
+            description: "Review and manage sales orders history"
         }
     ];

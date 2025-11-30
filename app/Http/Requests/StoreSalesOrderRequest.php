@@ -39,7 +39,7 @@ class StoreSalesOrderRequest extends FormRequest
         return [
             'so_number' => ['nullable', 'string', 'max:50', Rule::unique('sales_orders')],
             'customer_reference' => ['nullable', 'string', 'max:255'],
-            'warehouse_id' => $this->warehouseRules(),
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
             'requested_delivery_date' => ['nullable', 'date', 'after:today'],
             'promised_delivery_date' => ['nullable', 'date', 'after:today'],
             'status' => ['sometimes', Rule::in(array_keys(SalesOrder::STATUSES))],
@@ -67,9 +67,9 @@ class StoreSalesOrderRequest extends FormRequest
     protected function financialRules(): array
     {
         return [
-            'tax_rate' => ['nullable', 'numeric', 'between:0,1'],
-            'shipping_cost' => $this->priceRules(0, false),
-            'discount_amount' => $this->priceRules(0, false),
+            'tax_rate' => ['nullable', 'numeric', 'between:0,100'],
+            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'size:3'],
             'payment_terms' => ['nullable', 'string', 'max:255'],
         ];
@@ -78,15 +78,28 @@ class StoreSalesOrderRequest extends FormRequest
     protected function itemRules(): array
     {
         return [
-            'items' => $this->arrayItemRules(),
-            'items.*.product_id' => $this->productRules(),
-            'items.*.quantity_ordered' => $this->quantityRules(),
-            'items.*.unit_price' => $this->priceRules(),
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity_ordered' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.discount_percentage' => ['nullable', 'numeric', 'between:0,100'],
             'items.*.notes' => ['nullable', 'string', 'max:500'],
             'items.*.customer_notes' => ['nullable', 'string', 'max:500'],
             'items.*.requested_delivery_date' => ['nullable', 'date', 'after:today'],
         ];
+    }
+
+    protected function warehouseRules(): array
+    {
+        return ['required', 'integer', 'exists:warehouses,id'];
+    }
+
+    protected function priceRules($min = 0, $required = true): array
+    {
+        $rules = $required ? ['required'] : ['nullable'];
+        $rules[] = 'numeric';
+        $rules[] = "min:$min";
+        return $rules;
     }
 
     public function messages(): array

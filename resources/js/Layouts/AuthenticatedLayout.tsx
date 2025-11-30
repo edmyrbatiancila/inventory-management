@@ -1,6 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
@@ -15,15 +14,10 @@ import {
 } from '@/Components/ui/navigation-menu';
 import { 
     Settings, 
-    Package, 
-    Warehouse, 
-    ShoppingCart, 
-    Tags, 
-    BarChart3,
-    TrendingUp,
     Home
 } from 'lucide-react';
 import { adminMenuItems } from '@/utils/adminNavMenuItem';
+import { isAdminRouteActive } from '@/utils/admin-route';
 
 export default function Authenticated({
     header,
@@ -34,23 +28,6 @@ export default function Authenticated({
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
-    // Check if any admin route is currently active
-    const isAdminRouteActive = () => {
-        return route().current('admin.category.*') ||
-            route().current('admin.brand.*') ||
-            route().current('admin.products.*') ||
-            route().current('admin.warehouses.*') ||
-            route().current('admin.inventories.*') ||
-            route().current('admin.stock-adjustments.*') ||
-            route().current('admin.stock-transfers.*') ||
-            route().current('admin.stock-movements.*') ||
-            route().current('admin.purchase-orders.*');;
-    };
-
-    // Helper function to check if a specific admin route is active
-    const isSpecificAdminRouteActive = (routePattern: string) => {
-        return route().current(routePattern);
-    };
 
     return (
         <div className="min-h-screen bg-gray-100">

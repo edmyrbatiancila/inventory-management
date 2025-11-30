@@ -18,14 +18,20 @@ trait HasItemCalculations
     public function calculateTotals(): void
     {
         $unitField = $this->getUnitCostField();
-        $this->line_total = $this->quantity_ordered * $this->$unitField;
+        $unitCost = (float) ($this->$unitField ?? 0);
+        $quantity = (int) ($this->quantity_ordered ?? 0);
+        $discountPercentage = (float) ($this->discount_percentage ?? 0);
         
-        if ($this->discount_percentage > 0) {
-            $this->discount_amount = $this->line_total * ($this->discount_percentage / 100);
+        $this->line_total = $quantity * $unitCost;
+        
+        if ($discountPercentage > 0) {
+            $this->discount_amount = $this->line_total * ($discountPercentage / 100);
+        } else {
+            $this->discount_amount = 0;
         }
         
         $this->final_line_total = $this->line_total - $this->discount_amount;
-        $this->quantity_pending = $this->quantity_ordered - $this->getReceivedQuantity();
+        $this->quantity_pending = $quantity - $this->getReceivedQuantity();
     }
 
     public function getStatusLabelAttribute(): string

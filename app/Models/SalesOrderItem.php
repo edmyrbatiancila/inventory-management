@@ -23,6 +23,21 @@ class SalesOrderItem extends Model
         'notes', 'customer_notes'
     ];
 
+    protected $attributes = [
+        'quantity_fulfilled' => 0,
+        'quantity_shipped' => 0,
+        'quantity_pending' => 0,
+        'quantity_backordered' => 0,
+        'quantity_returned' => 0,
+        'allocated_quantity' => 0,
+        'discount_amount' => 0,
+        'line_total' => 0,
+        'final_line_total' => 0,
+        'item_status' => 'pending',
+        'requires_allocation' => false,
+        'metadata' => '{}',
+    ];
+
     protected $casts = [
         'quantity_ordered' => 'integer',
         'quantity_fulfilled' => 'integer',
@@ -127,7 +142,7 @@ class SalesOrderItem extends Model
 
     protected function getReceivedQuantity(): int
     {
-        return $this->quantity_fulfilled;
+        return (int) ($this->quantity_fulfilled ?? 0);
     }
 
     protected function getItemStatuses(): array
