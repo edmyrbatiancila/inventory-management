@@ -201,9 +201,26 @@ class SalesOrderController extends Controller
     public function update(UpdateSalesOrderRequest $request, SalesOrder $salesOrder): JsonResponse|RedirectResponse
     {
         try {
+            // Convert percentage fields and process items if they exist
+            $validatedData = $request->validated();
+            
+            // Convert percentage fields to decimals for main order
+            if (isset($validatedData['tax_rate']) && $validatedData['tax_rate'] !== '') {
+                $validatedData['tax_rate'] = (float)$validatedData['tax_rate'] / 100;
+            }
+            
+            // Process items discount percentage if items are being updated
+            if (isset($validatedData['items'])) {
+                foreach ($validatedData['items'] as &$item) {
+                    if (isset($item['discount_percentage']) && $item['discount_percentage'] !== '') {
+                        $item['discount_percentage'] = (float)$item['discount_percentage'] / 100;
+                    }
+                }
+            }
+
             $updated = $this->salesOrderService->updateSalesOrder(
                 $salesOrder->id, 
-                $request->validated()
+                $validatedData
             );
 
             if ($updated) {
@@ -215,6 +232,7 @@ class SalesOrderController extends Controller
                 ->with('error', 'Failed to update sales order.');
 
         } catch (\Exception $e) {
+            Log::error('Error updating sales order: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error updating sales order: ' . $e->getMessage());

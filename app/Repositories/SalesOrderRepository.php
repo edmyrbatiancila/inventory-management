@@ -95,7 +95,23 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
     public function update(SalesOrder $salesOrder, array $data): bool
     {
         return DB::transaction(function () use ($salesOrder, $data) {
+            // Separate items data from order data
+            $itemsData = $data['items'] ?? null;
+            unset($data['items']);
+            
+            // Update the sales order
             $updated = $salesOrder->update($data);
+            
+            // Update items if provided
+            if ($updated && $itemsData !== null && $salesOrder->canBeEdited()) {
+                // Delete existing items
+                $salesOrder->items()->delete();
+                
+                // Create new items
+                foreach ($itemsData as $itemData) {
+                    $this->addItem($salesOrder, $itemData);
+                }
+            }
             
             if ($updated) {
                 $salesOrder->calculateTotals();
