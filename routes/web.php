@@ -156,6 +156,32 @@ Route::middleware(['auth', 'admin'])->group(function () {
             'sales-orders' => 'salesOrder'
         ]);
 
+        // Sales Order Status Actions
+        Route::prefix('sales-orders/{salesOrder}')->name('sales-orders.')->group(function () {
+            Route::post('approve', [SalesOrderController::class, 'approve'])->name('approve');
+            Route::post('confirm', [SalesOrderController::class, 'confirm'])->name('confirm');
+            Route::post('cancel', [SalesOrderController::class, 'cancel'])->name('cancel');
+            Route::get('fulfill', [SalesOrderController::class, 'showFulfill'])->name('fulfill'); // GET for show fulfill page
+            Route::post('fulfill', [SalesOrderController::class, 'fulfill'])->name('fulfill.submit'); // POST for processing
+            Route::post('ship', [SalesOrderController::class, 'ship'])->name('ship');
+            Route::post('deliver', [SalesOrderController::class, 'deliver'])->name('deliver');
+        });
+
+        // Sales Order Item Actions
+        Route::prefix('sales-orders/{salesOrder}/items')->name('sales-orders.items.')->group(function () {
+            Route::post('/', [SalesOrderController::class, 'addItem'])->name('store');
+            Route::put('{item}', [SalesOrderController::class, 'updateItem'])->name('update');
+            Route::delete('{item}', [SalesOrderController::class, 'removeItem'])->name('destroy');
+        });
+
+        // Quick Actions & Reports
+        Route::prefix('sales-orders-reports')->name('sales-orders.reports.')->group(function () {
+            Route::get('pending-approvals', [SalesOrderController::class, 'pendingApprovals'])->name('pending-approvals');
+            Route::get('overdue', [SalesOrderController::class, 'overdue'])->name('overdue');
+            Route::get('fulfilled-unshipped', [SalesOrderController::class, 'fulfilledUnshipped'])->name('fulfilled-unshipped');
+            Route::get('statistics', [SalesOrderController::class, 'statistics'])->name('statistics');
+        });
+
     });
 });
 
