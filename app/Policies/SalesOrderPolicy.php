@@ -37,6 +37,12 @@ class SalesOrderPolicy
      */
     public function update(User $user, SalesOrder $salesOrder): bool
     {
+        // Admins can edit any sales order in editable status
+        if ($this->isAdmin($user)) {
+            return in_array($salesOrder->status, ['draft', 'pending_approval']);
+        }
+        
+        // Regular users can only edit their own draft sales orders
         return $salesOrder->status === 'draft' &&
                 $salesOrder->created_by === $user->id;
     }
@@ -46,6 +52,12 @@ class SalesOrderPolicy
      */
     public function delete(User $user, SalesOrder $salesOrder): bool
     {
+        // Admins can delete any draft sales order
+        if ($this->isAdmin($user)) {
+            return $salesOrder->status === 'draft';
+        }
+        
+        // Regular users can only delete their own draft sales orders
         return $salesOrder->status === 'draft' &&
                 $salesOrder->created_by === $user->id;
     }
@@ -71,8 +83,7 @@ class SalesOrderPolicy
      */
     public function approve(User $user, SalesOrder $salesOrder): bool
     {
-        // Allow any authenticated user to approve for now
-        // In production, you'd check for specific roles/permissions
+        // Admins and authorized users can approve pending approval orders
         return $salesOrder->status === 'pending_approval';
     }
 
@@ -81,7 +92,7 @@ class SalesOrderPolicy
      */
     public function confirm(User $user, SalesOrder $salesOrder): bool
     {
-        // Can confirm if approved or draft
+        // Admins and authorized users can confirm approved or draft orders
         return in_array($salesOrder->status, ['approved', 'draft']);
     }
 
@@ -90,7 +101,7 @@ class SalesOrderPolicy
      */
     public function fulfill(User $user, SalesOrder $salesOrder): bool
     {
-        // Can fulfill if confirmed or partially fulfilled
+        // Admins and authorized users can fulfill confirmed or partially fulfilled orders
         return in_array($salesOrder->status, ['confirmed', 'partially_fulfilled']);
     }
 
@@ -99,7 +110,7 @@ class SalesOrderPolicy
      */
     public function ship(User $user, SalesOrder $salesOrder): bool
     {
-        // Can ship if fully fulfilled
+        // Admins and authorized users can ship fully fulfilled orders
         return $salesOrder->status === 'fully_fulfilled';
     }
 
@@ -108,7 +119,7 @@ class SalesOrderPolicy
      */
     public function deliver(User $user, SalesOrder $salesOrder): bool
     {
-        // Can deliver if shipped
+        // Admins and authorized users can deliver shipped orders
         return $salesOrder->status === 'shipped';
     }
 
@@ -117,7 +128,16 @@ class SalesOrderPolicy
      */
     public function cancel(User $user, SalesOrder $salesOrder): bool
     {
-        // Can cancel if not yet delivered or closed
+        // Admins and authorized users can cancel orders that aren't delivered, closed, or already cancelled
         return !in_array($salesOrder->status, ['delivered', 'closed', 'cancelled']);
+    }
+
+    /**
+     * Check if the user is an admin.
+     * Uses the User model's isAdmin method for consistency.
+     */
+    private function isAdmin(User $user): bool
+    {
+        return $user->isAdmin();
     }
 }

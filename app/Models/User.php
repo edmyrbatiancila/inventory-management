@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'type',
     ];
 
     /**
@@ -55,5 +56,20 @@ class User extends Authenticatable
     public function approvedStockMovements()
     {
         return $this->hasMany(StockMovement::class, 'approved_by');
+    }
+
+    // Helper Methods
+    /**
+     * Check if the user is an admin.
+     */
+    public function isAdmin(): bool
+    {
+        // Check if user has admin type (preferred method)
+        if (isset($this->type) && $this->type === 'admin') {
+            return true;
+        }
+        
+        // Fallback to email check (for backward compatibility)
+        return $this->email === 'admin@gmail.com';
     }
 }

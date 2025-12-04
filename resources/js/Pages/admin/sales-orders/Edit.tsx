@@ -283,6 +283,10 @@ const SalesOrderEdit = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Update form data with current items before submission
+        setData('items', items);
+        
         put(route('admin.sales-orders.update', sales_order.id), {
             preserveScroll: true,
             onSuccess: () => {

@@ -253,7 +253,7 @@ const SalesOrderView = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.2, duration: 0.5 }}
                             >
-                                Sales Order #{sales_order.so_number}
+                                Sales Order Details
                             </motion.h2>
                             <motion.p
                                 className="text-sm text-gray-600 mt-1"
@@ -261,201 +261,239 @@ const SalesOrderView = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3, duration: 0.5 }}
                             >
-                                Customer: {sales_order.customer_name}
+                                {sales_order.so_number} - {sales_order.customer_name}
                             </motion.p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <motion.div
+                        className="flex items-center gap-3"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                    >
                         <Link href={route('admin.sales-orders.index')}>
-                            <Button variant="outline" size="sm">
-                                <ArrowLeft className="w-4 h-4 mr-2" />
-                                Back to Sales Orders
-                            </Button>
+                            <motion.div 
+                                whileHover={{ scale: 1.02 }} 
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                >
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
+                                    Back to Sales Orders
+                                </Button>
+                            </motion.div>
                         </Link>
+
+                        {can.approve && (
+                            <Button
+                                onClick={openApproveDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                className="bg-green-600 hover:bg-green-700"
+                                size="sm"
+                            >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Approve
+                            </Button>
+                        )}
+
+                        {can.confirm && (
+                            <Button
+                                onClick={openConfirmDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                size="sm"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                Confirm
+                            </Button>
+                        )}
+
+                        {can.fulfill && (
+                            <Button
+                                onClick={openFulfillDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                size="sm"
+                            >
+                                <Package className="w-4 h-4 mr-2" />
+                                Fulfill
+                            </Button>
+                        )}
+
+                        {can.ship && (
+                            <Button
+                                onClick={openShipDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                                size="sm"
+                            >
+                                <Truck className="w-4 h-4 mr-2" />
+                                Ship
+                            </Button>
+                        )}
+
+                        {can.deliver && (
+                            <Button
+                                onClick={openDeliverDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                className="bg-green-600 hover:bg-green-700"
+                                size="sm"
+                            >
+                                <PackageCheck className="w-4 h-4 mr-2" />
+                                Mark as Delivered
+                            </Button>
+                        )}
                         
                         {can.update && (
                             <Button
                                 onClick={handleEdit}
+                                disabled={confirmationDialog.isProcessing}
+                                variant="outline"
                                 size="sm"
-                                className="bg-blue-600 hover:bg-blue-700"
                             >
                                 <Edit3 className="w-4 h-4 mr-2" />
                                 Edit
                             </Button>
                         )}
-                    </div>
+                        
+                        {can.cancel && (
+                            <Button
+                                onClick={openCancelDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50"
+                                size="sm"
+                            >
+                                <X className="w-4 h-4 mr-2" />
+                                Cancel
+                            </Button>
+                        )}
+                        
+                        {can.delete && (
+                            <Button
+                                onClick={openDeleteDialog}
+                                disabled={confirmationDialog.isProcessing}
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50"
+                                size="sm"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                            </Button>
+                        )}
+                    </motion.div>
                 </motion.div>
             }
         >
             <Head title={`Sales Order #${sales_order.so_number}`} />
 
             <motion.div
-                className="py-8 space-y-6"
+                className="py-8"
                 initial="hidden"
                 animate="visible"
                 variants={containerVariants}
             >
-                {/* Status and Priority Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Status</CardTitle>
-                                <StatusIcon className="w-4 h-4 text-muted-foreground" />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                    {/* Status and Priority Summary */}
+                    <motion.div 
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                        variants={itemVariants}
+                    >
+                        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <StatusIcon className="w-8 h-8 text-blue-600" />
+                                    <Badge 
+                                        variant={sales_order.status === 'delivered' ? 'default' : 
+                                                sales_order.status === 'cancelled' ? 'destructive' : 'secondary'}
+                                        className="text-sm font-semibold"
+                                    >
+                                        {statuses[sales_order.status] || sales_order.status}
+                                    </Badge>
+                                </div>
                             </CardHeader>
                             <CardContent>
-                                <Badge 
-                                    variant={sales_order.status === 'delivered' ? 'default' : 
-                                            sales_order.status === 'cancelled' ? 'destructive' : 'secondary'}
-                                    className="text-sm font-semibold"
-                                >
-                                    {statuses[sales_order.status] || sales_order.status}
-                                </Badge>
+                                <CardTitle className="text-lg">Status</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Current order status
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <DollarSign className="w-8 h-8 text-green-600" />
+                                    <Badge 
+                                        variant={sales_order.payment_status === 'paid' ? 'default' : 
+                                                sales_order.payment_status === 'overdue' ? 'destructive' : 'secondary'}
+                                        className="text-sm font-semibold"
+                                    >
+                                        {payment_statuses[sales_order.payment_status] || sales_order.payment_status}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <CardTitle className="text-lg">Payment Status</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Payment processing status
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <PriorityIcon className="w-8 h-8 text-orange-600" />
+                                    <Badge 
+                                        variant={sales_order.priority === 'urgent' ? 'destructive' : 
+                                                sales_order.priority === 'high' ? 'default' : 'secondary'}
+                                        className="text-sm font-semibold"
+                                    >
+                                        {priorities[sales_order.priority] || sales_order.priority}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <CardTitle className="text-lg">Priority</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Order priority level
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <Receipt className="w-8 h-8 text-purple-600" />
+                                    <span className="text-2xl font-bold text-purple-700">
+                                        {formatCurrency(sales_order.total_amount)}
+                                    </span>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <CardTitle className="text-lg">Total Amount</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Order total value
+                                </CardDescription>
                             </CardContent>
                         </Card>
                     </motion.div>
 
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Payment Status</CardTitle>
-                                <DollarSign className="w-4 h-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <Badge 
-                                    variant={sales_order.payment_status === 'paid' ? 'default' : 
-                                            sales_order.payment_status === 'overdue' ? 'destructive' : 'secondary'}
-                                    className="text-sm font-semibold"
-                                >
-                                    {payment_statuses[sales_order.payment_status] || sales_order.payment_status}
-                                </Badge>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Priority</CardTitle>
-                                <PriorityIcon className="w-4 h-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <Badge 
-                                    variant={sales_order.priority === 'urgent' ? 'destructive' : 
-                                            sales_order.priority === 'high' ? 'default' : 'secondary'}
-                                    className="text-sm font-semibold"
-                                >
-                                    {priorities[sales_order.priority] || sales_order.priority}
-                                </Badge>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </div>
-
-                {/* Actions */}
-                <motion.div variants={cardVariants}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Actions</CardTitle>
-                            <CardDescription>
-                                Manage this sales order
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-3">
-                                {can.approve && (
-                                    <Button
-                                        onClick={openApproveDialog}
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                        Approve
-                                    </Button>
-                                )}
-
-                                {can.confirm && (
-                                    <Button
-                                        onClick={openConfirmDialog}
-                                        size="sm"
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        <Check className="w-4 h-4 mr-2" />
-                                        Confirm
-                                    </Button>
-                                )}
-
-                                {can.fulfill && (
-                                    <Button
-                                        onClick={openFulfillDialog}
-                                        size="sm"
-                                        className="bg-purple-600 hover:bg-purple-700"
-                                    >
-                                        <Package className="w-4 h-4 mr-2" />
-                                        Fulfill
-                                    </Button>
-                                )}
-
-                                {can.ship && (
-                                    <Button
-                                        onClick={openShipDialog}
-                                        size="sm"
-                                        className="bg-indigo-600 hover:bg-indigo-700"
-                                    >
-                                        <Truck className="w-4 h-4 mr-2" />
-                                        Ship
-                                    </Button>
-                                )}
-
-                                {can.deliver && (
-                                    <Button
-                                        onClick={openDeliverDialog}
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        <PackageCheck className="w-4 h-4 mr-2" />
-                                        Mark as Delivered
-                                    </Button>
-                                )}
-
-                                {can.cancel && (
-                                    <Button
-                                        onClick={openCancelDialog}
-                                        variant="destructive"
-                                        size="sm"
-                                    >
-                                        <X className="w-4 h-4 mr-2" />
-                                        Cancel
-                                    </Button>
-                                )}
-
-                                {can.delete && (
-                                    <Button
-                                        onClick={openDeleteDialog}
-                                        variant="destructive"
-                                        size="sm"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-
-                {/* Sales Order Information */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Customer Information */}
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <User className="w-5 h-5" />
-                                    Customer Information
-                                </CardTitle>
-                            </CardHeader>
+                    {/* Sales Order Information */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Customer Information */}
+                        <motion.div variants={cardVariants}>
+                            <Card className="h-fit">
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                                    <CardTitle className="flex items-center gap-2 text-blue-900">
+                                        <User className="w-6 h-6" />
+                                        Customer Information
+                                    </CardTitle>
+                                </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -508,15 +546,15 @@ const SalesOrderView = () => {
                         </Card>
                     </motion.div>
 
-                    {/* Order Details */}
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5" />
-                                    Order Details
-                                </CardTitle>
-                            </CardHeader>
+                        {/* Order Details */}
+                        <motion.div variants={cardVariants}>
+                            <Card className="h-fit">
+                                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+                                    <CardTitle className="flex items-center gap-2 text-green-900">
+                                        <FileText className="w-6 h-6" />
+                                        Order Details
+                                    </CardTitle>
+                                </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -577,16 +615,16 @@ const SalesOrderView = () => {
                     </motion.div>
                 </div>
 
-                {/* Shipping Information */}
-                {(sales_order.shipping_address || sales_order.shipping_method || sales_order.tracking_number) && (
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Truck className="w-5 h-5" />
-                                    Shipping Information
-                                </CardTitle>
-                            </CardHeader>
+                    {/* Shipping Information */}
+                    {(sales_order.shipping_address || sales_order.shipping_method || sales_order.tracking_number) && (
+                        <motion.div variants={cardVariants} className="lg:col-span-2">
+                            <Card>
+                                <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50">
+                                    <CardTitle className="flex items-center gap-2 text-purple-900">
+                                        <Truck className="w-6 h-6" />
+                                        Shipping Information
+                                    </CardTitle>
+                                </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {sales_order.shipping_address && (
@@ -627,15 +665,15 @@ const SalesOrderView = () => {
                     </motion.div>
                 )}
 
-                {/* Order Items */}
-                <motion.div variants={cardVariants}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="w-5 h-5" />
-                                Order Items
-                            </CardTitle>
-                        </CardHeader>
+                    {/* Order Items */}
+                    <motion.div variants={cardVariants} className="lg:col-span-2">
+                        <Card>
+                            <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+                                <CardTitle className="flex items-center gap-2 text-orange-900">
+                                    <Package className="w-6 h-6" />
+                                    Order Items ({sales_order.items?.length || 0} items)
+                                </CardTitle>
+                            </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
@@ -682,15 +720,15 @@ const SalesOrderView = () => {
                     </Card>
                 </motion.div>
 
-                {/* Financial Summary */}
-                <motion.div variants={cardVariants}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <DollarSign className="w-5 h-5" />
-                                Financial Summary
-                            </CardTitle>
-                        </CardHeader>
+                    {/* Financial Summary */}
+                    <motion.div variants={cardVariants}>
+                        <Card className="bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200">
+                            <CardHeader className="bg-gradient-to-r from-emerald-100 to-green-100">
+                                <CardTitle className="flex items-center gap-2 text-emerald-900">
+                                    <DollarSign className="w-6 h-6" />
+                                    Financial Summary
+                                </CardTitle>
+                            </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
                                 <div className="flex justify-between">
@@ -725,16 +763,16 @@ const SalesOrderView = () => {
                     </Card>
                 </motion.div>
 
-                {/* Notes and Terms */}
-                {(sales_order.notes || sales_order.customer_notes || sales_order.terms_and_conditions || sales_order.payment_terms) && (
-                    <motion.div variants={cardVariants}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5" />
-                                    Additional Information
-                                </CardTitle>
-                            </CardHeader>
+                    {/* Notes and Terms */}
+                    {(sales_order.notes || sales_order.customer_notes || sales_order.terms_and_conditions || sales_order.payment_terms) && (
+                        <motion.div variants={cardVariants}>
+                            <Card>
+                                <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50">
+                                    <CardTitle className="flex items-center gap-2 text-slate-900">
+                                        <FileText className="w-6 h-6" />
+                                        Additional Information
+                                    </CardTitle>
+                                </CardHeader>
                             <CardContent className="space-y-4">
                                 {sales_order.notes && (
                                     <div>
@@ -761,9 +799,10 @@ const SalesOrderView = () => {
                                     </div>
                                 )}
                             </CardContent>
-                        </Card>
-                    </motion.div>
-                )}
+                            </Card>
+                        </motion.div>
+                    )}
+                </div>
             </motion.div>
 
             {/* Confirmation Dialog */}

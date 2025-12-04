@@ -80,7 +80,7 @@ class UpdateSalesOrderRequest extends FormRequest
         $baseRule = $isDraft ? 'sometimes' : 'prohibited';
         
         return [
-            'tax_rate' => [$baseRule, 'nullable', 'numeric', 'between:0,1'],
+            'tax_rate' => [$baseRule, 'nullable', 'numeric', 'between:0,100'],
             'shipping_cost' => [$baseRule, 'nullable', 'numeric', 'min:0'],
             'discount_amount' => [$baseRule, 'nullable', 'numeric', 'min:0'],
             'currency' => [$baseRule, 'nullable', 'string', 'size:3'],
