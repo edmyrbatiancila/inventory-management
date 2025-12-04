@@ -58,6 +58,36 @@ class User extends Authenticatable
         return $this->hasMany(StockMovement::class, 'approved_by');
     }
 
+    public function createdSuppliers()
+    {
+        return $this->hasMany(Supplier::class, 'created_by');
+    }
+
+    public function updatedSuppliers()
+    {
+        return $this->hasMany(Supplier::class, 'updated_by');
+    }
+
+    public function createdCustomers()
+    {
+        return $this->hasMany(Customer::class, 'created_by');
+    }
+
+    public function updatedCustomers()
+    {
+        return $this->hasMany(Customer::class, 'updated_by');
+    }
+
+    public function managedCustomers()
+    {
+        return $this->hasMany(Customer::class, 'assigned_sales_rep');
+    }
+
+    public function contactLogs()
+    {
+        return $this->hasMany(ContactLog::class, 'contact_person_id');
+    }
+
     // Helper Methods
     /**
      * Check if the user is an admin.

@@ -32,7 +32,9 @@ class DatabaseSeeder extends Seeder
             StockMovementSeeder::class,
             PurchaseOrderSeeder::class,
             SalesOrderSeeder::class,
+            SupplierSeeder::class,
+            CustomerSeeder::class,
+            ContactLogSeeder::class,
         ]);
-
     }
 }
