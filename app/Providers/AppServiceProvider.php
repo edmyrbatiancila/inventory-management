@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\ContactLogRepositoryInterface;
+use App\Contracts\CustomerRepositoryInterface;
+use App\Contracts\SupplierRepositoryInterface;
+use App\Repositories\ContactLogRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\PurchaseOrderRepositoryInterface;
@@ -17,6 +22,7 @@ use App\Repositories\SalesOrderRepository;
 use App\Repositories\StockAdjustmentRepository;
 use App\Repositories\StockMovementRepository;
 use App\Repositories\StockTransferRepository;
+use App\Repositories\SupplierRepository;
 use App\Repositories\WarehouseRepository;
 use App\Services\StockAdjustmentService;
 use App\Services\StockTransferService;
@@ -41,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StockMovementRepositoryInterface::class, StockMovementRepository::class);
         $this->app->bind(PurchaseOrderRepositoryInterface::class, PurchaseOrderRepository::class);
         $this->app->bind(SalesOrderRepositoryInterface::class, SalesOrderRepository::class);
+        $this->app->bind(SupplierRepositoryInterface::class, SupplierRepository::class);
+        $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
+        $this->app->bind(ContactLogRepositoryInterface::class, ContactLogRepository::class);
     }
 
     /**

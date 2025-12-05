@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ContactLogController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -9,6 +11,7 @@ use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\SupplierController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -182,6 +185,36 @@ Route::middleware(['auth', 'admin'])->group(function () {
             Route::get('statistics', [SalesOrderController::class, 'statistics'])->name('statistics');
         });
 
+        // ============= Supplier Routes =============
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::get('suppliers/{id}', [SupplierController::class, 'show'])->name('suppliers.show');
+        Route::get('suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+        Route::put('suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('suppliers/{id}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+
+        // Supplier API endpoints
+        Route::get('/api/suppliers/search', [SupplierController::class, 'search'])->name('api.suppliers.search');
+        Route::get('/api/suppliers/{id}/metrics', [SupplierController::class, 'getMetrics'])->name('api.suppliers.metrics');
+
+
+        // =========== Customer Routes ============
+        Route::resource('customers', CustomerController::class);
+
+        Route::get('/api/customers/search', [CustomerController::class, 'search'])->name('api.customers.search');
+        Route::get('api/customers/{id}/metrics', [CustomerController::class, 'getMetrics'])->name('api.customers.metrics');
+
+
+        // =============== Contact Log Routes ==============
+        Route::resource('contact-logs', ContactLogController::class);
+
+        Route::prefix('contact-logs')->name('contact-logs.')->group(function () {
+            Route::get('/search', [ContactLogController::class, 'search'])->name('search');
+            Route::get('/follow-ups', [ContactLogController::class, 'getFollowUps'])->name('follow-ups');
+            Route::get('/entity/{type}/{id}', [ContactLogController::class, 'getByEntity'])->name('by-entity');
+            Route::post('/{contactLog}/complete-follow-up', [ContactLogController::class, 'markFollowUpComplete'])->name('complete-follow-up');
+        });
     });
 });
 
