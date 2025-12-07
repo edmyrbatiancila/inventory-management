@@ -19,6 +19,8 @@ class SupplierController extends Controller
     public function __construct(SupplierService $supplierService)
     {
         $this->supplierService = $supplierService;
+        $this->middleware('auth');
+        $this->middleware('admin')->except(['index', 'show']);
     }
 
     /**
@@ -26,31 +28,23 @@ class SupplierController extends Controller
      */
     public function index(Request $request)
     {
-        // Authorization check
-        if (!auth()->user() || !auth()->user()->isAdmin()) {
-            abort(403, 'Unauthorized access to suppliers.');
-        }
-
         $filters = $request->only(['status', 'type', 'search', 'country', 'min_rating']);
         
         try {
             $suppliers = $this->supplierService->getAllSuppliers($filters);
             
-            return Inertia::render('admin/supplier/Index', [
-                'suppliers' => SupplierResource::collection($suppliers)->toArray($request),
+            return Inertia::render('Admin/Suppliers/Index', [
+                'suppliers' => SupplierResource::collection($suppliers),
                 'filters' => $filters,
                 'constants' => [
                     'supplier_types' => SupplierConstants::SUPPLIER_TYPES,
                     'statuses' => SupplierConstants::STATUSES,
                     'payment_terms' => SupplierConstants::PAYMENT_TERMS,
-                    'payment_methods' => SupplierConstants::PAYMENT_METHODS,
-                    'contract_types' => SupplierConstants::CONTRACT_TYPES,
                 ],
                 'can' => [
                     'create' => auth()->user()->isAdmin(),
                     'edit' => auth()->user()->isAdmin(),
                     'delete' => auth()->user()->isAdmin(),
-                    'viewAny' => auth()->user()->isAdmin(),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -171,7 +165,7 @@ class SupplierController extends Controller
     public function destroy(Supplier $supplier)
     {
         try {
-            $this->supplierService->deleteSupplier($supplier->id);
+            $this->supplierService->deleteSupplier($id);
             
             return redirect()
                 ->route('admin.suppliers.index')

@@ -13,7 +13,7 @@ class SupplierPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return false;
     }
 
     /**
@@ -21,7 +21,7 @@ class SupplierPolicy
      */
     public function view(User $user, Supplier $supplier): bool
     {
-        return $user->isAdmin();
+        return false;
     }
 
     /**
@@ -29,7 +29,7 @@ class SupplierPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return false;
     }
 
     /**
@@ -37,7 +37,7 @@ class SupplierPolicy
      */
     public function update(User $user, Supplier $supplier): bool
     {
-        return $user->isAdmin();
+        return false;
     }
 
     /**
@@ -45,7 +45,7 @@ class SupplierPolicy
      */
     public function delete(User $user, Supplier $supplier): bool
     {
-        return $user->isAdmin();
+        return false;
     }
 
     /**
