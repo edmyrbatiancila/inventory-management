@@ -125,8 +125,8 @@ class SupplierResource extends JsonResource
             ],
 
             'permissions' => [
-                'can_edit' => auth()->user()->isAdmin(),
-                'can_delete' => auth()->user()->isAdmin() && !$this->hasActiveOrders(),
+                'can_edit' => auth()->check() && auth()->user()->isAdmin(),
+                'can_delete' => auth()->check() && auth()->user()->isAdmin() && !$this->hasActiveOrders(),
                 'can_create_order' => $this->canReceiveOrders(),
             ],
             
