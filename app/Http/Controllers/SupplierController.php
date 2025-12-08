@@ -8,6 +8,7 @@ use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Http\Resources\SupplierResource;
 use App\Services\SupplierService;
+use App\Contracts\SupplierRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -15,12 +16,14 @@ use Inertia\Inertia;
 class SupplierController extends Controller
 {
     protected $supplierService;
+    protected $supplierRepository;
 
-    public function __construct(SupplierService $supplierService)
-    {
+    public function __construct(
+        SupplierService $supplierService,
+        SupplierRepositoryInterface $supplierRepository
+    ) {
         $this->supplierService = $supplierService;
-        $this->middleware('auth');
-        $this->middleware('admin')->except(['index', 'show']);
+        $this->supplierRepository = $supplierRepository;
     }
 
     /**
@@ -31,10 +34,15 @@ class SupplierController extends Controller
         $filters = $request->only(['status', 'type', 'search', 'country', 'min_rating']);
         
         try {
-            $suppliers = $this->supplierService->getAllSuppliers($filters);
+            $suppliers = $this->supplierRepository->getPaginated(15, $filters);
             
-            return Inertia::render('Admin/Suppliers/Index', [
-                'suppliers' => SupplierResource::collection($suppliers),
+            // Transform the data using SupplierResource while preserving pagination
+            $suppliers->through(function ($supplier) use ($request) {
+                return (new SupplierResource($supplier))->toArray($request);
+            });
+            
+            return Inertia::render('admin/supplier/Index', [
+                'suppliers' => $suppliers,
                 'filters' => $filters,
                 'constants' => [
                     'supplier_types' => SupplierConstants::SUPPLIER_TYPES,
@@ -45,6 +53,7 @@ class SupplierController extends Controller
                     'create' => auth()->user()->isAdmin(),
                     'edit' => auth()->user()->isAdmin(),
                     'delete' => auth()->user()->isAdmin(),
+                    'viewAny' => auth()->user()->isAdmin(),
                 ]
             ]);
         } catch (\Exception $e) {

@@ -92,19 +92,33 @@ class SupplierRepository implements SupplierRepositoryInterface
     {
         $query = $this->model->query();
         
-        // Apply same filters as getAll
-        if (isset($filters['status'])) {
+        // Apply status filter
+        if (isset($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
         
-        if (isset($filters['type'])) {
+        // Apply type filter using scope
+        if (isset($filters['type']) && $filters['type'] !== 'all') {
             $query->byType($filters['type']);
         }
         
-        if (isset($filters['search'])) {
+        // Apply country filter
+        if (isset($filters['country']) && $filters['country'] !== 'all') {
+            $query->byCountry($filters['country']);
+        }
+        
+        // Apply rating filter
+        if (isset($filters['min_rating']) && $filters['min_rating'] !== 'all') {
+            $query->withHighRating((float) $filters['min_rating']);
+        }
+        
+        // Apply search
+        if (isset($filters['search']) && !empty($filters['search'])) {
             $query->where(function($q) use ($filters) {
                 $q->where('company_name', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%");
+                  ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%")
+                  ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%")
+                  ->orWhere('email', 'LIKE', "%{$filters['search']}%");
             });
         }
         

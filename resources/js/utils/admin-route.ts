@@ -10,5 +10,7 @@ export const isAdminRouteActive = () => {
         route().current('admin.stock-transfers.*') ||
         route().current('admin.stock-movements.*') ||
         route().current('admin.purchase-orders.*') ||
-        route().current('admin.sales-orders.*');
+        route().current('admin.sales-orders.*') 
+        // ||
+        // route().current('admin.suppliers.*');
 };

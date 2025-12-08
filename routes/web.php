@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InsightsController;
 use App\Http\Controllers\ContactLogController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InventoryController;
@@ -185,36 +188,42 @@ Route::middleware(['auth', 'admin'])->group(function () {
             Route::get('statistics', [SalesOrderController::class, 'statistics'])->name('statistics');
         });
 
-        // ============= Supplier Routes =============
-        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-        Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
-        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
-        Route::get('suppliers/{id}', [SupplierController::class, 'show'])->name('suppliers.show');
-        Route::get('suppliers/{id}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
-        Route::put('suppliers/{id}', [SupplierController::class, 'update'])->name('suppliers.update');
-        Route::delete('suppliers/{id}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+        // ============= Sprint 8: Advanced Analytics & Reporting =============
+        
+        // Analytics Reports
+        Route::resource('analytics', AnalyticsController::class)->parameters([
+            'analytics' => 'analyticsReport'
+        ]);
+        Route::post('analytics/{analyticsReport}/generate', [AnalyticsController::class, 'generate'])->name('analytics.generate');
+        Route::get('analytics/{analyticsReport}/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+        Route::get('analytics-dashboard', [AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
 
-        // Supplier API endpoints
-        Route::get('/api/suppliers/search', [SupplierController::class, 'search'])->name('api.suppliers.search');
-        Route::get('/api/suppliers/{id}/metrics', [SupplierController::class, 'getMetrics'])->name('api.suppliers.metrics');
-
-
-        // =========== Customer Routes ============
-        Route::resource('customers', CustomerController::class);
-
-        Route::get('/api/customers/search', [CustomerController::class, 'search'])->name('api.customers.search');
-        Route::get('api/customers/{id}/metrics', [CustomerController::class, 'getMetrics'])->name('api.customers.metrics');
-
-
-        // =============== Contact Log Routes ==============
-        Route::resource('contact-logs', ContactLogController::class);
-
-        Route::prefix('contact-logs')->name('contact-logs.')->group(function () {
-            Route::get('/search', [ContactLogController::class, 'search'])->name('search');
-            Route::get('/follow-ups', [ContactLogController::class, 'getFollowUps'])->name('follow-ups');
-            Route::get('/entity/{type}/{id}', [ContactLogController::class, 'getByEntity'])->name('by-entity');
-            Route::post('/{contactLog}/complete-follow-up', [ContactLogController::class, 'markFollowUpComplete'])->name('complete-follow-up');
+        // Dashboard Management
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
+            Route::get('/', [DashboardController::class, 'index'])->name('index');
+            Route::get('/widgets', [DashboardController::class, 'widgets'])->name('widgets');
+            Route::get('/widgets/create', [DashboardController::class, 'createWidget'])->name('widgets.create');
+            Route::post('/widgets', [DashboardController::class, 'storeWidget'])->name('widgets.store');
+            Route::get('/widgets/{widget}/edit', [DashboardController::class, 'editWidget'])->name('widgets.edit');
+            Route::put('/widgets/{widget}', [DashboardController::class, 'updateWidget'])->name('widgets.update');
+            Route::delete('/widgets/{widget}', [DashboardController::class, 'destroyWidget'])->name('widgets.destroy');
+            Route::post('/widgets/{widget}/refresh', [DashboardController::class, 'refreshWidget'])->name('widgets.refresh');
+            Route::patch('/layout', [DashboardController::class, 'updateLayout'])->name('layout.update');
         });
+
+        // Business Insights
+        Route::resource('insights', InsightsController::class)->only(['index', 'show']);
+        Route::post('insights/{insight}/acknowledge', [InsightsController::class, 'acknowledge'])->name('insights.acknowledge');
+        Route::post('insights/{insight}/assign', [InsightsController::class, 'assign'])->name('insights.assign');
+        Route::patch('insights/{insight}/status', [InsightsController::class, 'updateStatus'])->name('insights.status');
+        Route::post('insights/{insight}/feedback', [InsightsController::class, 'feedback'])->name('insights.feedback');
+        Route::post('insights/detect', [InsightsController::class, 'detect'])->name('insights.detect');
+        Route::post('insights/bulk-action', [InsightsController::class, 'bulkAction'])->name('insights.bulk-action');
+
+        // ============= Future: Supplier & Customer Management =============
+        // Route::resource('suppliers', SupplierController::class);
+        // Route::resource('customers', CustomerController::class);
+        // Route::resource('contact-logs', ContactLogController::class);
     });
 });
 

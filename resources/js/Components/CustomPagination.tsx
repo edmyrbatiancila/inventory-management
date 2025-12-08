@@ -18,7 +18,10 @@ interface CustomPaginationProps<T> {
 }
 
 export default function CustomPagination<T>({ data, className }: CustomPaginationProps<T>) {
-  if (data.last_page <= 1) return null;
+  // Add safety checks for malformed data
+  if (!data || data.last_page <= 1 || !data.links || !Array.isArray(data.links)) {
+    return null;
+  }
 
   const renderPaginationLink = (link: PaginationLinkType, index: number) => {
     if (link.label === '&laquo; Previous') {
@@ -87,11 +90,11 @@ export default function CustomPagination<T>({ data, className }: CustomPaginatio
       className={`flex flex-col items-center gap-4 ${className}`}
     >
       <div className="text-sm text-muted-foreground">
-        Showing {data.from} to {data.to} of {data.total} results
+        Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
       </div>
       <Pagination>
         <PaginationContent>
-          {data.links.map((link, index) => renderPaginationLink(link, index))}
+          {(data.links || []).map((link, index) => renderPaginationLink(link, index))}
         </PaginationContent>
       </Pagination>
     </motion.div>

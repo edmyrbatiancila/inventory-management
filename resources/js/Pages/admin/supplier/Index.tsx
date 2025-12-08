@@ -77,6 +77,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { toast } from 'sonner';
 import { Supplier, SupplierConstants, SupplierFilters } from '@/types/Suppliers/ISuppliers';
+import { renderPerformanceRating } from '@/hooks/supplier/render-perf-rating';
+import CustomPagination from '@/Components/CustomPagination';
 
 
 interface SupplierIndexProps {
@@ -308,25 +310,6 @@ const SuppliersIndex = ({
         );
     };
 
-    const renderPerformanceRating = (rating: number) => {
-        const stars = Math.round(rating);
-        return (
-            <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                        key={star}
-                        className={`w-3 h-3 ${
-                            star <= stars 
-                                ? 'fill-yellow-400 text-yellow-400' 
-                                : 'text-gray-300'
-                        }`}
-                    />
-                ))}
-                <span className="ml-1 text-sm text-gray-600">({rating.toFixed(1)})</span>
-            </div>
-        );
-    };
-
     // Sort suppliers - handle both array and Laravel Resource Collection formats
     const supplierArray = Array.isArray(suppliers) 
         ? suppliers 
@@ -461,54 +444,54 @@ const SuppliersIndex = ({
                         transition={{ delay: 0.1 }}
                     >
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Suppliers</CardTitle>
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{supplierArray.length}</div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Active Suppliers</CardTitle>
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">
-                                {supplierArray.filter(s => s.status === 'active').length}
-                            </div>
-                        </CardContent>
-                    </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Total Suppliers</CardTitle>
+                                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{supplierArray.length}</div>
+                                </CardContent>
+                            </Card>
+                        
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Active Suppliers</CardTitle>
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-green-600">
+                                        {supplierArray.filter(s => s.status === 'active').length}
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
-                            <Clock className="h-4 w-4 text-yellow-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-yellow-600">
-                                {supplierArray.filter(s => s.status === 'pending_approval').length}
-                            </div>
-                        </CardContent>
-                    </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+                                    <Clock className="h-4 w-4 text-yellow-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-yellow-600">
+                                        {supplierArray.filter(s => s.status === 'pending_approval').length}
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-                            <Star className="h-4 w-4 text-yellow-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-yellow-600">
-                                {supplierArray.length > 0
-                                    ? (supplierArray.reduce((sum, s) => sum + s.performance_metrics.overall_rating, 0) / supplierArray.length).toFixed(1)
-                                    : '0.0'
-                                }
-                            </div>
-                        </CardContent>
-                    </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+                                    <Star className="h-4 w-4 text-yellow-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-yellow-600">
+                                        {supplierArray.length > 0
+                                            ? (supplierArray.reduce((sum, s) => sum + s.performance_metrics.overall_rating, 0) / supplierArray.length).toFixed(1)
+                                            : '0.0'
+                                        }
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     </motion.div>
 
@@ -899,6 +882,9 @@ const SuppliersIndex = ({
                                         )}
                                     </div>
                                 )}
+                                <div className="mt-6">
+                                    <CustomPagination data={ suppliers } />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
