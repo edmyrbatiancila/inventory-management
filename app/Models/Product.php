@@ -77,4 +77,12 @@ class Product extends Model
     {
         return $this->hasMany(StockMovement::class);
     }
+
+    /**
+     * Check if product is low on stock across all warehouses
+     */
+    public function isLowStock(): bool
+    {
+        return $this->inventories()->where('quantity_available', '<=', $this->min_stock_level)->exists();
+    }
 }

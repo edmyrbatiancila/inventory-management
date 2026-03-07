@@ -58,14 +58,17 @@ class InventorySeeder extends Seeder
         // Main DC gets high stock of popular products
         if ($mainDC) {
             foreach ($popularProducts->take(20) as $product) {
+                $onHand = fake()->numberBetween(200, 1000);
+                $reserved = fake()->numberBetween(0, min(20, $onHand));
+                
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
                         'warehouse_id' => $mainDC->id
                     ],
                     [
-                        'quantity_on_hand' => fake()->numberBetween(200, 1000),
-                        'quantity_reserved' => fake()->numberBetween(0, 20),
+                        'quantity_on_hand' => $onHand,
+                        'quantity_reserved' => $reserved,
                     ]
                 );
             }
@@ -74,14 +77,17 @@ class InventorySeeder extends Seeder
         // East Hub gets medium stock of popular products
         if ($eastHub) {
             foreach ($popularProducts->skip(5)->take(15) as $product) {
+                $onHand = fake()->numberBetween(50, 200);
+                $reserved = fake()->numberBetween(0, min(10, $onHand));
+                
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
                         'warehouse_id' => $eastHub->id
                     ],
                     [
-                        'quantity_on_hand' => fake()->numberBetween(50, 200),
-                        'quantity_reserved' => fake()->numberBetween(0, 10),
+                        'quantity_on_hand' => $onHand,
+                        'quantity_reserved' => $reserved,
                     ]
                 );
             }
@@ -90,14 +96,17 @@ class InventorySeeder extends Seeder
         // West Storage gets varied stock
         if ($westStorage) {
             foreach ($popularProducts->skip(10)->take(10) as $product) {
+                $onHand = fake()->numberBetween(10, 150);
+                $reserved = fake()->numberBetween(0, min(5, $onHand));
+                
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
                         'warehouse_id' => $westStorage->id
                     ],
                     [
-                        'quantity_on_hand' => fake()->numberBetween(10, 150),
-                        'quantity_reserved' => fake()->numberBetween(0, 5),
+                        'quantity_on_hand' => $onHand,
+                        'quantity_reserved' => $reserved,
                     ]
                 );
             }
@@ -118,14 +127,17 @@ class InventorySeeder extends Seeder
             $selectedWarehouses = $activeWarehouses->random($warehouseCount);
 
             foreach ($selectedWarehouses as $warehouse) {
+                $onHand = fake()->numberBetween(0, 500);
+                $reserved = fake()->numberBetween(0, min(50, $onHand));
+                
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
                         'warehouse_id' => $warehouse->id
                     ],
                     [
-                        'quantity_on_hand' => fake()->numberBetween(0, 500),
-                        'quantity_reserved' => fake()->numberBetween(0, 50),
+                        'quantity_on_hand' => $onHand,
+                        'quantity_reserved' => $reserved,
                     ]
                 );
             }
@@ -147,14 +159,17 @@ class InventorySeeder extends Seeder
                 $selectedWarehouses = $activeWarehouses->random($warehouseCount);
                 
                 foreach ($selectedWarehouses as $warehouse) {
+                    $onHand = fake()->numberBetween(10, 200);
+                    $reserved = fake()->numberBetween(0, min(10, $onHand));
+                    
                     Inventory::firstOrCreate(
                         [
                             'product_id' => $product->id,
                             'warehouse_id' => $warehouse->id
                         ],
                         [
-                            'quantity_on_hand' => fake()->numberBetween(10, 200),
-                            'quantity_reserved' => fake()->numberBetween(0, 10),
+                            'quantity_on_hand' => $onHand,
+                            'quantity_reserved' => $reserved,
                         ]
                     );
                 }
