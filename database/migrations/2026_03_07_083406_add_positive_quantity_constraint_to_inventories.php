@@ -25,11 +25,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('inventories', function (Blueprint $table) {
-            // Drop the constraints
-            DB::statement('ALTER TABLE inventories DROP CONSTRAINT IF EXISTS check_positive_quantity_available');
-            DB::statement('ALTER TABLE inventories DROP CONSTRAINT IF EXISTS check_positive_quantity_on_hand');
-            DB::statement('ALTER TABLE inventories DROP CONSTRAINT IF EXISTS check_positive_quantity_reserved');
-        });
+        // For MySQL, we need to use DROP CHECK instead of DROP CONSTRAINT
+        DB::statement('ALTER TABLE inventories DROP CHECK check_positive_quantity_available');
+        DB::statement('ALTER TABLE inventories DROP CHECK check_positive_quantity_on_hand');
+        DB::statement('ALTER TABLE inventories DROP CHECK check_positive_quantity_reserved');
     }
 };

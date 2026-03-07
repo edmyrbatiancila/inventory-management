@@ -5,8 +5,8 @@ namespace Database\Factories;
 use App\Models\SalesOrder;
 use App\Models\User;
 use App\Models\Warehouse;
-use Database\Factories\Traits\HasCustomerData;
-use Database\Factories\Traits\HasSalesOrderStates;
+use Database\Factories\traits\HasCustomerData;
+use Database\Factories\traits\HasSalesOrderStates;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

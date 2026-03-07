@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Customer;
 use App\Models\User;
-use Database\Factories\Traits\HasCustomerStates;
+use Database\Factories\traits\HasCustomerStates;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

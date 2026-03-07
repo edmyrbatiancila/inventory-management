@@ -32,24 +32,18 @@ class InventoryFactory extends Factory
 
     public function highStock()
     {
-        return $this->state(function (array $attributes) {
-            $onHand = $this->faker->numberBetween(200, 1000);
-            return [
-                'quantity_on_hand' => $onHand,
-                'quantity_reserved' => $this->faker->numberBetween(0, min(20, $onHand)),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'quantity_on_hand' => $this->faker->numberBetween(200, 1000),
+            'quantity_reserved' => $this->faker->numberBetween(0, 20),
+        ]);
     }
 
     public function lowStock()
     {
-        return $this->state(function (array $attributes) {
-            $onHand = $this->faker->numberBetween(1, 10);
-            return [
-                'quantity_on_hand' => $onHand,
-                'quantity_reserved' => $this->faker->numberBetween(0, min(3, $onHand)),
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'quantity_on_hand' => $this->faker->numberBetween(1, 10),
+            'quantity_reserved' => $this->faker->numberBetween(0, 3),
+        ]);
     }
 
     public function outOfStock()

@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use Database\Factories\Traits\HasPurchaseOrderItemStates;
+use Database\Factories\traits\HasPurchaseOrderItemStates;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

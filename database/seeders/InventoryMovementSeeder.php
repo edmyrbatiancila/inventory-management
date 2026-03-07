@@ -71,9 +71,13 @@ class InventoryMovementSeeder extends Seeder
             }
 
             // Update final inventory to match movement history
+            // Ensure quantity_reserved doesn't exceed quantity_on_hand
+            $adjustedReserved = min($inventory->quantity_reserved, $currentStock);
+            
             $inventory->update([
                 'quantity_on_hand' => $currentStock,
-                'quantity_available' => max(0, $currentStock - $inventory->quantity_reserved)
+                'quantity_reserved' => $adjustedReserved,
+                // quantity_available will be automatically calculated by the model
             ]);
         }
     }

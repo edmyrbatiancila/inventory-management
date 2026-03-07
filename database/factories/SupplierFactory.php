@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Supplier;
 use App\Models\User;
-use Database\Factories\Traits\HasSupplierStates;
+use Database\Factories\traits\HasSupplierStates;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

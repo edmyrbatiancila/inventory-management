@@ -5,8 +5,8 @@ namespace Database\Factories;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use App\Models\Warehouse;
-use Database\Factories\Traits\HasPurchaseOrderStates;
-use Database\Factories\Traits\HasSupplierData;
+use Database\Factories\traits\HasPurchaseOrderStates;
+use Database\Factories\traits\HasSupplierData;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
