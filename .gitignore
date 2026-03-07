@@ -24,3 +24,6 @@ Homestead.yaml
 Thumbs.db
 /docker/mysql-data
 /storage/*.log
+/boost.json
+/.github/copilot-instructions.md
+/CLAUDE.md
