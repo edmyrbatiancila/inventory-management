@@ -1,10 +1,9 @@
 <?php
 
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InsightsController;
-use App\Http\Controllers\ContactLogController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
@@ -15,10 +14,10 @@ use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\SupplierController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -65,7 +64,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Route::get('/admin/products/reports/needing-reorder', [ProductController::class, 'needingReorder'])->name('admin.products.needing-reorder'); // Reorder report
     // Route::get('/admin/products/{id}/check-availability', [ProductController::class, 'checkAvailability'])->name('admin.products.check-availability'); // Check product availability
 
-    
     Route::prefix('admin')->name('admin.')->group(function () {
         // Product Routes:
         Route::resource('products', ProductController::class)->except(['lowStock', 'needingReorder', 'checkAvailability']);
@@ -95,13 +93,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
         // Stock Adjustment Routes:
         Route::resource('stock-adjustments', StockAdjustmentController::class)->parameters([
-            'stock-adjustments' => 'stockAdjustment'
+            'stock-adjustments' => 'stockAdjustment',
         ]);
         Route::get('/api/stock-adjustments/inventory/{inventoryId}', [StockAdjustmentController::class, 'getByInventory'])->name('api.stock-adjustments.by-inventory');
 
         // Stock Transfer Routes:
         Route::resource('stock-transfers', StockTransferController::class)->parameters([
-            'stock-transfers' => 'stockTransfer'
+            'stock-transfers' => 'stockTransfer',
         ]);
 
         // Additional workflow routes
@@ -116,10 +114,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
             ->name('stock-transfers.bulk-approve');
         Route::post('/stock-transfers/bulk-cancel', [StockTransferController::class, 'bulkCancel'])
             ->name('stock-transfers.bulk-cancel');
-        
+
         // Stock Movement Routes:
         Route::resource('stock-movements', StockMovementController::class)->parameters([
-            'stock-movements' => 'stockMovement'
+            'stock-movements' => 'stockMovement',
         ]);
         Route::post('stock-movements/{id}/approve', [StockMovementController::class, 'approve'])->name('stock-movements.approve');
         Route::post('stock-movements/{id}/reject', [StockMovementController::class, 'reject'])->name('stock-movements.reject');
@@ -131,7 +129,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         // =========== Purchase Order Routes ============
 
         Route::resource('purchase-orders', PurchaseOrderController::class)->parameters([
-            'purchase-orders' => 'purchaseOrder'
+            'purchase-orders' => 'purchaseOrder',
         ]);
 
         // Purchase Order Status Actions
@@ -159,7 +157,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
         // ===================== Sales Order Routes =====================
         Route::resource('sales-orders', SalesOrderController::class)->parameters([
-            'sales-orders' => 'salesOrder'
+            'sales-orders' => 'salesOrder',
         ]);
 
         // Sales Order Status Actions
@@ -189,27 +187,25 @@ Route::middleware(['auth', 'admin'])->group(function () {
         });
 
         // ============= Sprint 8: Advanced Analytics & Reporting =============
-        
+
         // Analytics Reports
         Route::resource('analytics', AnalyticsController::class)->parameters([
-            'analytics' => 'analyticsReport'
+            'analytics' => 'analyticsReport',
         ]);
         Route::post('analytics/{analyticsReport}/generate', [AnalyticsController::class, 'generate'])->name('analytics.generate');
         Route::get('analytics/{analyticsReport}/export', [AnalyticsController::class, 'export'])->name('analytics.export');
         Route::get('analytics-dashboard', [AnalyticsController::class, 'dashboard'])->name('analytics.dashboard');
 
         // Dashboard Management
-        Route::prefix('dashboard')->name('dashboard.')->group(function () {
-            Route::get('/', [DashboardController::class, 'index'])->name('index');
-            Route::get('/widgets', [DashboardController::class, 'widgets'])->name('widgets');
-            Route::get('/widgets/create', [DashboardController::class, 'createWidget'])->name('widgets.create');
-            Route::post('/widgets', [DashboardController::class, 'storeWidget'])->name('widgets.store');
-            Route::get('/widgets/{widget}/edit', [DashboardController::class, 'editWidget'])->name('widgets.edit');
-            Route::put('/widgets/{widget}', [DashboardController::class, 'updateWidget'])->name('widgets.update');
-            Route::delete('/widgets/{widget}', [DashboardController::class, 'destroyWidget'])->name('widgets.destroy');
-            Route::post('/widgets/{widget}/refresh', [DashboardController::class, 'refreshWidget'])->name('widgets.refresh');
-            Route::patch('/layout', [DashboardController::class, 'updateLayout'])->name('layout.update');
-        });
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/dashboard/widgets', [DashboardController::class, 'widgets'])->name('dashboard.widgets');
+        Route::get('/dashboard/widgets/create', [DashboardController::class, 'createWidget'])->name('dashboard.widgets.create');
+        Route::post('/dashboard/widgets', [DashboardController::class, 'storeWidget'])->name('dashboard.widgets.store');
+        Route::get('/dashboard/widgets/{widget}/edit', [DashboardController::class, 'editWidget'])->name('dashboard.widgets.edit');
+        Route::put('/dashboard/widgets/{widget}', [DashboardController::class, 'updateWidget'])->name('dashboard.widgets.update');
+        Route::delete('/dashboard/widgets/{widget}', [DashboardController::class, 'destroyWidget'])->name('dashboard.widgets.destroy');
+        Route::post('/dashboard/widgets/{widget}/refresh', [DashboardController::class, 'refreshWidget'])->name('dashboard.widgets.refresh');
+        Route::patch('/dashboard/layout', [DashboardController::class, 'updateLayout'])->name('dashboard.layout.update');
 
         // Business Insights
         Route::resource('insights', InsightsController::class)->only(['index', 'show']);
@@ -220,15 +216,38 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('insights/detect', [InsightsController::class, 'detect'])->name('insights.detect');
         Route::post('insights/bulk-action', [InsightsController::class, 'bulkAction'])->name('insights.bulk-action');
 
-        // ============= Future: Supplier & Customer Management =============
-        // Route::resource('suppliers', SupplierController::class);
-        // Route::resource('customers', CustomerController::class);
-        // Route::resource('contact-logs', ContactLogController::class);
+        // ============= Supplier & Customer Management =============
+        
+        // Supplier Management Routes  
+        Route::prefix('suppliers')->name('suppliers.')->group(function () {
+            Route::get('/', [SupplierController::class, 'index'])->name('index');
+            Route::get('/create', [SupplierController::class, 'create'])->name('create');
+            Route::post('/', [SupplierController::class, 'store'])->name('store');
+            Route::get('/search', [SupplierController::class, 'search'])->name('search'); // Must be before {id} routes
+            Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show');
+            Route::get('/{supplier}/edit', [SupplierController::class, 'edit'])->name('edit');
+            Route::put('/{supplier}', [SupplierController::class, 'update'])->name('update');
+            Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/metrics', [SupplierController::class, 'getMetrics'])->name('metrics');
+        });
+
+        // Customer Management Routes (for future implementation)
+        Route::prefix('customers')->name('customers.')->group(function () {
+            Route::get('/', [CustomerController::class, 'index'])->name('index');
+            Route::get('/create', [CustomerController::class, 'create'])->name('create');
+            Route::post('/', [CustomerController::class, 'store'])->name('store');
+            Route::get('/search', [CustomerController::class, 'search'])->name('search');
+            Route::get('/{customer}', [CustomerController::class, 'show'])->name('show');
+            Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
+            Route::put('/{customer}', [CustomerController::class, 'update'])->name('update');
+            Route::delete('/{customer}', [CustomerController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/metrics', [CustomerController::class, 'getMetrics'])->name('metrics');
+        });
     });
 });
 
 // Inventory availability check route (moved outside admin middleware for AJAX accessibility)
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::get('/api/stock-transfers/check-inventory', [StockTransferController::class, 'checkInventoryAvailability'])
         ->name('api.stock-transfers.check-inventory');
     Route::get('/api/stock-transfers/products-with-inventory', [StockTransferController::class, 'getProductsWithInventory'])

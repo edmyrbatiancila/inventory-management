@@ -4,20 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DashboardWidget;
-use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function __construct(
-        private AnalyticsService $analyticsService
-    ) {}
-
     public function index(Request $request)
     {
         $dashboardType = $request->input('dashboard', DashboardWidget::DASHBOARD_OPERATIONAL);
-        
+
         $widgets = DashboardWidget::active()
             ->byDashboard($dashboardType)
             ->ordered()
@@ -29,13 +26,14 @@ class DashboardController extends Controller
                     $widget->data_cached_at = now();
                     $widget->save();
                 }
+
                 return $widget;
             });
 
-        return Inertia::render('Admin/Dashboard/Index', [
+        return Inertia::render('admin/Dashboard/Index', [
             'widgets' => $widgets,
             'dashboardType' => $dashboardType,
-            'dashboardTypes' => $this->getDashboardTypes()
+            'dashboardTypes' => $this->getDashboardTypes(),
         ]);
     }
 
@@ -45,14 +43,14 @@ class DashboardController extends Controller
             ->latest()
             ->paginate(15);
 
-        return Inertia::render('Admin/Dashboard/Widgets', [
-            'widgets' => $widgets
+        return Inertia::render('admin/Dashboard/Widgets', [
+            'widgets' => $widgets,
         ]);
     }
 
     public function createWidget()
     {
-        return Inertia::render('Admin/Dashboard/CreateWidget');
+        return Inertia::render('admin/Dashboard/CreateWidget');
     }
 
     public function storeWidget(Request $request)
@@ -74,8 +72,10 @@ class DashboardController extends Controller
             'is_interactive' => 'boolean',
             'allows_export' => 'boolean',
             'has_alerts' => 'boolean',
-            'alert_thresholds' => 'nullable|array'
+            'alert_thresholds' => 'nullable|array',
         ]);
+
+        $validated['created_by'] = Auth::id();
 
         DashboardWidget::create($validated);
 
@@ -85,8 +85,8 @@ class DashboardController extends Controller
 
     public function editWidget(DashboardWidget $widget)
     {
-        return Inertia::render('Admin/Dashboard/EditWidget', [
-            'widget' => $widget
+        return Inertia::render('admin/Dashboard/EditWidget', [
+            'widget' => $widget,
         ]);
     }
 
@@ -109,8 +109,10 @@ class DashboardController extends Controller
             'is_interactive' => 'boolean',
             'allows_export' => 'boolean',
             'has_alerts' => 'boolean',
-            'alert_thresholds' => 'nullable|array'
+            'alert_thresholds' => 'nullable|array',
         ]);
+
+        $validated['updated_by'] = Auth::id();
 
         $widget->update($validated);
 
@@ -136,12 +138,12 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $widget->cached_data
+                'data' => $widget->cached_data,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -154,7 +156,7 @@ class DashboardController extends Controller
             'widgets.*.grid_position_x' => 'required|integer|min:0',
             'widgets.*.grid_position_y' => 'required|integer|min:0',
             'widgets.*.grid_width' => 'required|integer|min:1|max:12',
-            'widgets.*.grid_height' => 'required|integer|min:1|max:12'
+            'widgets.*.grid_height' => 'required|integer|min:1|max:12',
         ]);
 
         foreach ($validated['widgets'] as $widgetData) {
@@ -162,7 +164,7 @@ class DashboardController extends Controller
                 'grid_position_x' => $widgetData['grid_position_x'],
                 'grid_position_y' => $widgetData['grid_position_y'],
                 'grid_width' => $widgetData['grid_width'],
-                'grid_height' => $widgetData['grid_height']
+                'grid_height' => $widgetData['grid_height'],
             ]);
         }
 
@@ -171,7 +173,7 @@ class DashboardController extends Controller
 
     private function refreshWidgetData(DashboardWidget $widget): array
     {
-        return match($widget->data_source) {
+        return match ($widget->data_source) {
             'inventory_levels' => $this->getInventoryLevelsData($widget),
             'stock_movements' => $this->getStockMovementsData($widget),
             'purchase_orders' => $this->getPurchaseOrdersData($widget),
@@ -185,53 +187,53 @@ class DashboardController extends Controller
     {
         // Implementation will depend on widget type and configuration
         return [
-            'total_products' => \DB::table('products')->count(),
-            'total_inventory_value' => \DB::table('inventories')
+            'total_products' => DB::table('products')->count(),
+            'total_inventory_value' => DB::table('inventories')
                 ->join('products', 'inventories.product_id', '=', 'products.id')
-                ->sum(\DB::raw('inventories.quantity * products.unit_cost')),
-            'low_stock_count' => \DB::table('inventories')
+                ->sum(DB::raw('inventories.quantity_on_hand * products.cost_price')),
+            'low_stock_count' => DB::table('inventories')
                 ->join('products', 'inventories.product_id', '=', 'products.id')
-                ->whereRaw('inventories.quantity <= products.reorder_point')
+                ->whereRaw('inventories.quantity_on_hand <= products.min_stock_level')
                 ->count(),
-            'warehouses_count' => \DB::table('warehouses')->count()
+            'warehouses_count' => DB::table('warehouses')->count(),
         ];
     }
 
     private function getStockMovementsData(DashboardWidget $widget): array
     {
         return [
-            'today_movements' => \DB::table('stock_movements')->whereDate('created_at', today())->count(),
-            'week_movements' => \DB::table('stock_movements')->whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
-            'pending_transfers' => \DB::table('stock_transfers')->where('status', 'pending')->count()
+            'today_movements' => DB::table('stock_movements')->whereDate('created_at', today())->count(),
+            'week_movements' => DB::table('stock_movements')->whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
+            'pending_transfers' => DB::table('stock_transfers')->where('transfer_status', 'pending')->count(),
         ];
     }
 
     private function getPurchaseOrdersData(DashboardWidget $widget): array
     {
         return [
-            'pending_orders' => \DB::table('purchase_orders')->where('status', 'pending')->count(),
-            'total_amount_pending' => \DB::table('purchase_orders')->where('status', 'pending')->sum('total_amount'),
-            'orders_this_month' => \DB::table('purchase_orders')->whereMonth('created_at', now()->month)->count()
+            'pending_orders' => DB::table('purchase_orders')->where('status', 'pending')->count(),
+            'total_amount_pending' => DB::table('purchase_orders')->where('status', 'pending')->sum('total_amount'),
+            'orders_this_month' => DB::table('purchase_orders')->whereMonth('created_at', now()->month)->count(),
         ];
     }
 
     private function getSalesOrdersData(DashboardWidget $widget): array
     {
         return [
-            'pending_orders' => \DB::table('sales_orders')->where('status', 'pending')->count(),
-            'total_revenue_pending' => \DB::table('sales_orders')->where('status', 'pending')->sum('total_amount'),
-            'orders_this_month' => \DB::table('sales_orders')->whereMonth('created_at', now()->month)->count()
+            'pending_orders' => DB::table('sales_orders')->where('status', 'pending')->count(),
+            'total_revenue_pending' => DB::table('sales_orders')->where('status', 'pending')->sum('total_amount'),
+            'orders_this_month' => DB::table('sales_orders')->whereMonth('created_at', now()->month)->count(),
         ];
     }
 
     private function getFinancialMetricsData(DashboardWidget $widget): array
     {
         return [
-            'total_purchase_value' => \DB::table('purchase_orders')->sum('total_amount'),
-            'total_sales_value' => \DB::table('sales_orders')->sum('total_amount'),
-            'inventory_value' => \DB::table('inventories')
+            'total_purchase_value' => DB::table('purchase_orders')->sum('total_amount'),
+            'total_sales_value' => DB::table('sales_orders')->sum('total_amount'),
+            'inventory_value' => DB::table('inventories')
                 ->join('products', 'inventories.product_id', '=', 'products.id')
-                ->sum(\DB::raw('inventories.quantity * products.unit_cost'))
+                ->sum(DB::raw('inventories.quantity_on_hand * products.cost_price')),
         ];
     }
 
@@ -242,7 +244,7 @@ class DashboardController extends Controller
             ['value' => 'operational', 'label' => 'Operational Dashboard'],
             ['value' => 'financial', 'label' => 'Financial Dashboard'],
             ['value' => 'warehouse', 'label' => 'Warehouse Dashboard'],
-            ['value' => 'custom', 'label' => 'Custom Dashboard']
+            ['value' => 'custom', 'label' => 'Custom Dashboard'],
         ];
     }
 }

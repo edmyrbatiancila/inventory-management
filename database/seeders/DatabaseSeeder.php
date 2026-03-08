@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             CustomerSeeder::class,
             ContactLogSeeder::class,
+            DashboardWidgetSeeder::class,
         ]);
     }
 }

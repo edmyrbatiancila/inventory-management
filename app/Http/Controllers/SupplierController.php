@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Constants\SupplierConstants;
-use App\Models\Supplier;
+use App\Contracts\SupplierRepositoryInterface;
 use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Http\Resources\SupplierResource;
+use App\Models\Supplier;
 use App\Services\SupplierService;
-use App\Contracts\SupplierRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -16,6 +16,7 @@ use Inertia\Inertia;
 class SupplierController extends Controller
 {
     protected $supplierService;
+
     protected $supplierRepository;
 
     public function __construct(
@@ -32,15 +33,15 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['status', 'type', 'search', 'country', 'min_rating']);
-        
+
         try {
             $suppliers = $this->supplierRepository->getPaginated(15, $filters);
-            
+
             // Transform the data using SupplierResource while preserving pagination
             $suppliers->through(function ($supplier) use ($request) {
                 return (new SupplierResource($supplier))->toArray($request);
             });
-            
+
             return Inertia::render('admin/supplier/Index', [
                 'suppliers' => $suppliers,
                 'filters' => $filters,
@@ -54,10 +55,10 @@ class SupplierController extends Controller
                     'edit' => auth()->user()->isAdmin(),
                     'delete' => auth()->user()->isAdmin(),
                     'viewAny' => auth()->user()->isAdmin(),
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to load suppliers: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to load suppliers: '.$e->getMessage()]);
         }
     }
 
@@ -73,7 +74,7 @@ class SupplierController extends Controller
                 'payment_terms' => SupplierConstants::PAYMENT_TERMS,
                 'payment_methods' => SupplierConstants::PAYMENT_METHODS,
                 'contract_types' => SupplierConstants::CONTRACT_TYPES,
-            ]
+            ],
         ]);
     }
 
@@ -84,11 +85,11 @@ class SupplierController extends Controller
     {
         try {
             $supplier = $this->supplierService->createSupplier($request->validated());
-            
+
             return redirect()
                 ->route('admin.suppliers.show', $supplier)
                 ->with('success', 'Supplier created successfully.');
-                
+
         } catch (ValidationException $e) {
             return back()
                 ->withInput()
@@ -96,7 +97,7 @@ class SupplierController extends Controller
         } catch (\Exception $e) {
             return back()
                 ->withInput()
-                ->withErrors(['error' => 'Failed to create supplier: ' . $e->getMessage()]);
+                ->withErrors(['error' => 'Failed to create supplier: '.$e->getMessage()]);
         }
     }
 
@@ -106,16 +107,16 @@ class SupplierController extends Controller
     public function show(Supplier $supplier)
     {
         try {
-            $supplier = $this->supplierService->getSupplierById($id);
-            $metrics = $this->supplierService->getSupplierMetrics($id);
-            
+            $supplier = $this->supplierService->getSupplierById($supplier->id);
+            $metrics = $this->supplierService->getSupplierMetrics($supplier->id);
+
             return Inertia::render('Admin/Suppliers/Show', [
                 'supplier' => new SupplierResource($supplier),
                 'metrics' => $metrics,
                 'can' => [
                     'edit' => auth()->user()->isAdmin(),
                     'delete' => auth()->user()->isAdmin(),
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Supplier not found']);
@@ -128,8 +129,8 @@ class SupplierController extends Controller
     public function edit(Supplier $supplier)
     {
         try {
-            $supplier = $this->supplierService->getSupplierById($id);
-            
+            $supplier = $this->supplierService->getSupplierById($supplier->id);
+
             return Inertia::render('Admin/Suppliers/Edit', [
                 'supplier' => new SupplierResource($supplier),
                 'constants' => [
@@ -138,7 +139,7 @@ class SupplierController extends Controller
                     'payment_terms' => SupplierConstants::PAYMENT_TERMS,
                     'payment_methods' => SupplierConstants::PAYMENT_METHODS,
                     'contract_types' => SupplierConstants::CONTRACT_TYPES,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Supplier not found']);
@@ -151,12 +152,12 @@ class SupplierController extends Controller
     public function update(UpdateSupplierRequest $request, Supplier $supplier)
     {
         try {
-            $supplier = $this->supplierService->updateSupplier($id, $request->validated());
-            
+            $supplier = $this->supplierService->updateSupplier($supplier->id, $request->validated());
+
             return redirect()
                 ->route('admin.suppliers.show', $supplier)
                 ->with('success', 'Supplier updated successfully.');
-                
+
         } catch (ValidationException $e) {
             return back()
                 ->withInput()
@@ -164,7 +165,7 @@ class SupplierController extends Controller
         } catch (\Exception $e) {
             return back()
                 ->withInput()
-                ->withErrors(['error' => 'Failed to update supplier: ' . $e->getMessage()]);
+                ->withErrors(['error' => 'Failed to update supplier: '.$e->getMessage()]);
         }
     }
 
@@ -174,14 +175,14 @@ class SupplierController extends Controller
     public function destroy(Supplier $supplier)
     {
         try {
-            $this->supplierService->deleteSupplier($id);
-            
+            $this->supplierService->deleteSupplier($supplier->id);
+
             return redirect()
                 ->route('admin.suppliers.index')
                 ->with('success', 'Supplier deleted successfully.');
-                
+
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to delete supplier: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to delete supplier: '.$e->getMessage()]);
         }
     }
 
@@ -190,11 +191,11 @@ class SupplierController extends Controller
     {
         $term = $request->get('q');
         $filters = $request->only(['status', 'type']);
-        
+
         $suppliers = $this->supplierService->searchSuppliers($term, $filters);
-        
+
         return response()->json([
-            'data' => SupplierResource::collection($suppliers)
+            'data' => SupplierResource::collection($suppliers),
         ]);
     }
 
@@ -202,6 +203,7 @@ class SupplierController extends Controller
     {
         try {
             $metrics = $this->supplierService->getSupplierMetrics($id);
+
             return response()->json(['data' => $metrics]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 404);

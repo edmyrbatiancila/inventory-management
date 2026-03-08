@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\AnalyticsReport;
-use App\Models\DashboardWidget;
 use App\Models\BusinessInsight;
-use Illuminate\Support\Facades\DB;
+use App\Models\DashboardWidget;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class AnalyticsService
 {
@@ -18,7 +17,7 @@ class AnalyticsService
             'low_stock_items' => $this->getLowStockCount($filters),
             'warehouse_distribution' => $this->getWarehouseDistribution($filters),
             'top_products' => $this->getTopProductsByValue($filters),
-            'movement_trends' => $this->getMovementTrends($filters)
+            'movement_trends' => $this->getMovementTrends($filters),
         ];
 
         return [
@@ -26,8 +25,8 @@ class AnalyticsService
             'summary_stats' => [
                 'total_value' => $data['total_stock_value'],
                 'total_items' => $data['total_products'],
-                'critical_alerts' => $data['low_stock_items']
-            ]
+                'critical_alerts' => $data['low_stock_items'],
+            ],
         ];
     }
 
@@ -40,10 +39,8 @@ class AnalyticsService
                 COUNT(*) as count,
                 SUM(quantity) as total_quantity
             ')
-            ->when($filters['date_from'] ?? null, fn($q, $date) => 
-                $q->whereDate('created_at', '>=', $date))
-            ->when($filters['date_to'] ?? null, fn($q, $date) => 
-                $q->whereDate('created_at', '<=', $date))
+            ->when($filters['date_from'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date))
             ->groupBy('date', 'type')
             ->orderBy('date')
             ->get();
@@ -52,8 +49,8 @@ class AnalyticsService
             'data' => $movements->groupBy('date'),
             'summary_stats' => [
                 'total_movements' => $movements->sum('count'),
-                'total_quantity' => $movements->sum('total_quantity')
-            ]
+                'total_quantity' => $movements->sum('total_quantity'),
+            ],
         ];
     }
 
@@ -69,6 +66,7 @@ class AnalyticsService
                     $widget->data_cached_at = now();
                     $widget->save();
                 }
+
                 return $widget;
             });
     }
@@ -91,8 +89,7 @@ class AnalyticsService
     private function getTotalProducts(array $filters): int
     {
         return DB::table('products')
-            ->when($filters['category_id'] ?? null, fn($q, $id) => 
-                $q->where('category_id', $id))
+            ->when($filters['category_id'] ?? null, fn ($q, $id) => $q->where('category_id', $id))
             ->count();
     }
 
@@ -100,18 +97,16 @@ class AnalyticsService
     {
         return DB::table('inventories')
             ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->when($filters['warehouse_id'] ?? null, fn($q, $id) => 
-                $q->where('inventories.warehouse_id', $id))
-            ->sum(DB::raw('inventories.quantity * products.unit_cost'));
+            ->when($filters['warehouse_id'] ?? null, fn ($q, $id) => $q->where('inventories.warehouse_id', $id))
+            ->sum(DB::raw('inventories.quantity_on_hand * products.cost_price'));
     }
 
     private function getLowStockCount(array $filters): int
     {
         return DB::table('inventories')
             ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->whereRaw('inventories.quantity <= products.reorder_point')
-            ->when($filters['warehouse_id'] ?? null, fn($q, $id) => 
-                $q->where('inventories.warehouse_id', $id))
+            ->whereRaw('inventories.quantity_on_hand <= products.min_stock_level')
+            ->when($filters['warehouse_id'] ?? null, fn ($q, $id) => $q->where('inventories.warehouse_id', $id))
             ->count();
     }
 
@@ -123,8 +118,8 @@ class AnalyticsService
             ->selectRaw('
                 warehouses.name,
                 COUNT(inventories.id) as product_count,
-                SUM(inventories.quantity) as total_quantity,
-                SUM(inventories.quantity * products.unit_cost) as total_value
+                SUM(inventories.quantity_on_hand) as total_quantity,
+                SUM(inventories.quantity_on_hand * products.cost_price) as total_value
             ')
             ->groupBy('warehouses.id', 'warehouses.name')
             ->get();
@@ -137,8 +132,8 @@ class AnalyticsService
             ->selectRaw('
                 products.name,
                 products.sku,
-                SUM(inventories.quantity) as total_quantity,
-                SUM(inventories.quantity * products.unit_cost) as total_value
+                SUM(inventories.quantity_on_hand) as total_quantity,
+                SUM(inventories.quantity_on_hand * products.cost_price) as total_value
             ')
             ->groupBy('products.id', 'products.name', 'products.sku')
             ->orderByDesc('total_value')
@@ -162,7 +157,7 @@ class AnalyticsService
 
     private function refreshWidgetData(DashboardWidget $widget): array
     {
-        return match($widget->data_source) {
+        return match ($widget->data_source) {
             'inventory_levels' => $this->getInventoryLevelsData($widget),
             'stock_movements' => $this->getStockMovementsData($widget),
             'financial_metrics' => $this->getFinancialMetricsData($widget),
@@ -176,7 +171,7 @@ class AnalyticsService
             'total_products' => DB::table('products')->count(),
             'total_inventory_value' => $this->getTotalStockValue([]),
             'low_stock_count' => $this->getLowStockCount([]),
-            'warehouses_count' => DB::table('warehouses')->count()
+            'warehouses_count' => DB::table('warehouses')->count(),
         ];
     }
 
@@ -185,7 +180,7 @@ class AnalyticsService
         return [
             'today_movements' => DB::table('stock_movements')->whereDate('created_at', today())->count(),
             'week_movements' => DB::table('stock_movements')->whereBetween('created_at', [now()->startOfWeek(), now()])->count(),
-            'pending_transfers' => DB::table('stock_transfers')->where('status', 'pending')->count()
+            'pending_transfers' => DB::table('stock_transfers')->where('transfer_status', 'pending')->count(),
         ];
     }
 
@@ -194,7 +189,7 @@ class AnalyticsService
         return [
             'total_purchase_orders' => DB::table('purchase_orders')->sum('total_amount'),
             'total_sales_orders' => DB::table('sales_orders')->sum('total_amount'),
-            'inventory_value' => $this->getTotalStockValue([])
+            'inventory_value' => $this->getTotalStockValue([]),
         ];
     }
 
@@ -203,12 +198,12 @@ class AnalyticsService
         return DB::table('inventories')
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->join('warehouses', 'inventories.warehouse_id', '=', 'warehouses.id')
-            ->whereRaw('inventories.quantity <= products.reorder_point')
+            ->whereRaw('inventories.quantity_on_hand <= products.min_stock_level')
             ->select(
                 'products.name as product_name',
                 'warehouses.name as warehouse_name',
-                'inventories.quantity',
-                'products.reorder_point'
+                'inventories.quantity_on_hand as quantity',
+                'products.min_stock_level as reorder_point'
             )
             ->get()
             ->map(function ($item) {
@@ -220,7 +215,7 @@ class AnalyticsService
                     'description' => "Product {$item->product_name} in {$item->warehouse_name} has {$item->quantity} units, below reorder point of {$item->reorder_point}",
                     'current_value' => $item->quantity,
                     'threshold_value' => $item->reorder_point,
-                    'urgency' => 'high'
+                    'urgency' => 'high',
                 ];
             });
     }
@@ -232,8 +227,8 @@ class AnalyticsService
             ->selectRaw('AVG(daily_count) as avg_count')
             ->fromSub(function ($query) {
                 $query->selectRaw('DATE(created_at) as date, COUNT(*) as daily_count')
-                      ->from('stock_movements')
-                      ->groupBy('date');
+                    ->from('stock_movements')
+                    ->groupBy('date');
             }, 'daily_movements')
             ->value('avg_count');
 
@@ -248,7 +243,7 @@ class AnalyticsService
                 'description' => "Today's stock movements ({$todayCount}) are significantly higher than the 30-day average ({$avgDaily})",
                 'current_value' => $todayCount,
                 'threshold_value' => $avgDaily,
-                'urgency' => 'medium'
+                'urgency' => 'medium',
             ]]);
         }
 

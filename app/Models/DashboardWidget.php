@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardWidget extends Model
 {
@@ -20,7 +21,7 @@ class DashboardWidget extends Model
         'visible_to_roles', 'visible_to_users', 'is_interactive',
         'allows_drill_down', 'drill_down_config', 'allows_export',
         'status', 'has_alerts', 'alert_thresholds', 'alert_recipients',
-        'created_by', 'updated_by'
+        'created_by', 'updated_by',
     ];
 
     protected $casts = [
@@ -46,16 +47,24 @@ class DashboardWidget extends Model
 
     // Widget Types
     public const TYPE_KPI_CARD = 'kpi_card';
+
     public const TYPE_LINE_CHART = 'line_chart';
+
     public const TYPE_BAR_CHART = 'bar_chart';
+
     public const TYPE_PIE_CHART = 'pie_chart';
+
     public const TYPE_AREA_CHART = 'area_chart';
+
     public const TYPE_GAUGE_CHART = 'gauge_chart';
 
     // Dashboard Types
     public const DASHBOARD_EXECUTIVE = 'executive';
+
     public const DASHBOARD_OPERATIONAL = 'operational';
+
     public const DASHBOARD_FINANCIAL = 'financial';
+
     public const DASHBOARD_WAREHOUSE = 'warehouse';
 
     // Relationships
@@ -88,17 +97,24 @@ class DashboardWidget extends Model
     // Helper Methods
     public function isDataStale(): bool
     {
-        if (!$this->data_cached_at) return true;
-        
+        if (! $this->data_cached_at) {
+            return true;
+        }
+
         $expiresAt = $this->data_cached_at->addMinutes($this->cache_duration_minutes);
+
         return now()->greaterThan($expiresAt);
     }
 
     public function canBeViewedByUser(int $userId): bool
     {
-        if ($this->visibility === 'public') return true;
-        if ($this->created_by === $userId) return true;
-        
+        if ($this->visibility === 'public') {
+            return true;
+        }
+        if ($this->created_by === $userId) {
+            return true;
+        }
+
         return in_array($userId, $this->visible_to_users ?? []);
     }
 
@@ -108,17 +124,19 @@ class DashboardWidget extends Model
         parent::boot();
 
         static::creating(function ($widget) {
-            if (!$widget->widget_code) {
+            if (! $widget->widget_code) {
                 $widget->widget_code = self::generateWidgetCode();
             }
             // Only set created_by if not already set (for seeders)
-            if (!$widget->created_by) {
-                $widget->created_by = auth()->id() ?? 1; // Fallback to user 1 for seeding
+            if (! $widget->created_by && Auth::id()) {
+                $widget->created_by = Auth::id();
             }
         });
 
         static::updating(function ($widget) {
-            $widget->updated_by = auth()->id();
+            if (Auth::id()) {
+                $widget->updated_by = Auth::id();
+            }
         });
     }
 
@@ -127,7 +145,7 @@ class DashboardWidget extends Model
         $year = date('Y');
         $lastWidget = self::whereYear('created_at', $year)->orderBy('id', 'desc')->first();
         $sequence = $lastWidget ? (int) substr($lastWidget->widget_code, -3) + 1 : 1;
-        
-        return 'WID-' . $year . '-' . str_pad($sequence, 3, '0', STR_PAD_LEFT);
+
+        return 'WID-'.$year.'-'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
     }
 }

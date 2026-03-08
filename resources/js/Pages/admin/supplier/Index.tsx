@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageProps, PaginatedResponse } from '@/types';
@@ -13,8 +13,6 @@ import {
     Phone,
     Mail,
     MapPin,
-    Calendar,
-    DollarSign,
     Star,
     ChevronDown,
     MoreVertical,
@@ -292,9 +290,24 @@ const SuppliersIndex = ({
         return sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />;
     };
 
-    // Helper functions
+    // Sort suppliers - handle both array and Laravel Resource Collection formats
+    const supplierArray = React.useMemo(() => {
+        if (Array.isArray(suppliers)) {
+            return suppliers;
+        }
+        if (suppliers && typeof suppliers === 'object' && 'data' in suppliers && Array.isArray(suppliers.data)) {
+            return suppliers.data;
+        }
+        return [];
+    }, [suppliers]);
+
+    // Helper functions (moved after supplierArray definition)
     const getCountries = () => {
-        const countries = [...new Set(supplierArray.map(s => s.address.country))].sort();
+        if (!supplierArray || supplierArray.length === 0) return [];
+        const countries = [...new Set(supplierArray
+            .map(s => s.address?.country)
+            .filter(Boolean)
+        )].sort();
         return countries;
     };
 
@@ -310,12 +323,6 @@ const SuppliersIndex = ({
         );
     };
 
-    // Sort suppliers - handle both array and Laravel Resource Collection formats
-    const supplierArray = Array.isArray(suppliers) 
-        ? suppliers 
-        : (suppliers && typeof suppliers === 'object' && 'data' in suppliers && Array.isArray(suppliers.data))
-            ? suppliers.data 
-            : [];
     const sortedSuppliers = [...supplierArray].sort((a, b) => {
         let aValue, bValue;
         

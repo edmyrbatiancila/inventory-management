@@ -18,18 +18,15 @@ class AnalyticsController extends Controller
     public function index(Request $request)
     {
         $reports = AnalyticsReport::with(['createdBy'])
-            ->when($request->search, fn($q, $search) => 
-                $q->where('title', 'like', "%{$search}%"))
-            ->when($request->type, fn($q, $type) => 
-                $q->where('type', $type))
-            ->when($request->status, fn($q, $status) => 
-                $q->where('status', $status))
+            ->when($request->search, fn ($q, $search) => $q->where('title', 'like', "%{$search}%"))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->latest()
             ->paginate(15);
 
-        return Inertia::render('Admin/Analytics/Index', [
+        return Inertia::render('admin/Analytics/Index', [
             'reports' => $reports,
-            'filters' => $request->only(['search', 'type', 'status'])
+            'filters' => $request->only(['search', 'type', 'status']),
         ]);
     }
 
@@ -49,7 +46,7 @@ class AnalyticsController extends Controller
             'metrics' => 'nullable|array',
             'auto_generate' => 'boolean',
             'email_on_completion' => 'boolean',
-            'email_recipients' => 'nullable|array'
+            'email_recipients' => 'nullable|array',
         ]);
 
         $report = AnalyticsReport::create($validated);
@@ -69,14 +66,14 @@ class AnalyticsController extends Controller
         $analyticsReport->update(['last_viewed_at' => now()]);
 
         return Inertia::render('Admin/Analytics/Show', [
-            'report' => $analyticsReport
+            'report' => $analyticsReport,
         ]);
     }
 
     public function edit(AnalyticsReport $analyticsReport)
     {
         return Inertia::render('Admin/Analytics/Edit', [
-            'report' => $analyticsReport
+            'report' => $analyticsReport,
         ]);
     }
 
@@ -91,7 +88,7 @@ class AnalyticsController extends Controller
             'metrics' => 'nullable|array',
             'auto_generate' => 'boolean',
             'email_on_completion' => 'boolean',
-            'email_recipients' => 'nullable|array'
+            'email_recipients' => 'nullable|array',
         ]);
 
         $analyticsReport->update($validated);
@@ -118,8 +115,8 @@ class AnalyticsController extends Controller
 
         try {
             $startTime = now();
-            
-            $reportData = match($report->type) {
+
+            $reportData = match ($report->type) {
                 'inventory_summary' => $this->analyticsService->generateInventorySummaryReport($report->filters ?? []),
                 'stock_movement' => $this->analyticsService->generateStockMovementReport($report->filters ?? []),
                 default => ['data' => [], 'summary_stats' => []]
@@ -134,7 +131,7 @@ class AnalyticsController extends Controller
                 'total_value' => $reportData['summary_stats']['total_value'] ?? null,
                 'total_items' => $reportData['summary_stats']['total_items'] ?? null,
                 'generated_at' => now(),
-                'generation_time_seconds' => $generationTime
+                'generation_time_seconds' => $generationTime,
             ]);
 
             if ($report->email_on_completion && $report->email_recipients) {
@@ -147,31 +144,31 @@ class AnalyticsController extends Controller
         } catch (\Exception $e) {
             $report->update([
                 'status' => AnalyticsReport::STATUS_FAILED,
-                'error_message' => $e->getMessage()
+                'error_message' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate report: '.$e->getMessage());
         }
     }
 
     public function export(AnalyticsReport $report, Request $request)
     {
         $format = $request->input('format', 'pdf');
-        
+
         // TODO: Implement export functionality
         // For now, return the data as JSON
         return response()->json([
             'report' => $report,
-            'format' => $format
+            'format' => $format,
         ]);
     }
 
     public function dashboard()
     {
         $widgets = $this->analyticsService->getExecutiveDashboardWidgets();
-        
+
         return Inertia::render('Admin/Analytics/Dashboard', [
-            'widgets' => $widgets
+            'widgets' => $widgets,
         ]);
     }
 }

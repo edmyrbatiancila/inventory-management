@@ -1,4 +1,4 @@
-import { BarChart3, Building2, Package, PackageOpen, PackagePlus, ShoppingBasket, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon, LineChart, Activity, Brain, Target } from "lucide-react";
+import { BarChart3, Package, PackageOpen, PackagePlus, ShoppingBasket, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon, LineChart, Activity, Brain, Building2, } from "lucide-react";
 
 export const adminMenuItems = [
         {
@@ -85,18 +85,18 @@ export const adminMenuItems = [
             icon: Activity,
             description: "Manage dashboard widgets and layouts"
         },
-        {
-            title: "Business Insights",
-            href: route('admin.insights.index'),
-            routePattern: 'admin.insights.*',
-            icon: Brain,
-            description: "View AI-powered business insights and recommendations"
-        },
         // {
-        //     title: "Suppliers",
-        //     href: route('admin.suppliers.index'),
-        //     routePattern: 'admin.suppliers.*',
-        //     icon: Building2,
-        //     description: "Review and manage suppliers history"
-        // }
+        //     title: "Business Insights",
+        //     href: route('admin.insights.index'),
+        //     routePattern: 'admin.insights.*',
+        //     icon: Brain,
+        //     description: "View AI-powered business insights and recommendations"
+        // },
+        {
+            title: "Suppliers",
+            href: route('admin.suppliers.index'),
+            routePattern: 'admin.suppliers.*',
+            icon: Building2,
+            description: "Review and manage suppliers history"
+        }
     ];
