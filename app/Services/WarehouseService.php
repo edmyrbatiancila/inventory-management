@@ -84,7 +84,7 @@ class WarehouseService
             $warehouse = $this->warehouseRepository->create($data);
 
             DB::commit();
-            
+
             return $warehouse;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -103,7 +103,7 @@ class WarehouseService
         try {
             // Check if warehouse exists
             $warehouse = $this->warehouseRepository->findById($id);
-            if (!$warehouse) {
+            if (! $warehouse) {
                 throw new ModelNotFoundException('Warehouse not found.');
             }
 
@@ -118,7 +118,7 @@ class WarehouseService
             $result = $this->warehouseRepository->update($id, $data);
 
             DB::commit();
-            
+
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -137,7 +137,7 @@ class WarehouseService
         try {
             // Check if warehouse exists
             $warehouse = $this->warehouseRepository->findById($id);
-            if (!$warehouse) {
+            if (! $warehouse) {
                 throw new ModelNotFoundException('Warehouse not found.');
             }
 
@@ -150,7 +150,7 @@ class WarehouseService
             $result = $this->warehouseRepository->delete($id);
 
             DB::commit();
-            
+
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -188,7 +188,7 @@ class WarehouseService
     private function generateWarehouseCode(): string
     {
         do {
-            $code = 'WH' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $code = 'WH'.str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
         } while ($this->warehouseRepository->findByCode($code));
 
         return $code;

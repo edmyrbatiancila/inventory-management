@@ -52,6 +52,7 @@ class StockTransferService
             $this->logTransferActivity($transfer, 'initiated');
 
             DB::commit();
+
             return $transfer;
 
         } catch (Exception $e) {
@@ -63,8 +64,8 @@ class StockTransferService
     public function approveTransfer(int $transferId, int $approvedBy): StockTransfer
     {
         $transfer = $this->stockTransferRepository->findById($transferId);
-        
-        if (!$transfer || !$transfer->canBeApproved()) {
+
+        if (! $transfer || ! $transfer->canBeApproved()) {
             throw new ValidationException('Transfer cannot be approved');
         }
 
@@ -79,14 +80,15 @@ class StockTransferService
         try {
             // Update transfer status
             $this->stockTransferRepository->markAsApproved($transferId, $approvedBy);
-            
+
             // Refresh model
             $transfer->refresh();
-            
+
             // Log the approval
             $this->logTransferActivity($transfer, 'approved');
 
             DB::commit();
+
             return $transfer;
 
         } catch (Exception $e) {
@@ -98,8 +100,8 @@ class StockTransferService
     public function markInTransit(int $transferId): StockTransfer
     {
         $transfer = $this->stockTransferRepository->findById($transferId);
-        
-        if (!$transfer || !$transfer->canBeMarkedInTransit()) {
+
+        if (! $transfer || ! $transfer->canBeMarkedInTransit()) {
             throw new ValidationException('Transfer cannot be marked as in transit');
         }
 
@@ -117,14 +119,15 @@ class StockTransferService
 
             // Update transfer status
             $this->stockTransferRepository->markAsInTransit($transferId);
-            
+
             // Refresh model
             $transfer->refresh();
-            
+
             // Log the transit
             $this->logTransferActivity($transfer, 'in_transit');
 
             DB::commit();
+
             return $transfer;
 
         } catch (Exception $e) {
@@ -136,8 +139,8 @@ class StockTransferService
     public function completeTransfer(int $transferId, int $completedBy): StockTransfer
     {
         $transfer = $this->stockTransferRepository->findById($transferId);
-        
-        if (!$transfer || !$transfer->canBeCompleted()) {
+
+        if (! $transfer || ! $transfer->canBeCompleted()) {
             throw new ValidationException('Transfer cannot be completed');
         }
 
@@ -155,14 +158,15 @@ class StockTransferService
 
             // Update transfer status
             $this->stockTransferRepository->markAsCompleted($transferId, $completedBy);
-            
+
             // Refresh model
             $transfer->refresh();
-            
+
             // Log the completion
             $this->logTransferActivity($transfer, 'completed');
 
             DB::commit();
+
             return $transfer;
 
         } catch (Exception $e) {
@@ -174,8 +178,8 @@ class StockTransferService
     public function cancelTransfer(int $transferId, string $reason): StockTransfer
     {
         $transfer = $this->stockTransferRepository->findById($transferId);
-        
-        if (!$transfer || !$transfer->canBeCancelled()) {
+
+        if (! $transfer || ! $transfer->canBeCancelled()) {
             throw new ValidationException('Transfer cannot be cancelled');
         }
 
@@ -195,14 +199,15 @@ class StockTransferService
 
             // Update transfer status
             $this->stockTransferRepository->markAsCancelled($transferId, $reason);
-            
+
             // Refresh model
             $transfer->refresh();
-            
+
             // Log the cancellation
             $this->logTransferActivity($transfer, 'cancelled');
 
             DB::commit();
+
             return $transfer;
 
         } catch (Exception $e) {
@@ -236,7 +241,7 @@ class StockTransferService
     private function validateInventoryAvailability(int $warehouseId, int $productId, int $quantity): void
     {
         $available = $this->stockTransferRepository->getAvailableQuantity($warehouseId, $productId);
-        
+
         if ($available < $quantity) {
             throw new \Exception("Insufficient inventory. Available: {$available}, Requested: {$quantity}");
         }
@@ -248,13 +253,14 @@ class StockTransferService
         $prefix = 'ST';
         $date = now()->format('Ymd');
         $sequence = $this->getNextSequenceNumber($date);
-        
+
         return "{$prefix}-{$date}-{$sequence}";
     }
 
     private function getNextSequenceNumber(string $date): string
     {
         $count = StockTransfer::whereDate('created_at', today())->count();
+
         return str_pad($count + 1, 4, '0', STR_PAD_LEFT);
     }
 
@@ -266,12 +272,12 @@ class StockTransferService
             'reference_number' => $transfer->reference_number,
             'activity' => $activity,
             'user_id' => Auth::id(),
-            'timestamp' => now()
+            'timestamp' => now(),
         ]);
     }
 
     // Query Helper Methods
-    public function getTransferAnalytics(int $warehouseId = null): array
+    public function getTransferAnalytics(?int $warehouseId = null): array
     {
         return $this->stockTransferRepository->getTransferAnalytics($warehouseId);
     }
@@ -299,8 +305,8 @@ class StockTransferService
     public function updateTransfer(int $transferId, array $data): StockTransfer
     {
         $transfer = $this->stockTransferRepository->findById($transferId);
-        
-        if (!$transfer) {
+
+        if (! $transfer) {
             throw new ModelNotFoundException('Transfer not found');
         }
 
@@ -314,13 +320,13 @@ class StockTransferService
             );
         }
 
-        return DB::transaction(function () use ($transfer, $data, $transferId) {
+        return DB::transaction(function () use ($data, $transferId) {
             $updated = $this->stockTransferRepository->update($transferId, $data);
-            
-            if (!$updated) {
+
+            if (! $updated) {
                 throw new Exception('Failed to update transfer');
             }
-            
+
             return $this->stockTransferRepository->findById($transferId);
         });
     }
@@ -337,23 +343,25 @@ class StockTransferService
             foreach ($transferIds as $transferId) {
                 try {
                     $transfer = $this->stockTransferRepository->findById($transferId);
-                
-                    if (!$transfer) {
+
+                    if (! $transfer) {
                         $errors[] = "Transfer ID {$transferId} not found";
                         $failed++;
+
                         continue;
                     }
 
-                    if (!$transfer->canBeApproved()) {
+                    if (! $transfer->canBeApproved()) {
                         $errors[] = "Transfer {$transfer->reference_number} cannot be approved";
                         $failed++;
+
                         continue;
                     }
 
                     $this->approveTransfer($transferId, $approvedBy);
                     $approved++;
                 } catch (Exception $e) {
-                    $errors[] = "Failed to approve transfer ID {$transferId}: " . $e->getMessage();
+                    $errors[] = "Failed to approve transfer ID {$transferId}: ".$e->getMessage();
                     $failed++;
                 }
             }
@@ -367,7 +375,7 @@ class StockTransferService
             return [
                 'approved' => $approved,
                 'failed' => $failed,
-                'errors' => $errors
+                'errors' => $errors,
             ];
 
         } catch (Exception $e) {
@@ -389,15 +397,17 @@ class StockTransferService
                 try {
                     $transfer = $this->stockTransferRepository->findById($transferId);
 
-                    if (!$transfer) {
+                    if (! $transfer) {
                         $errors[] = "Transfer ID {$transferId} not found";
                         $failed++;
+
                         continue;
                     }
 
-                    if (!$transfer->canBeCancelled()) {
+                    if (! $transfer->canBeCancelled()) {
                         $errors[] = "Transfer {$transfer->reference_number} cannot be cancelled";
                         $failed++;
+
                         continue;
                     }
 
@@ -405,7 +415,7 @@ class StockTransferService
                     $cancelled++;
 
                 } catch (Exception $e) {
-                    $errors[] = "Failed to cancel transfer ID {$transferId}: " . $e->getMessage();
+                    $errors[] = "Failed to cancel transfer ID {$transferId}: ".$e->getMessage();
                     $failed++;
                 }
             }
@@ -419,7 +429,7 @@ class StockTransferService
             return [
                 'cancelled' => $cancelled,
                 'failed' => $failed,
-                'errors' => $errors
+                'errors' => $errors,
             ];
 
         } catch (Exception $e) {
@@ -427,5 +437,4 @@ class StockTransferService
             throw $e;
         }
     }
-    
 }

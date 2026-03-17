@@ -72,7 +72,7 @@ class StockTransferSeeder extends Seeder
 
         for ($i = 0; $i < $count; $i++) {
             $sourceInventory = $availableInventory->random();
-            
+
             // Find a different warehouse for destination
             $availableDestinations = array_diff($warehouses, [$sourceInventory->warehouse_id]);
             $toWarehouseId = collect($availableDestinations)->random();
@@ -112,7 +112,7 @@ class StockTransferSeeder extends Seeder
 
         for ($i = 0; $i < $count; $i++) {
             $sourceInventory = $availableInventory->random();
-            
+
             $availableDestinations = array_diff($warehouses, [$sourceInventory->warehouse_id]);
             $toWarehouseId = collect($availableDestinations)->random();
 
@@ -143,18 +143,18 @@ class StockTransferSeeder extends Seeder
     private function createCompletedTransfers(): void
     {
         $this->command->info('Creating completed transfers...');
-        
+
         // For completed transfers, we can be less strict about current inventory
         // since the transfer already happened
         $availableInventory = Inventory::with(['product', 'warehouse'])->get();
-        
+
         $count = min(15, $availableInventory->count());
         $users = User::pluck('id')->toArray();
         $warehouses = Warehouse::where('is_active', true)->pluck('id')->toArray();
 
         for ($i = 0; $i < $count; $i++) {
             $sourceInventory = $availableInventory->random();
-            
+
             $availableDestinations = array_diff($warehouses, [$sourceInventory->warehouse_id]);
             $toWarehouseId = collect($availableDestinations)->random();
 
@@ -188,16 +188,16 @@ class StockTransferSeeder extends Seeder
     private function createCancelledTransfers(): void
     {
         $this->command->info('Creating cancelled transfers...');
-        
+
         $availableInventory = Inventory::with(['product', 'warehouse'])->get();
-        
+
         $count = min(3, $availableInventory->count());
         $users = User::pluck('id')->toArray();
         $warehouses = Warehouse::where('is_active', true)->pluck('id')->toArray();
 
         for ($i = 0; $i < $count; $i++) {
             $sourceInventory = $availableInventory->random();
-            
+
             $availableDestinations = array_diff($warehouses, [$sourceInventory->warehouse_id]);
             $toWarehouseId = collect($availableDestinations)->random();
 
@@ -220,7 +220,7 @@ class StockTransferSeeder extends Seeder
                     'Customer order cancelled',
                     'Product quality issue',
                     'Transport unavailable',
-                    'Business priority changed'
+                    'Business priority changed',
                 ]),
                 'initiated_at' => $initiatedAt,
                 'cancelled_at' => $cancelledAt,
@@ -233,7 +233,7 @@ class StockTransferSeeder extends Seeder
     private function createRecentTransfers(): void
     {
         $this->command->info('Creating recent scenario-based transfers...');
-        
+
         // Get some specific inventory for demo scenarios
         $highStockInventory = Inventory::where('quantity_available', '>', 50)
             ->with(['product', 'warehouse'])
@@ -294,6 +294,7 @@ class StockTransferSeeder extends Seeder
     {
         $date = now()->format('Ymd');
         $sequence = StockTransfer::whereDate('created_at', now())->count() + 1;
-        return 'ST-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        return 'ST-'.$date.'-'.str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -98,7 +98,7 @@ class User extends Authenticatable
         if (isset($this->type) && $this->type === 'admin') {
             return true;
         }
-        
+
         // Fallback to email check (for backward compatibility)
         return $this->email === 'admin@gmail.com';
     }

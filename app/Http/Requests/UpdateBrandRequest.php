@@ -26,7 +26,7 @@ class UpdateBrandRequest extends FormRequest
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'website_url' => 'nullable|url|max:255',
             'description' => 'nullable|string|max:500',
-            'slug' => 'nullable|string|max:255|unique:brands,slug,' . $this->route('brand')->id,
+            'slug' => 'nullable|string|max:255|unique:brands,slug,'.$this->route('brand')->id,
         ];
     }
 }

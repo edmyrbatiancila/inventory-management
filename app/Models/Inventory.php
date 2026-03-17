@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Inventory extends Model
 {
     /** @use HasFactory<\Database\Factories\InventoryFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected static function boot()
     {
@@ -27,13 +27,13 @@ class Inventory extends Model
         'quantity_on_hand',
         'quantity_reserved',
         'quantity_available',
-        'notes'
+        'notes',
     ];
 
     protected $casts = [
         'quantity_on_hand' => 'integer',
         'quantity_reserved' => 'integer',
-        'quantity_available' => 'integer'
+        'quantity_available' => 'integer',
     ];
 
     public function product()
@@ -64,8 +64,10 @@ class Inventory extends Model
         if ($this->quantity_available >= $quantity) {
             $this->quantity_reserved += $quantity;
             $this->updateAvailableQuantity();
+
             return true;
         }
+
         return false;
     }
 

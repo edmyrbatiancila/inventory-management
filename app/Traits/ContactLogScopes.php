@@ -17,7 +17,7 @@ trait ContactLogScopes
     public function scopeNeedsFollowUp($query)
     {
         return $query->where('follow_up_date', '<=', now())
-                    ->whereNotNull('follow_up_date');
+            ->whereNotNull('follow_up_date');
     }
 
     public function scopeRecent($query, int $days = 30)

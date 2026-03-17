@@ -2,8 +2,6 @@
 
 namespace Database\Factories\Traits;
 
-use App\Models\SalesOrder;
-
 trait HasSalesOrderStates
 {
     /**

@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services;
 
@@ -25,17 +25,17 @@ class PurchaseOrderService
     public function createPurchaseOrder(array $data): PurchaseOrder
     {
         // Set created_by if not provided
-        if (!isset($data['purchase_order']['created_by'])) {
+        if (! isset($data['purchase_order']['created_by'])) {
             $data['purchase_order']['created_by'] = Auth::id();
         }
 
         // Generate PO number if not provided
-        if (!isset($data['purchase_order']['po_number'])) {
+        if (! isset($data['purchase_order']['po_number'])) {
             $data['purchase_order']['po_number'] = PurchaseOrder::generatePoNumber();
         }
 
         // Set default status
-        if (!isset($data['purchase_order']['status'])) {
+        if (! isset($data['purchase_order']['status'])) {
             $data['purchase_order']['status'] = PurchaseOrder::STATUS_DRAFT;
         }
 
@@ -53,15 +53,15 @@ class PurchaseOrderService
     public function updatePurchaseOrder(int $id, array $data): PurchaseOrder
     {
         $purchaseOrder = $this->repository->find($id);
-        
-        if (!$purchaseOrder) {
+
+        if (! $purchaseOrder) {
             throw new InvalidArgumentException("Purchase order not found with ID: {$id}");
         }
 
         // Business rule: Can't modify certain fields after approval
-        if ($purchaseOrder->status !== PurchaseOrder::STATUS_DRAFT && 
+        if ($purchaseOrder->status !== PurchaseOrder::STATUS_DRAFT &&
             $purchaseOrder->status !== PurchaseOrder::STATUS_PENDING_APPROVAL) {
-            
+
             $restrictedFields = ['warehouse_id', 'supplier_name', 'supplier_email'];
             foreach ($restrictedFields as $field) {
                 if (isset($data[$field])) {
@@ -71,7 +71,7 @@ class PurchaseOrderService
         }
 
         $this->repository->update($purchaseOrder, $data);
-        
+
         return $this->repository->find($id);
     }
 
@@ -81,13 +81,13 @@ class PurchaseOrderService
     public function approvePurchaseOrder(int $id, int $approvedBy): bool
     {
         $purchaseOrder = $this->repository->find($id);
-        
-        if (!$purchaseOrder) {
-            throw new InvalidArgumentException("Purchase order not found");
+
+        if (! $purchaseOrder) {
+            throw new InvalidArgumentException('Purchase order not found');
         }
 
-        if (!$purchaseOrder->canBeApproved()) {
-            throw new InvalidArgumentException("Purchase order cannot be approved in its current state");
+        if (! $purchaseOrder->canBeApproved()) {
+            throw new InvalidArgumentException('Purchase order cannot be approved in its current state');
         }
 
         return $this->repository->update($purchaseOrder, [
@@ -103,9 +103,9 @@ class PurchaseOrderService
     public function sendToSupplier(int $id): bool
     {
         $purchaseOrder = $this->repository->find($id);
-        
-        if (!$purchaseOrder || !$purchaseOrder->canBeSent()) {
-            throw new InvalidArgumentException("Purchase order cannot be sent to supplier");
+
+        if (! $purchaseOrder || ! $purchaseOrder->canBeSent()) {
+            throw new InvalidArgumentException('Purchase order cannot be sent to supplier');
         }
 
         return $this->repository->update($purchaseOrder, [
@@ -120,9 +120,9 @@ class PurchaseOrderService
     public function cancelPurchaseOrder(int $id, string $reason): bool
     {
         $purchaseOrder = $this->repository->find($id);
-        
-        if (!$purchaseOrder || !$purchaseOrder->canBeCancelled()) {
-            throw new InvalidArgumentException("Purchase order cannot be cancelled");
+
+        if (! $purchaseOrder || ! $purchaseOrder->canBeCancelled()) {
+            throw new InvalidArgumentException('Purchase order cannot be cancelled');
         }
 
         return $this->repository->update($purchaseOrder, [
@@ -140,9 +140,9 @@ class PurchaseOrderService
     public function addItemToPurchaseOrder(int $poId, array $itemData): PurchaseOrderItem
     {
         $purchaseOrder = $this->repository->find($poId);
-        
-        if (!$purchaseOrder) {
-            throw new InvalidArgumentException("Purchase order not found");
+
+        if (! $purchaseOrder) {
+            throw new InvalidArgumentException('Purchase order not found');
         }
 
         // Business rule: Can't add items after sent to supplier
@@ -150,13 +150,13 @@ class PurchaseOrderService
             PurchaseOrder::STATUS_SENT_TO_SUPPLIER,
             PurchaseOrder::STATUS_PARTIALLY_RECEIVED,
             PurchaseOrder::STATUS_FULLY_RECEIVED,
-            PurchaseOrder::STATUS_CANCELLED
+            PurchaseOrder::STATUS_CANCELLED,
         ])) {
-            throw new InvalidArgumentException("Cannot add items to purchase order in current status");
+            throw new InvalidArgumentException('Cannot add items to purchase order in current status');
         }
 
         $this->validateItemData($itemData);
-        
+
         return $this->repository->addItem($purchaseOrder, $itemData);
     }
 
@@ -166,9 +166,9 @@ class PurchaseOrderService
     public function updateItem(int $poId, int $itemId, array $itemData): bool
     {
         $purchaseOrder = $this->repository->find($poId);
-        
-        if (!$purchaseOrder) {
-            throw new InvalidArgumentException("Purchase order not found");
+
+        if (! $purchaseOrder) {
+            throw new InvalidArgumentException('Purchase order not found');
         }
 
         return $this->repository->updateItem($purchaseOrder, $itemId, $itemData);
@@ -180,14 +180,14 @@ class PurchaseOrderService
     public function removeItem(int $poId, int $itemId): bool
     {
         $purchaseOrder = $this->repository->find($poId);
-        
-        if (!$purchaseOrder) {
-            throw new InvalidArgumentException("Purchase order not found");
+
+        if (! $purchaseOrder) {
+            throw new InvalidArgumentException('Purchase order not found');
         }
 
         // Only allow item removal if PO is in draft status
         if ($purchaseOrder->status !== PurchaseOrder::STATUS_DRAFT) {
-            throw new InvalidArgumentException("Can only remove items from draft purchase orders");
+            throw new InvalidArgumentException('Can only remove items from draft purchase orders');
         }
 
         return $this->repository->removeItem($purchaseOrder, $itemId);
@@ -199,25 +199,25 @@ class PurchaseOrderService
     public function receiveItems(int $poId, array $receivingData): bool
     {
         $purchaseOrder = $this->repository->find($poId);
-        
-        if (!$purchaseOrder || !$purchaseOrder->canBeReceived()) {
-            throw new InvalidArgumentException("Purchase order cannot receive items");
+
+        if (! $purchaseOrder || ! $purchaseOrder->canBeReceived()) {
+            throw new InvalidArgumentException('Purchase order cannot receive items');
         }
 
         return DB::transaction(function () use ($purchaseOrder, $receivingData) {
             foreach ($receivingData['items'] as $itemData) {
                 $item = $this->repository->getItem($purchaseOrder, $itemData['item_id']);
-                
+
                 if ($item && isset($itemData['quantity_received'])) {
                     $item->receiveQuantity(
-                        $itemData['quantity_received'], 
+                        $itemData['quantity_received'],
                         $itemData['notes'] ?? null
                     );
                 }
             }
 
             // Update received_by if this is the first receiving
-            if (!$purchaseOrder->received_by) {
+            if (! $purchaseOrder->received_by) {
                 $this->repository->update($purchaseOrder, [
                     'received_by' => $receivingData['received_by'] ?? Auth::id(),
                     'received_at' => now(),
@@ -267,19 +267,19 @@ class PurchaseOrderService
     private function validateItemData(array $itemData): void
     {
         $required = ['product_id', 'quantity_ordered', 'unit_cost'];
-        
+
         foreach ($required as $field) {
-            if (!isset($itemData[$field])) {
+            if (! isset($itemData[$field])) {
                 throw new InvalidArgumentException("Missing required field: {$field}");
             }
         }
 
         if ($itemData['quantity_ordered'] <= 0) {
-            throw new InvalidArgumentException("Quantity ordered must be greater than 0");
+            throw new InvalidArgumentException('Quantity ordered must be greater than 0');
         }
 
         if ($itemData['unit_cost'] < 0) {
-            throw new InvalidArgumentException("Unit cost cannot be negative");
+            throw new InvalidArgumentException('Unit cost cannot be negative');
         }
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Warehouse;
 use App\Http\Requests\StoreWarehouseRequest;
 use App\Http\Requests\UpdateWarehouseRequest;
 use App\Http\Requests\WarehouseAdvancedSearchRequest;
+use App\Models\Warehouse;
 use App\Services\WarehouseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -72,6 +72,7 @@ class WarehouseController extends Controller
 
             $warehouses->getCollection()->transform(function ($warehouse) {
                 $warehouse->full_address = $warehouse->getFullAddressAttribute();
+
                 return $warehouse;
             });
 
@@ -83,15 +84,15 @@ class WarehouseController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error fetching warehouses: ' . $e->getMessage(), [
+            Log::error('Error fetching warehouses: '.$e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return Inertia::render('admin/warehouse/Index', [
                 'warehouses' => collect(),
-                'error' => 'Failed to load warehouses. Please try again.'
+                'error' => 'Failed to load warehouses. Please try again.',
             ]);
         }
     }
@@ -104,7 +105,7 @@ class WarehouseController extends Controller
         $advancedFilterKeys = [
             'globalSearch', 'name', 'code', 'address', 'state', 'postalCode',
             'phone', 'email', 'isActive', 'createdAfter', 'createdBefore',
-            'updatedAfter', 'updatedBefore', 'recentlyUpdated', 'newWarehouses'
+            'updatedAfter', 'updatedBefore', 'recentlyUpdated', 'newWarehouses',
         ];
 
         foreach ($advancedFilterKeys as $key) {
@@ -123,7 +124,7 @@ class WarehouseController extends Controller
     {
         try {
             $filters = $request->validated();
-            
+
             // Remove null/empty values
             $filters = array_filter($filters, function ($value) {
                 return $value !== null && $value !== '';
@@ -137,11 +138,11 @@ class WarehouseController extends Controller
                 'data' => [
                     'warehouses' => $warehouses,
                     'searchStats' => $searchStats,
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in warehouse advanced search: ' . $e->getMessage(), [
+            Log::error('Error in warehouse advanced search: '.$e->getMessage(), [
                 'filters' => $request->all(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -150,7 +151,7 @@ class WarehouseController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Advanced search failed. Please try again.',
-                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error'
+                'error' => app()->environment('local') ? $e->getMessage() : 'Internal server error',
             ], 500);
         }
     }
@@ -163,7 +164,7 @@ class WarehouseController extends Controller
         try {
             return Inertia::render('admin/warehouse/Create');
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@create: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@create: '.$e->getMessage());
 
             return redirect()->route('admin.warehouses.index')
                 ->with('error', 'Error loading create form.');
@@ -182,11 +183,11 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse created successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@store: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@store: '.$e->getMessage());
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error creating warehouse: ' . $e->getMessage());
+                ->with('error', 'Error creating warehouse: '.$e->getMessage());
         }
     }
 
@@ -198,7 +199,7 @@ class WarehouseController extends Controller
         try {
             $warehouse = $this->warehouseService->getWarehouseById($id);
 
-            if (!$warehouse) {
+            if (! $warehouse) {
                 return redirect()->route('admin.warehouses.index')
                     ->with('error', 'Warehouse not found.');
             }
@@ -209,10 +210,10 @@ class WarehouseController extends Controller
 
             return Inertia::render('admin/warehouse/View', [
                 'warehouse' => $warehouse,
-                'analytics' => $analytics
+                'analytics' => $analytics,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@show: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@show: '.$e->getMessage());
 
             return redirect()->route('admin.warehouses.index')
                 ->with('error', 'Error loading warehouse details.');
@@ -227,16 +228,16 @@ class WarehouseController extends Controller
         try {
             $warehouse = $this->warehouseService->getWarehouseById($id);
 
-            if (!$warehouse) {
+            if (! $warehouse) {
                 return redirect()->route('admin.warehouses.index')
                     ->with('error', 'Warehouse not found.');
             }
 
             return Inertia::render('admin/warehouse/Edit', [
-                'warehouse' => $warehouse
+                'warehouse' => $warehouse,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@edit: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@edit: '.$e->getMessage());
 
             return redirect()->route('admin.warehouses.index')
                 ->with('error', 'Error loading edit form.');
@@ -251,7 +252,7 @@ class WarehouseController extends Controller
         try {
             $result = $this->warehouseService->updateWarehouse($id, $request->validated());
 
-            if (!$result) {
+            if (! $result) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Failed to update warehouse.');
@@ -261,11 +262,11 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse updated successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@update: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@update: '.$e->getMessage());
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error updating warehouse: ' . $e->getMessage());
+                ->with('error', 'Error updating warehouse: '.$e->getMessage());
         }
     }
 
@@ -277,7 +278,7 @@ class WarehouseController extends Controller
         try {
             $result = $this->warehouseService->deleteWarehouse($id);
 
-            if (!$result) {
+            if (! $result) {
                 return redirect()->route('admin.warehouses.index')
                     ->with('error', 'Failed to delete warehouse. It may be in use.');
             }
@@ -286,10 +287,10 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse deleted successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@destroy: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@destroy: '.$e->getMessage());
 
             return redirect()->route('admin.warehouses.index')
-                ->with('error', 'Error deleting warehouse: ' . $e->getMessage());
+                ->with('error', 'Error deleting warehouse: '.$e->getMessage());
 
         }
     }
@@ -304,15 +305,15 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $analytics
+                'data' => $analytics,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in WarehouseController@analytics: ' . $e->getMessage());
+            Log::error('Error in WarehouseController@analytics: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching warehouse analytics: ' . $e->getMessage()
+                'message' => 'Error fetching warehouse analytics: '.$e->getMessage(),
             ], 500);
         }
     }

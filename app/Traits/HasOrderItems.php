@@ -18,9 +18,9 @@ trait HasOrderItems
     {
         return $query->with([
             'warehouse', 'createdBy',
-            'items.product', 'items' => function($query) {
+            'items.product', 'items' => function ($query) {
                 $query->orderBy('created_at');
-            }
+            },
         ]);
     }
 }

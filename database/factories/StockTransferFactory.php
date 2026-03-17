@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Inventory;
-use App\Models\Product;
 use App\Models\StockTransfer;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -33,7 +32,7 @@ class StockTransferFactory extends Factory
         }
 
         $sourceInventory = $availableInventory->random();
-        
+
         // Get a different warehouse for destination
         $warehouses = Warehouse::where('is_active', true)
             ->where('id', '!=', $sourceInventory->warehouse_id)
@@ -45,12 +44,12 @@ class StockTransferFactory extends Factory
         }
 
         $toWarehouseId = $this->faker->randomElement($warehouses);
-        
+
         $status = $this->faker->randomElement(StockTransfer::STATUSES);
         $initiatedAt = $this->faker->dateTimeBetween('-30 days', 'now');
 
         // Generate realistic reference number
-        $referenceNumber = 'ST-' . strtoupper($this->faker->bothify('????-####'));
+        $referenceNumber = 'ST-'.strtoupper($this->faker->bothify('????-####'));
 
         // Realistic transfer quantity based on available stock
         $maxTransfer = min($sourceInventory->quantity_available, 100);
@@ -116,7 +115,7 @@ class StockTransferFactory extends Factory
             'transfer_status' => StockTransfer::STATUS_COMPLETED,
             'initiated_at' => $initiatedAt,
             'approved_by' => User::factory(),
-            'completed_by' => User::factory(), 
+            'completed_by' => User::factory(),
             'approved_at' => $approvedAt,
             'completed_at' => $completedAt,
             'cancelled_at' => null,
@@ -147,7 +146,7 @@ class StockTransferFactory extends Factory
         return in_array($status, [
             StockTransfer::STATUS_APPROVED,
             StockTransfer::STATUS_IN_TRANSIT,
-            StockTransfer::STATUS_COMPLETED
+            StockTransfer::STATUS_COMPLETED,
         ]);
     }
 
@@ -158,7 +157,7 @@ class StockTransferFactory extends Factory
 
     private function getApprovedAt(string $status, $initiatedAt)
     {
-        if (!$this->shouldHaveApprover($status)) {
+        if (! $this->shouldHaveApprover($status)) {
             return null;
         }
 
@@ -167,11 +166,12 @@ class StockTransferFactory extends Factory
 
     private function getCompletedAt(string $status, $initiatedAt)
     {
-        if (!$this->shouldHaveCompleter($status)) {
+        if (! $this->shouldHaveCompleter($status)) {
             return null;
         }
 
         $approvedAt = $this->getApprovedAt($status, $initiatedAt);
+
         return $this->faker->dateTimeBetween($approvedAt ?: $initiatedAt, 'now');
     }
 }

@@ -17,7 +17,7 @@ class ContactLogResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            
+
             // Polymorphic relationship
             'contactable_type' => $this->contactable_type,
             'contactable_id' => $this->contactable_id,
@@ -30,7 +30,7 @@ class ContactLogResource extends JsonResource
                 ];
             }),
 
-             // Contact Information
+            // Contact Information
             'contact_type' => $this->contact_type,
             'contact_type_label' => ContactLogConstants::CONTACT_TYPES[$this->contact_type] ?? $this->contact_type,
             'direction' => $this->direction,
@@ -39,7 +39,7 @@ class ContactLogResource extends JsonResource
             'description' => $this->description,
             'outcome' => $this->outcome,
             'outcome_label' => $this->outcome ? (ContactLogConstants::OUTCOMES[$this->outcome] ?? $this->outcome) : null,
-            
+
             // Participants
             'contact_person_id' => $this->contact_person_id,
             'contact_person' => $this->whenLoaded('contactPerson', function () {
@@ -63,7 +63,7 @@ class ContactLogResource extends JsonResource
             'follow_up_date_formatted' => $this->follow_up_date?->format('M d, Y g:i A'),
             'is_follow_up_due' => $this->isFollowUpDue(),
             'follow_up_status' => $this->getFollowUpStatus(),
-            
+
             // Additional Information
             'attachments' => $this->attachments,
             'attachment_count' => is_array($this->attachments) ? count($this->attachments) : 0,
@@ -72,7 +72,7 @@ class ContactLogResource extends JsonResource
             'priority_badge_color' => $this->getPriorityBadgeColor(),
             'tags' => $this->tags,
             'tag_count' => is_array($this->tags) ? count($this->tags) : 0,
-            
+
             // Timestamps
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
@@ -90,13 +90,13 @@ class ContactLogResource extends JsonResource
 
     private function getContactableName(): string
     {
-        if (!$this->relationLoaded('contactable') || !$this->contactable) {
+        if (! $this->relationLoaded('contactable') || ! $this->contactable) {
             return 'Unknown';
         }
 
         return match (class_basename($this->contactable_type)) {
             'Supplier' => $this->contactable->company_name,
-            'Customer' => $this->contactable->customer_type === 'individual' 
+            'Customer' => $this->contactable->customer_type === 'individual'
                 ? "{$this->contactable->first_name} {$this->contactable->last_name}"
                 : ($this->contactable->trade_name ?: $this->contactable->company_name),
             default => 'Unknown Contact'
@@ -105,29 +105,29 @@ class ContactLogResource extends JsonResource
 
     private function getContactableDisplayName(): string
     {
-        if (!$this->relationLoaded('contactable') || !$this->contactable) {
+        if (! $this->relationLoaded('contactable') || ! $this->contactable) {
             return 'Unknown Contact';
         }
 
         $type = class_basename($this->contactable_type);
         $name = $this->getContactableName();
-        
+
         return "{$type}: {$name}";
     }
 
     private function getFormattedDuration(): string
     {
-        if (!$this->duration_minutes) {
+        if (! $this->duration_minutes) {
             return 'N/A';
         }
-        
+
         $hours = floor($this->duration_minutes / 60);
         $minutes = $this->duration_minutes % 60;
-        
+
         if ($hours > 0) {
             return "{$hours}h {$minutes}m";
         }
-        
+
         return "{$minutes}m";
     }
 
@@ -138,7 +138,7 @@ class ContactLogResource extends JsonResource
 
     private function getFollowUpStatus(): ?string
     {
-        if (!$this->follow_up_date) {
+        if (! $this->follow_up_date) {
             return null;
         }
 
@@ -155,7 +155,7 @@ class ContactLogResource extends JsonResource
 
     private function getPriorityBadgeColor(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'low' => 'bg-gray-100 text-gray-800',
             'normal' => 'bg-blue-100 text-blue-800',
             'high' => 'bg-orange-100 text-orange-800',
@@ -166,7 +166,7 @@ class ContactLogResource extends JsonResource
 
     private function getOutcomeBadgeColor(): string
     {
-        return match($this->outcome) {
+        return match ($this->outcome) {
             'successful' => 'bg-green-100 text-green-800',
             'resolved' => 'bg-blue-100 text-blue-800',
             'no_answer' => 'bg-yellow-100 text-yellow-800',
@@ -178,7 +178,7 @@ class ContactLogResource extends JsonResource
 
     private function getTypeIcon(): string
     {
-        return match($this->contact_type) {
+        return match ($this->contact_type) {
             'call' => 'phone',
             'email' => 'mail',
             'meeting' => 'users',
@@ -190,7 +190,7 @@ class ContactLogResource extends JsonResource
 
     private function getDirectionIcon(): string
     {
-        return match($this->direction) {
+        return match ($this->direction) {
             'inbound' => 'arrow-down-left',
             'outbound' => 'arrow-up-right',
             default => 'arrow-right'

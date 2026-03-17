@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StockMovementAdvancedSearch;
-use App\Models\StockMovement;
 use App\Http\Requests\StoreStockMovementRequest;
 use App\Http\Requests\UpdateStockMovementRequest;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\StockMovementService;
@@ -26,7 +26,6 @@ class StockMovementController extends Controller
         $this->stockMovementService = $stockMovementService;
     }
 
-
     /**
      * Display a listing of the resource.
      */
@@ -45,7 +44,7 @@ class StockMovementController extends Controller
                 'unitCostMin', 'unitCostMax', 'totalValueMin', 'totalValueMax',
                 'createdAfter', 'createdBefore', 'approvedAfter', 'approvedBefore',
                 'movementDirection', 'relatedDocumentTypes', 'myMovements', 'recentMovements',
-                'pendingApproval', 'highValueMovements', 'hasApprover', 'hasDocumentReference'
+                'pendingApproval', 'highValueMovements', 'hasApprover', 'hasDocumentReference',
             ]);
 
             $movements = $this->stockMovementService->getAllMovements($filters);
@@ -53,8 +52,8 @@ class StockMovementController extends Controller
             $advancedSearchStats = null;
 
             // Calculate search stats if filters are applied
-            $hasFilters = !empty(array_filter($filters, function($value, $key) {
-                return !in_array($key, ['per_page', 'sort']) && $value !== null && $value !== '';
+            $hasFilters = ! empty(array_filter($filters, function ($value, $key) {
+                return ! in_array($key, ['per_page', 'sort']) && $value !== null && $value !== '';
             }, ARRAY_FILTER_USE_BOTH));
 
             if ($hasFilters) {
@@ -67,10 +66,10 @@ class StockMovementController extends Controller
                 'productSku', 'warehouseName', 'userName', 'movementTypes', 'statuses',
                 'productIds', 'warehouseIds', 'userIds', 'quantityMovedMin', 'quantityMovedMax',
                 'totalValueMin', 'totalValueMax', 'createdAfter', 'createdBefore',
-                'movementDirection', 'myMovements', 'pendingApproval', 'highValueMovements'
+                'movementDirection', 'myMovements', 'pendingApproval', 'highValueMovements',
             ];
 
-            $hasAdvancedFilters = !empty(array_intersect_key($filters, array_flip($advancedFilterKeys)));
+            $hasAdvancedFilters = ! empty(array_intersect_key($filters, array_flip($advancedFilterKeys)));
 
             if ($hasAdvancedFilters) {
                 $advancedSearchStats = $this->stockMovementService->getAdvancedSearchStats($filters);
@@ -93,18 +92,18 @@ class StockMovementController extends Controller
                 'warehouses' => $warehouses,
                 'users' => $users,
                 'currentFilters' => $filters,
-                'hasAdvancedFilters' => $hasAdvancedFilters
+                'hasAdvancedFilters' => $hasAdvancedFilters,
             ]);
 
         } catch (\Exception $e) {
             Log::error('StockMovementController@index - Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return Inertia::render('admin/stock-movement/Index', [
                 'movements' => collect([]),
-                'error' => 'Failed to load stock movements. Please try again.'
+                'error' => 'Failed to load stock movements. Please try again.',
             ]);
         }
     }
@@ -132,12 +131,12 @@ class StockMovementController extends Controller
     {
         $movement = $this->stockMovementService->getMovementById($id);
 
-        if (!$movement) {
+        if (! $movement) {
             abort(404, 'Stock movement not found');
         }
 
         return Inertia::render('admin/stock-movement/View', [
-            'movement' => $movement
+            'movement' => $movement,
         ]);
     }
 
@@ -173,14 +172,14 @@ class StockMovementController extends Controller
             return redirect()->back()->with('success', 'Stock movement approved successfully.');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to approve movement: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to approve movement: '.$e->getMessage());
         }
     }
 
     public function reject(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'reason' => 'required|string|max:500'
+            'reason' => 'required|string|max:500',
         ]);
 
         try {
@@ -189,7 +188,7 @@ class StockMovementController extends Controller
             return redirect()->back()->with('success', 'Stock movement rejected.');
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to reject movement: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to reject movement: '.$e->getMessage());
         }
     }
 
@@ -197,6 +196,7 @@ class StockMovementController extends Controller
     {
         try {
             $analytics = $this->stockMovementService->getMovementAnalytics();
+
             return response()->json($analytics);
 
         } catch (\Exception $e) {
@@ -211,13 +211,13 @@ class StockMovementController extends Controller
     {
         try {
             $filters = $request->validated();
-            
+
             // Get movements with advanced filtering
             $movements = $this->stockMovementService->getAllMovements($filters);
-            
+
             // Get search statistics
             $searchStats = $this->stockMovementService->getAdvancedSearchStats($filters);
-            
+
             // Get filter options
             $filterOptions = $this->getFilterOptions();
 
@@ -228,11 +228,11 @@ class StockMovementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockMovementController@advancedSearch: ' . $e->getMessage());
-            
+            Log::error('Error in StockMovementController@advancedSearch: '.$e->getMessage());
+
             return response()->json([
                 'error' => 'An error occurred while performing the search.',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

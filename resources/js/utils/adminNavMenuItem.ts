@@ -1,4 +1,4 @@
-import { BarChart3, Package, PackageOpen, PackagePlus, ShoppingBasket, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon, LineChart, Activity, Brain, Building2, } from "lucide-react";
+import { BarChart3, Package, PackageOpen, PackagePlus, ShoppingBasket, ShoppingCart, Split, Tags, TrendingUpDown, WarehouseIcon, LineChart, Activity, Building2, } from "lucide-react";
 
 export const adminMenuItems = [
         {

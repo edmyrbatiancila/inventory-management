@@ -14,67 +14,67 @@ class ProductRepository implements ProductRepositoryInterface
     public function findAll(array $filters = []): LengthAwarePaginator
     {
         $query = Product::with(['category', 'brand'])
-        ->withCount('inventories');
+            ->withCount('inventories');
 
         // Basic search (from search input) across multiple fields
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('barcode', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('brand', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('brand', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Global search across multiple fields (from advanced search)
-        if (!empty($filters['global_search'])) {
+        if (! empty($filters['global_search'])) {
             $search = $filters['global_search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('barcode', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('brand', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('brand', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Specific field searches
-        if (!empty($filters['name'])) {
+        if (! empty($filters['name'])) {
             $query->where('name', 'like', "%{$filters['name']}%");
         }
 
-        if (!empty($filters['sku'])) {
+        if (! empty($filters['sku'])) {
             $query->where('sku', 'like', "%{$filters['sku']}%");
         }
 
         // Apply filters dynamically
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
         // Category and Brand filters
-        if (!empty($filters['categories'])) {
-            $categoryIds = is_string($filters['categories']) 
-                ? explode(',', $filters['categories']) 
+        if (! empty($filters['categories'])) {
+            $categoryIds = is_string($filters['categories'])
+                ? explode(',', $filters['categories'])
                 : $filters['categories'];
             $query->whereIn('category_id', $categoryIds);
         }
 
-        if (!empty($filters['brands'])) {
-            $brandIds = is_string($filters['brands']) 
-                ? explode(',', $filters['brands']) 
+        if (! empty($filters['brands'])) {
+            $brandIds = is_string($filters['brands'])
+                ? explode(',', $filters['brands'])
                 : $filters['brands'];
             $query->whereIn('brand_id', $brandIds);
         }
@@ -105,10 +105,10 @@ class ProductRepository implements ProductRepositoryInterface
         }
 
         // Date filters
-        if (!empty($filters['created_after'])) {
+        if (! empty($filters['created_after'])) {
             $query->where('created_at', '>=', $filters['created_after']);
         }
-        if (!empty($filters['created_before'])) {
+        if (! empty($filters['created_before'])) {
             $query->where('created_at', '<=', $filters['created_before']);
         }
 
@@ -156,11 +156,11 @@ class ProductRepository implements ProductRepositoryInterface
     {
         try {
             $baseQuery = Product::with(['category', 'brand']);
-            
+
             // Apply the same filters as findAll to get accurate stats
             $filteredQuery = clone $baseQuery;
             $this->applyFiltersToQuery($filteredQuery, $filters);
-            
+
             // Status counts
             $statusCounts = [
                 'active' => (clone $filteredQuery)->where('is_active', true)->count(),
@@ -168,12 +168,12 @@ class ProductRepository implements ProductRepositoryInterface
                 'lowStock' => (clone $filteredQuery)->where('min_stock_level', '>', 0)
                     ->whereColumn('min_stock_level', '>', DB::raw('COALESCE((SELECT SUM(quantity_available) FROM inventories WHERE inventories.product_id = products.id), 0)'))
                     ->count(),
-                'outOfStock' => (clone $filteredQuery)->where(function($q) {
-                    $q->whereNotExists(function($query) {
+                'outOfStock' => (clone $filteredQuery)->where(function ($q) {
+                    $q->whereNotExists(function ($query) {
                         $query->select(DB::raw(1))
-                              ->from('inventories')
-                              ->whereColumn('inventories.product_id', 'products.id')
-                              ->where('quantity_available', '>', 0);
+                            ->from('inventories')
+                            ->whereColumn('inventories.product_id', 'products.id')
+                            ->where('quantity_available', '>', 0);
                     });
                 })->count(),
                 'overstock' => (clone $filteredQuery)->where('max_stock_level', '>', 0)
@@ -207,7 +207,7 @@ class ProductRepository implements ProductRepositoryInterface
                 ->map(function ($item) {
                     return [
                         'category_name' => $item->category->name ?? 'Unknown',
-                        'count' => $item->count
+                        'count' => $item->count,
                     ];
                 });
 
@@ -222,7 +222,7 @@ class ProductRepository implements ProductRepositoryInterface
                 ->map(function ($item) {
                     return [
                         'brand_name' => $item->brand->name ?? 'Unknown',
-                        'count' => $item->count
+                        'count' => $item->count,
                     ];
                 });
 
@@ -249,17 +249,17 @@ class ProductRepository implements ProductRepositoryInterface
         } catch (\Exception $e) {
             Log::error('❌ Product Search Stats Error:', [
                 'error' => $e->getMessage(),
-                'filters' => $filters
+                'filters' => $filters,
             ]);
 
             // Return empty stats structure on error
             return [
                 'statusCounts' => [
-                    'active' => 0, 
-                    'inactive' => 0, 
-                    'lowStock' => 0, 
-                    'outOfStock' => 0, 
-                    'overstock' => 0
+                    'active' => 0,
+                    'inactive' => 0,
+                    'lowStock' => 0,
+                    'outOfStock' => 0,
+                    'overstock' => 0,
                 ],
                 'priceRanges' => ['budget' => 0, 'moderate' => 0, 'premium' => 0, 'expensive' => 0],
                 'stockAnalysis' => ['low_min_stock' => 0, 'medium_min_stock' => 0, 'high_min_stock' => 0],
@@ -267,7 +267,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'brandStats' => [],
                 'recentActivity' => ['new_products' => 0, 'recently_updated' => 0],
                 'generatedAt' => now()->toISOString(),
-                'error' => 'Failed to generate statistics'
+                'error' => 'Failed to generate statistics',
             ];
         }
     }
@@ -278,63 +278,63 @@ class ProductRepository implements ProductRepositoryInterface
     private function applyFiltersToQuery($query, array $filters)
     {
         // Basic search (from search input) across multiple fields
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('barcode', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('brand', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('brand', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Global search across multiple fields (from advanced search)
-        if (!empty($filters['global_search'])) {
+        if (! empty($filters['global_search'])) {
             $search = $filters['global_search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('barcode', 'like', "%{$search}%")
-                ->orWhereHas('category', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('brand', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('brand', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         // Text field searches
-        if (!empty($filters['name'])) {
+        if (! empty($filters['name'])) {
             $query->where('name', 'like', "%{$filters['name']}%");
         }
-        if (!empty($filters['sku'])) {
+        if (! empty($filters['sku'])) {
             $query->where('sku', 'like', "%{$filters['sku']}%");
         }
-        if (!empty($filters['description'])) {
+        if (! empty($filters['description'])) {
             $query->where('description', 'like', "%{$filters['description']}%");
         }
-        if (!empty($filters['barcode'])) {
+        if (! empty($filters['barcode'])) {
             $query->where('barcode', 'like', "%{$filters['barcode']}%");
         }
 
         // Category and Brand filters
-        if (!empty($filters['categories'])) {
-            $categoryIds = is_string($filters['categories']) 
-                ? explode(',', $filters['categories']) 
+        if (! empty($filters['categories'])) {
+            $categoryIds = is_string($filters['categories'])
+                ? explode(',', $filters['categories'])
                 : $filters['categories'];
             $query->whereIn('category_id', $categoryIds);
         }
-        if (!empty($filters['brands'])) {
-            $brandIds = is_string($filters['brands']) 
-                ? explode(',', $filters['brands']) 
+        if (! empty($filters['brands'])) {
+            $brandIds = is_string($filters['brands'])
+                ? explode(',', $filters['brands'])
                 : $filters['brands'];
             $query->whereIn('brand_id', $brandIds);
         }
@@ -353,10 +353,10 @@ class ProductRepository implements ProductRepositoryInterface
         }
 
         // Date filters
-        if (!empty($filters['created_after'])) {
+        if (! empty($filters['created_after'])) {
             $query->where('created_at', '>=', $filters['created_after']);
         }
-        if (!empty($filters['created_before'])) {
+        if (! empty($filters['created_before'])) {
             $query->where('created_at', '<=', $filters['created_before']);
         }
     }
@@ -405,15 +405,15 @@ class ProductRepository implements ProductRepositoryInterface
         return Product::whereHas('inventories', function ($query) {
             $query->whereRaw('quantity_available <= products.min_stock_level');
         })
-        ->with(['inventories.warehouse'])
-        ->get();
+            ->with(['inventories.warehouse'])
+            ->get();
     }
 
     public function searchProducts(string $query): Collection
     {
-        return Product::where('name', 'like', '%' . $query . '%')
-            ->orWhere('sku', 'like', '%' . $query . '%')
-            ->orWhere('description', 'like', '%' . $query . '%')
+        return Product::where('name', 'like', '%'.$query.'%')
+            ->orWhere('sku', 'like', '%'.$query.'%')
+            ->orWhere('description', 'like', '%'.$query.'%')
             ->with(['category', 'brand'])
             ->limit(10)
             ->get();
@@ -426,7 +426,7 @@ class ProductRepository implements ProductRepositoryInterface
             'brand',
             'inventories' => function ($query) {
                 $query->with('warehouse')->where('quantity_on_hand', '>', 0);
-            }
+            },
         ])->find($id);
     }
 
@@ -436,6 +436,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->get()
             ->map(function ($product) {
                 $product->total_stock = $product->totalStock();
+
                 return $product;
             });
     }
@@ -445,8 +446,8 @@ class ProductRepository implements ProductRepositoryInterface
         return Product::whereHas('inventories', function ($query) {
             $query->whereRaw('quantity_available <= products.min_stock_level');
         })
-        ->orWhereDoesntHave('inventories')
-        ->with(['category', 'brand'])
-        ->get();
+            ->orWhereDoesntHave('inventories')
+            ->with(['category', 'brand'])
+            ->get();
     }
 }

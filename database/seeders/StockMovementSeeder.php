@@ -6,9 +6,7 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class StockMovementSeeder extends Seeder
 {
@@ -37,7 +35,7 @@ class StockMovementSeeder extends Seeder
         // Create warehouses if none exist
         if (Warehouse::count() === 0) {
             Warehouse::factory(3)->create([
-                'is_active' => true
+                'is_active' => true,
             ]);
         }
 
@@ -45,7 +43,7 @@ class StockMovementSeeder extends Seeder
         if (Product::count() === 0) {
             Product::factory(20)->create([
                 'is_active' => true,
-                'track_quantity' => true
+                'track_quantity' => true,
             ]);
         }
     }
@@ -73,7 +71,7 @@ class StockMovementSeeder extends Seeder
         // Create some recent pending movements
         $this->createPendingMovements(10);
 
-        $this->command->info('Created ' . StockMovement::count() . ' stock movements');
+        $this->command->info('Created '.StockMovement::count().' stock movements');
     }
 
     /**
@@ -100,7 +98,7 @@ class StockMovementSeeder extends Seeder
 
         // Create 3-5 movements for each combination
         $movementCount = rand(3, 5);
-        
+
         for ($i = 0; $i < $movementCount; $i++) {
             $movementTypes = [
                 'sale_fulfill' => -rand(1, 20),      // Sales (decrease)
@@ -113,7 +111,7 @@ class StockMovementSeeder extends Seeder
 
             $movementType = array_rand($movementTypes);
             $quantityMoved = $movementTypes[$movementType];
-            
+
             // Ensure we don't go below 0
             if ($quantityMoved < 0 && abs($quantityMoved) > $currentQuantity) {
                 $quantityMoved = -max(1, floor($currentQuantity / 2));
@@ -172,20 +170,20 @@ class StockMovementSeeder extends Seeder
         for ($i = 0; $i < $count; $i++) {
             $product = $products->random();
             $warehouse = $warehouses->random();
-            
+
             // Get a reasonable starting quantity
             $quantityBefore = rand(50, 200);
-            
+
             $movementType = collect([
                 'adjustment_increase',
-                'adjustment_decrease', 
+                'adjustment_decrease',
                 'damage_write_off',
-                'return_customer'
+                'return_customer',
             ])->random();
 
             $isIncrease = in_array($movementType, ['adjustment_increase', 'return_customer']);
-            $quantityMoved = $isIncrease 
-                ? rand(1, 20) 
+            $quantityMoved = $isIncrease
+                ? rand(1, 20)
                 : -rand(1, min(20, floor($quantityBefore / 2)));
 
             StockMovement::factory()->create([

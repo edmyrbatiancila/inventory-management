@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\PurchaseOrder;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class PurchaseOrderPolicy
 {
@@ -42,7 +41,7 @@ class PurchaseOrderPolicy
     {
         // Allow creators to update draft purchase orders
         // Note: Assuming all authenticated users can edit draft POs for now
-        return $purchaseOrder->status === 'draft' && 
+        return $purchaseOrder->status === 'draft' &&
                $purchaseOrder->created_by === $user->id;
     }
 
@@ -52,7 +51,7 @@ class PurchaseOrderPolicy
     public function delete(User $user, PurchaseOrder $purchaseOrder): bool
     {
         // Only allow deletion of draft purchase orders by creator
-        return $purchaseOrder->status === 'draft' && 
+        return $purchaseOrder->status === 'draft' &&
                $purchaseOrder->created_by === $user->id;
     }
 
@@ -106,6 +105,6 @@ class PurchaseOrderPolicy
     public function cancel(User $user, PurchaseOrder $purchaseOrder): bool
     {
         // Can cancel if not yet fully received
-        return !in_array($purchaseOrder->status, ['fully_received', 'closed', 'cancelled']);
+        return ! in_array($purchaseOrder->status, ['fully_received', 'closed', 'cancelled']);
     }
 }

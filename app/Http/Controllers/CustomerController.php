@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Constants\CustomerConstants;
-use App\Models\Customer;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Http\Resources\CustomerResource;
+use App\Models\Customer;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -29,10 +29,10 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['status', 'customer_type', 'priority', 'credit_status', 'search']);
-        
+
         try {
             $customers = $this->customerService->getAllCustomers($filters);
-            
+
             return Inertia::render('Admin/Customers/Index', [
                 'customers' => CustomerResource::collection($customers),
                 'filters' => $filters,
@@ -45,7 +45,7 @@ class CustomerController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to load customers: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to load customers: '.$e->getMessage()]);
         }
     }
 
@@ -75,15 +75,15 @@ class CustomerController extends Controller
     {
         try {
             $customer = $this->customerService->createCustomer($request->validated());
-            
+
             return redirect()
                 ->route('admin.customers.show', $customer)
                 ->with('success', 'Customer created successfully!');
-                
+
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to create customer: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Failed to create customer: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -95,7 +95,7 @@ class CustomerController extends Controller
         try {
             $customer = $this->customerService->getCustomerById($customer->id);
             $metrics = $this->customerService->getCustomerMetrics($customer->id);
-            
+
             return Inertia::render('Admin/Customers/Show', [
                 'customer' => new CustomerResource($customer),
                 'metrics' => $metrics,
@@ -107,7 +107,7 @@ class CustomerController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Customer not found: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Customer not found: '.$e->getMessage()]);
         }
     }
 
@@ -118,7 +118,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = $this->customerService->getCustomerById($customer->id);
-            
+
             return Inertia::render('Admin/Customers/Edit', [
                 'customer' => new CustomerResource($customer),
                 'constants' => [
@@ -133,7 +133,7 @@ class CustomerController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Customer not found: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Customer not found: '.$e->getMessage()]);
         }
     }
 
@@ -144,15 +144,15 @@ class CustomerController extends Controller
     {
         try {
             $updatedCustomer = $this->customerService->updateCustomer($customer->id, $request->validated());
-            
+
             return redirect()
                 ->route('admin.customers.show', $updatedCustomer)
                 ->with('success', 'Customer updated successfully!');
-                
+
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to update customer: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Failed to update customer: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -163,12 +163,12 @@ class CustomerController extends Controller
     {
         try {
             $this->customerService->deleteCustomer($customer->id);
-            
+
             return redirect()
                 ->route('admin.customers.index')
                 ->with('success', 'Customer deleted successfully!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to delete customer: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to delete customer: '.$e->getMessage()]);
         }
     }
 
@@ -177,9 +177,9 @@ class CustomerController extends Controller
     {
         $term = $request->get('term', '');
         $filters = $request->only(['status', 'customer_type', 'priority']);
-        
+
         $customers = $this->customerService->searchCustomers($term, $filters);
-        
+
         return CustomerResource::collection($customers);
     }
 
@@ -187,6 +187,7 @@ class CustomerController extends Controller
     {
         try {
             $metrics = $this->customerService->getCustomerMetrics($id);
+
             return response()->json($metrics);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 404);

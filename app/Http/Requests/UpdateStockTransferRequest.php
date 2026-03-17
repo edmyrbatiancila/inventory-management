@@ -33,45 +33,45 @@ class UpdateStockTransferRequest extends FormRequest
                 'integer',
                 'exists:warehouses,id',
                 'different:to_warehouse_id',
-                Rule::requiredIf($transfer->transfer_status === 'pending')
+                Rule::requiredIf($transfer->transfer_status === 'pending'),
             ],
             'to_warehouse_id' => [
-                'sometimes', 
+                'sometimes',
                 'integer',
                 'exists:warehouses,id',
                 'different:from_warehouse_id',
-                Rule::requiredIf($transfer->transfer_status === 'pending')
+                Rule::requiredIf($transfer->transfer_status === 'pending'),
             ],
             'product_id' => [
                 'sometimes',
-                'integer', 
+                'integer',
                 'exists:products,id',
-                Rule::requiredIf($transfer->transfer_status === 'pending')
+                Rule::requiredIf($transfer->transfer_status === 'pending'),
             ],
             'quantity_transferred' => [
                 'sometimes',
                 'integer',
                 'min:1',
-                Rule::requiredIf($transfer->transfer_status === 'pending')
+                Rule::requiredIf($transfer->transfer_status === 'pending'),
             ],
 
             'transfer_status' => [
                 'sometimes',
                 'string',
-                Rule::in(StockTransfer::STATUSES)
+                Rule::in(StockTransfer::STATUSES),
             ],
             'notes' => [
                 'sometimes',
                 'nullable',
                 'string',
-                'max:1000'
+                'max:1000',
             ],
             'cancellation_reason' => [
                 'required_if:transfer_status,cancelled',
                 'nullable',
                 'string',
-                'max:500'
-            ]
+                'max:500',
+            ],
         ];
     }
 

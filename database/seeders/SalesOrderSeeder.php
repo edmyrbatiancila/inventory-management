@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Product;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SalesOrderSeeder extends Seeder
@@ -16,10 +15,10 @@ class SalesOrderSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Creating Sales Orders...');
-        
+
         // Create sales orders with different statuses
         $this->createSalesOrdersByStatus();
-        
+
         $this->command->info('Sales Orders seeding completed!');
     }
 
@@ -41,21 +40,21 @@ class SalesOrderSeeder extends Seeder
 
         foreach ($statusDistribution as $status => $count) {
             $this->command->info("Creating {$count} {$status} sales orders...");
-            
+
             for ($i = 0; $i < $count; $i++) {
                 $salesOrder = SalesOrder::factory()->{$status}()->create();
-                
+
                 // Add items to each sales order
                 $itemsCount = rand(2, 6);
                 $products = Product::inRandomOrder()->limit($itemsCount)->get();
-                
+
                 foreach ($products as $product) {
                     $item = SalesOrderItem::factory()
                         ->forSalesOrder($salesOrder)
                         ->forProduct($product)
                         ->{$this->getItemStatusForOrderStatus($status)}()
                         ->create();
-                    
+
                     // 30% chance of having discount
                     if (rand(1, 100) <= 30) {
                         $discountPercentage = rand(5, 15) / 100; // 5% to 15% as decimal (0.05-0.15)
@@ -66,7 +65,7 @@ class SalesOrderSeeder extends Seeder
                         $item->calculateTotals();
                     }
                 }
-                
+
                 // Update sales order totals
                 $salesOrder->calculateTotals();
             }
@@ -74,7 +73,7 @@ class SalesOrderSeeder extends Seeder
 
         // Create some high priority orders
         $this->command->info('Creating urgent and high priority orders...');
-        
+
         SalesOrder::factory(2)->urgent()->confirmed()->create()->each(function ($so) {
             SalesOrderItem::factory(rand(1, 3))
                 ->forSalesOrder($so)
@@ -82,7 +81,7 @@ class SalesOrderSeeder extends Seeder
                 ->create();
             $so->calculateTotals();
         });
-        
+
         SalesOrder::factory(3)->highPriority()->approved()->create()->each(function ($so) {
             SalesOrderItem::factory(rand(2, 4))
                 ->forSalesOrder($so)
@@ -97,7 +96,7 @@ class SalesOrderSeeder extends Seeder
      */
     private function getItemStatusForOrderStatus(string $orderStatus): string
     {
-        return match($orderStatus) {
+        return match ($orderStatus) {
             'draft', 'pendingApproval' => 'pending',
             'approved', 'confirmed' => 'confirmed',
             'partiallyFulfilled' => rand(1, 2) === 1 ? 'partiallyFulfilled' : 'confirmed',

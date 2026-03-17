@@ -9,9 +9,9 @@ it('fixes the tax rate validation error when editing sales order', function () {
     $user = User::factory()->create(['type' => 'admin']);
     $warehouse = Warehouse::factory()->create([
         'name' => 'Regional Hub - Shanahanborough',
-        'code' => 'RH679'
+        'code' => 'RH679',
     ]);
-    
+
     $salesOrder = SalesOrder::factory()->create([
         'so_number' => 'SO-202511-860',
         'status' => 'draft',
@@ -40,13 +40,13 @@ it('fixes the tax rate validation error when editing sales order', function () {
         'tax_rate' => '22', // This should now work (22% as percentage input)
         'shipping_cost' => '33.00',
         'discount_amount' => '45.00',
-        'notes' => 'Updated notes'
+        'notes' => 'Updated notes',
     ]);
 
     // This should NOT have validation errors anymore
     $response->assertSessionDoesntHaveErrors();
     $response->assertRedirect();
-    
+
     // Verify the data was actually updated
     $salesOrder->refresh();
     expect($salesOrder->customer_name)->toBe('Inamaw Corp Updated');
@@ -59,11 +59,11 @@ it('handles the exact error scenario from the user report', function () {
         'id' => 1,
         'name' => 'admin',
         'email' => 'admin@gmail.com',
-        'type' => 'admin'
+        'type' => 'admin',
     ]);
-    
+
     $warehouse = Warehouse::factory()->create(['id' => 6]);
-    
+
     $salesOrder = SalesOrder::factory()->create([
         'id' => 36,
         'so_number' => 'SO-202511-860',
@@ -90,7 +90,7 @@ it('handles the exact error scenario from the user report', function () {
 
     // Should NOT have the "Tax rate must be between 0% and 100%" error
     $response->assertSessionDoesntHaveErrors(['tax_rate']);
-    
+
     // Verify we get a successful response
     expect($response->status())->toBe(302); // Redirect after successful update
 });

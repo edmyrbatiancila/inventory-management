@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Supplier extends Model
 {
     /** @use HasFactory<\Database\Factories\SupplierFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter, SupplierScopes;
+    use HasFactory, HasSearchAndFilter, SoftDeletes, SupplierScopes;
 
     protected $fillable = [
         'supplier_code',
@@ -126,6 +126,85 @@ class Supplier extends Model
     public function contactLogs(): MorphMany
     {
         return $this->morphMany(ContactLog::class, 'contactable');
+    }
+
+    // Helper Methods
+    public function getFullAddress(): string
+    {
+        $addressParts = array_filter([
+            $this->address_line_1,
+            $this->address_line_2,
+            $this->city,
+            $this->state_province,
+            $this->postal_code,
+            $this->country,
+        ]);
+
+        return implode(', ', $addressParts);
+    }
+
+    public function getPerformanceScore(): float
+    {
+        // Calculate weighted performance score
+        $weights = [
+            'quality_rating' => 0.3,
+            'delivery_rating' => 0.3,
+            'service_rating' => 0.2,
+            'overall_rating' => 0.2,
+        ];
+
+        $score = 0;
+        $totalWeight = 0;
+
+        foreach ($weights as $field => $weight) {
+            $value = $this->$field;
+            if ($value > 0) {
+                $score += $value * $weight;
+                $totalWeight += $weight;
+            }
+        }
+
+        return $totalWeight > 0 ? round($score / $totalWeight * 100 / 5, 2) : 0;
+    }
+
+    public function getStatusBadgeColor(): string
+    {
+        return match ($this->status) {
+            'active' => 'green',
+            'inactive' => 'gray',
+            'blacklisted' => 'red',
+            'pending_approval' => 'yellow',
+            default => 'gray',
+        };
+    }
+
+    public function getDisplayName(): string
+    {
+        return $this->trade_name ?: $this->company_name;
+    }
+
+    public function isContractActive(): bool
+    {
+        if (! $this->contract_start_date || ! $this->contract_end_date) {
+            return false;
+        }
+
+        $now = now();
+
+        return $now >= $this->contract_start_date && $now <= $this->contract_end_date;
+    }
+
+    public function canReceiveOrders(): bool
+    {
+        return in_array($this->status, ['active', 'pending_approval']);
+    }
+
+    public function hasActiveOrders(): bool
+    {
+        // Check if supplier has active purchase orders
+        return $this->purchaseOrders()
+            ->whereIn('status', ['pending', 'approved', 'sent_to_supplier', 'partially_received'])
+            ->exists();
     }
 
     // Boot method for model events

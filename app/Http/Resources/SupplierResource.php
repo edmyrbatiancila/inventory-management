@@ -21,13 +21,13 @@ class SupplierResource extends JsonResource
             'company_name' => $this->company_name,
             'trade_name' => $this->trade_name,
             'display_name' => $this->trade_name ?: $this->company_name,
-            
+
             'supplier_type' => $this->supplier_type,
             'supplier_type_label' => SupplierConstants::SUPPLIER_TYPES[$this->supplier_type] ?? '',
             'status' => $this->status,
             'status_label' => SupplierConstants::STATUSES[$this->status] ?? '',
             'status_badge_color' => $this->getStatusBadgeColor(),
-            
+
             'contact_info' => [
                 'person' => $this->contact_person,
                 'title' => $this->contact_title,
@@ -47,7 +47,7 @@ class SupplierResource extends JsonResource
                 'country' => $this->country,
                 'full_address' => $this->getFullAddress(),
             ],
-            
+
             'business_info' => [
                 'tax_id' => $this->tax_id,
                 'registration_number' => $this->registration_number,
@@ -55,7 +55,7 @@ class SupplierResource extends JsonResource
                 'established_year' => $this->established_year,
                 'certifications' => $this->certifications,
             ],
-            
+
             'financial_info' => [
                 'payment_terms' => $this->payment_terms,
                 'payment_terms_label' => SupplierConstants::PAYMENT_TERMS[$this->payment_terms] ?? '',
@@ -78,7 +78,7 @@ class SupplierResource extends JsonResource
                 'quality_issues_count' => $this->quality_issues_count ?? 0,
                 'performance_score' => $this->getPerformanceScore(),
             ],
-            
+
             'operational_info' => [
                 'standard_lead_time' => $this->standard_lead_time,
                 'rush_order_lead_time' => $this->rush_order_lead_time,
@@ -92,7 +92,7 @@ class SupplierResource extends JsonResource
                 'required_documents' => $this->required_documents,
                 'insurance_expiry' => $this->insurance_expiry,
             ],
-            
+
             'contract_info' => [
                 'type' => $this->contract_type,
                 'type_label' => SupplierConstants::CONTRACT_TYPES[$this->contract_type] ?? '',
@@ -100,7 +100,7 @@ class SupplierResource extends JsonResource
                 'end_date' => $this->contract_end_date,
                 'is_active' => $this->isContractActive(),
             ],
-            
+
             'meta' => [
                 'tags' => $this->tags,
                 'internal_notes' => $this->internal_notes,
@@ -126,10 +126,10 @@ class SupplierResource extends JsonResource
 
             'permissions' => [
                 'can_edit' => auth()->user()->isAdmin(),
-                'can_delete' => auth()->user()->isAdmin() && !$this->hasActiveOrders(),
+                'can_delete' => auth()->user()->isAdmin() && ! $this->hasActiveOrders(),
                 'can_create_order' => $this->canReceiveOrders(),
             ],
-            
+
             'timestamps' => [
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
@@ -141,7 +141,7 @@ class SupplierResource extends JsonResource
 
     private function getStatusBadgeColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'active' => 'success',
             'pending_approval' => 'warning',
             'inactive' => 'secondary',
@@ -154,17 +154,17 @@ class SupplierResource extends JsonResource
     {
         $address = $this->address_line_1;
         if ($this->address_line_2) {
-            $address .= ', ' . $this->address_line_2;
+            $address .= ', '.$this->address_line_2;
         }
-        $address .= ', ' . $this->city;
+        $address .= ', '.$this->city;
         if ($this->state_province) {
-            $address .= ', ' . $this->state_province;
+            $address .= ', '.$this->state_province;
         }
         if ($this->postal_code) {
-            $address .= ' ' . $this->postal_code;
+            $address .= ' '.$this->postal_code;
         }
-        $address .= ', ' . $this->country;
-        
+        $address .= ', '.$this->country;
+
         return $address;
     }
 
@@ -176,17 +176,18 @@ class SupplierResource extends JsonResource
             $this->delivery_rating,
             $this->service_rating,
         ]);
-        
+
         return empty($scores) ? 0 : round(array_sum($scores) / count($scores), 2);
     }
 
     private function isContractActive(): bool
     {
-        if (!$this->contract_start_date || !$this->contract_end_date) {
+        if (! $this->contract_start_date || ! $this->contract_end_date) {
             return false;
         }
-        
+
         $now = now();
+
         return $now >= $this->contract_start_date && $now <= $this->contract_end_date;
     }
 

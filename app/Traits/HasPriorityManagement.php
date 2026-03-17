@@ -11,7 +11,7 @@ trait HasPriorityManagement
 
     public function getPriorityColorAttribute(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'low' => 'gray',
             'normal' => 'blue',
             'high' => 'orange',
@@ -20,7 +20,7 @@ trait HasPriorityManagement
         };
     }
 
-    public function scopeByPriority($query, string $priority) 
+    public function scopeByPriority($query, string $priority)
     {
         return $query->where('priority', $priority);
     }
@@ -31,7 +31,7 @@ trait HasPriorityManagement
             'low' => 'Low',
             'normal' => 'Normal',
             'high' => 'High',
-            'urgent' => 'Urgent'
+            'urgent' => 'Urgent',
         ];
     }
 }

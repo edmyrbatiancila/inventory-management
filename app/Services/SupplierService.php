@@ -29,11 +29,11 @@ class SupplierService
     public function getSupplierById(int $id): Supplier
     {
         $supplier = $this->supplierRepository->findById($id, ['createdBy', 'contactLogs']);
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             throw new ModelNotFoundException('Supplier not found');
         }
-        
+
         return $supplier;
     }
 
@@ -46,21 +46,21 @@ class SupplierService
     {
         // Validate data
         $validatedData = $this->validateSupplierData($data);
-        
+
         // Auto-generate supplier code
         $validatedData['supplier_code'] = $this->generateSupplierCode();
-        
+
         // Set defaults
         $validatedData['created_by'] = auth()->id();
         $validatedData['status'] = $validatedData['status'] ?? 'pending_approval';
         $validatedData['currency'] = $validatedData['currency'] ?? 'USD';
-        
+
         return DB::transaction(function () use ($validatedData) {
             $supplier = $this->supplierRepository->create($validatedData);
-            
+
             // Log creation activity
             $this->logSupplierActivity($supplier, 'created', 'Supplier created successfully');
-            
+
             return $supplier;
         });
     }
@@ -68,22 +68,22 @@ class SupplierService
     public function updateSupplier(int $id, array $data): Supplier
     {
         $supplier = $this->supplierRepository->findById($id);
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             throw new ModelNotFoundException('Supplier not found');
         }
-        
+
         $validatedData = $this->validateSupplierData($data, $id);
-        
+
         return DB::transaction(function () use ($supplier, $validatedData, $id) {
             $this->supplierRepository->update($id, $validatedData);
-            
+
             // Reload model
             $supplier = $this->supplierRepository->findById($id);
-            
+
             // Log update activity
             $this->logSupplierActivity($supplier, 'updated', 'Supplier information updated');
-            
+
             return $supplier;
         });
     }
@@ -91,20 +91,20 @@ class SupplierService
     public function deleteSupplier(int $id): bool
     {
         $supplier = $this->supplierRepository->findById($id);
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             return false;
         }
-        
+
         // Check if supplier has active orders
         if ($supplier->purchaseOrders()->whereIn('status', ['pending', 'approved', 'partial'])->exists()) {
             throw new ValidationException('Cannot delete supplier with active purchase orders');
         }
-        
+
         return DB::transaction(function () use ($supplier, $id) {
             // Log deletion activity
             $this->logSupplierActivity($supplier, 'deleted', 'Supplier deleted');
-            
+
             return $this->supplierRepository->delete($id);
         });
     }
@@ -112,7 +112,7 @@ class SupplierService
     public function generateSupplierCode(): string
     {
         do {
-            $code = 'SUP-' . date('Y') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+            $code = 'SUP-'.date('Y').'-'.str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
         } while (Supplier::where('supplier_code', $code)->exists());
 
         return $code;
@@ -123,15 +123,15 @@ class SupplierService
         $rules = [
             'company_name' => 'required|string|max:255',
             'trade_name' => 'nullable|string|max:255',
-            'supplier_type' => ['required', 'in:' . implode(',', array_keys(SupplierConstants::SUPPLIER_TYPES))],
-            'status' => ['nullable', 'in:' . implode(',', array_keys(SupplierConstants::STATUSES))],
+            'supplier_type' => ['required', 'in:'.implode(',', array_keys(SupplierConstants::SUPPLIER_TYPES))],
+            'status' => ['nullable', 'in:'.implode(',', array_keys(SupplierConstants::STATUSES))],
             'contact_person' => 'nullable|string|max:255',
             'contact_title' => 'nullable|string|max:255',
             'email' => [
                 'nullable',
                 'email:rfc,dns',
                 'max:255',
-                $supplierId ? "unique:suppliers,email,{$supplierId}" : 'unique:suppliers,email'
+                $supplierId ? "unique:suppliers,email,{$supplierId}" : 'unique:suppliers,email',
             ],
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
@@ -144,18 +144,18 @@ class SupplierService
             'state_province' => 'nullable|string|max:100',
             'postal_code' => 'nullable|string|max:20',
             'country' => 'required|string|max:100',
-            
+
             // Business information
             'tax_id' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:100',
             'business_description' => 'nullable|string|max:1000',
-            'established_year' => 'nullable|integer|min:1800|max:' . date('Y'),
-            
+            'established_year' => 'nullable|integer|min:1800|max:'.date('Y'),
+
             // Financial information
-            'payment_terms' => ['nullable', 'in:' . implode(',', array_keys(SupplierConstants::PAYMENT_TERMS))],
+            'payment_terms' => ['nullable', 'in:'.implode(',', array_keys(SupplierConstants::PAYMENT_TERMS))],
             'currency' => 'nullable|string|size:3',
             'credit_limit' => 'nullable|numeric|min:0|max:999999999.99',
-            
+
             // JSON fields
             'certifications' => 'nullable|array',
             'shipping_methods' => 'nullable|array',
@@ -164,7 +164,7 @@ class SupplierService
         ];
 
         $validator = Validator::make($data, $rules);
-        
+
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
@@ -175,8 +175,8 @@ class SupplierService
     public function getSupplierMetrics(int $id): array
     {
         $supplier = $this->supplierRepository->findById($id, ['purchaseOrders', 'contactLogs']);
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             throw new ModelNotFoundException('Supplier not found');
         }
 
@@ -217,7 +217,7 @@ class SupplierService
             $supplier->delivery_rating,
             $supplier->service_rating,
         ]);
-        
+
         return empty($scores) ? 0 : round(array_sum($scores) / count($scores), 2);
     }
 
@@ -230,17 +230,17 @@ class SupplierService
     {
         $address = $supplier->address_line_1;
         if ($supplier->address_line_2) {
-            $address .= ', ' . $supplier->address_line_2;
+            $address .= ', '.$supplier->address_line_2;
         }
-        $address .= ', ' . $supplier->city;
+        $address .= ', '.$supplier->city;
         if ($supplier->state_province) {
-            $address .= ', ' . $supplier->state_province;
+            $address .= ', '.$supplier->state_province;
         }
         if ($supplier->postal_code) {
-            $address .= ' ' . $supplier->postal_code;
+            $address .= ' '.$supplier->postal_code;
         }
-        $address .= ', ' . $supplier->country;
-        
+        $address .= ', '.$supplier->country;
+
         return $address;
     }
 
@@ -255,11 +255,11 @@ class SupplierService
             $supplier->overall_rating,
             $supplier->quality_rating,
             $supplier->delivery_rating,
-            $supplier->service_rating
+            $supplier->service_rating,
         ];
-        
-        $validScores = array_filter($scores, fn($score) => $score > 0);
-        
+
+        $validScores = array_filter($scores, fn ($score) => $score > 0);
+
         return empty($validScores) ? 0 : round(array_sum($validScores) / count($validScores), 2);
     }
 
@@ -298,9 +298,9 @@ class SupplierService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        $nextNumber = $lastOrder ? 
+        $nextNumber = $lastOrder ?
             intval(substr($lastOrder->po_number, -3)) + 1 : 1;
 
-        return $supplier->supplier_code . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        return $supplier->supplier_code.'-'.str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 }

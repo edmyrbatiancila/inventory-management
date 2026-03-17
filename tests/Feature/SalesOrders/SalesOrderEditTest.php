@@ -2,23 +2,25 @@
 
 namespace Tests\Feature\SalesOrders;
 
+use App\Models\Product;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
-use Illuminate\Support\Facades\Auth;
 
 class SalesOrderEditTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
     protected User $user;
+
     protected Warehouse $warehouse;
+
     protected Product $product;
+
     protected SalesOrder $salesOrder;
 
     protected function setUp(): void
@@ -28,20 +30,20 @@ class SalesOrderEditTest extends TestCase
         // Create test user
         $this->user = User::factory()->create([
             'type' => 'admin',
-            'email' => 'admin@test.com'
+            'email' => 'admin@test.com',
         ]);
 
         // Create test warehouse
         $this->warehouse = Warehouse::factory()->create([
             'name' => 'Test Warehouse',
-            'code' => 'TW001'
+            'code' => 'TW001',
         ]);
 
         // Create test product
         $this->product = Product::factory()->create([
             'name' => 'Test Product',
             'sku' => 'TEST-001',
-            'price' => 100.00
+            'price' => 100.00,
         ]);
 
         // Create test sales order
@@ -64,7 +66,7 @@ class SalesOrderEditTest extends TestCase
             'product_id' => $this->product->id,
             'quantity_ordered' => 10,
             'unit_price' => 100.00,
-            'line_total' => 1000.00
+            'line_total' => 1000.00,
         ]);
 
         // Authenticate user
@@ -77,13 +79,12 @@ class SalesOrderEditTest extends TestCase
         $response = $this->get(route('admin.sales-orders.edit', $this->salesOrder->id));
 
         $response->assertOk();
-        $response->assertInertia(fn ($page) => 
-            $page->component('admin/sales-orders/Edit')
-                ->has('sales_order')
-                ->where('sales_order.id', $this->salesOrder->id)
-                ->where('sales_order.tax_rate', '0.2200') // Should be decimal
-                ->has('warehouses')
-                ->has('products')
+        $response->assertInertia(fn ($page) => $page->component('admin/sales-orders/Edit')
+            ->has('sales_order')
+            ->where('sales_order.id', $this->salesOrder->id)
+            ->where('sales_order.tax_rate', '0.2200') // Should be decimal
+            ->has('warehouses')
+            ->has('products')
         );
     }
 
@@ -106,9 +107,9 @@ class SalesOrderEditTest extends TestCase
                     'quantity_ordered' => 15,
                     'unit_price' => 120.00,
                     'line_total' => 1800.00,
-                    'notes' => 'Updated item notes'
-                ]
-            ]
+                    'notes' => 'Updated item notes',
+                ],
+            ],
         ];
 
         $response = $this->put(
@@ -161,7 +162,7 @@ class SalesOrderEditTest extends TestCase
 
             $this->salesOrder->refresh();
             $this->assertEquals(
-                $testCase['expected_decimal'], 
+                $testCase['expected_decimal'],
                 (float) $this->salesOrder->tax_rate,
                 "Tax rate {$testCase['tax_rate']}% should convert to decimal {$testCase['expected_decimal']}"
             );
@@ -203,8 +204,8 @@ class SalesOrderEditTest extends TestCase
                         'product_id' => $this->product->id,
                         'quantity_ordered' => 20,
                         'unit_price' => 150.00,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -266,8 +267,8 @@ class SalesOrderEditTest extends TestCase
                     'quantity_ordered' => 5,
                     'unit_price' => 200.00,
                     'line_total' => 1000.00,
-                ]
-            ]
+                ],
+            ],
         ];
 
         $response = $this->put(
@@ -278,7 +279,7 @@ class SalesOrderEditTest extends TestCase
         $response->assertSessionDoesntHaveErrors();
 
         $this->salesOrder->refresh();
-        
+
         // Verify totals are recalculated
         $expectedSubtotal = 1000.00; // 5 × 200.00
         $expectedTaxAmount = $expectedSubtotal * 0.15; // 15%

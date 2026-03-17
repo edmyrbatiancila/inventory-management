@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Customer extends Model
 {
     /** @use HasFactory<\Database\Factories\CustomerFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter, CustomerScopes;
+    use CustomerScopes, HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'customer_code',

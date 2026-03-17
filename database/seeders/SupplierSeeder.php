@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Supplier;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SupplierSeeder extends Seeder
@@ -48,10 +47,10 @@ class SupplierSeeder extends Seeder
     {
         // Manufacturers (typically larger orders, longer lead times)
         Supplier::factory(8)->manufacturer()->active()->create();
-        
+
         // Distributors (faster delivery, smaller minimums)
         Supplier::factory(10)->distributor()->active()->create();
-        
+
         // Mix of other types
         Supplier::factory(2)->state(['supplier_type' => 'wholesaler'])->active()->create();
         Supplier::factory(1)->state(['supplier_type' => 'retailer'])->active()->create();
@@ -65,13 +64,13 @@ class SupplierSeeder extends Seeder
     {
         // Preferred vendors (top performers)
         Supplier::factory(5)->preferredVendor()->highRated()->create();
-        
+
         // High-rated active suppliers
         Supplier::factory(3)->active()->highRated()->create();
-        
+
         // Recent suppliers pending approval
         Supplier::factory(2)->pendingApproval()->state([
-            'created_at' => now()->subDays(rand(1, 7))
+            'created_at' => now()->subDays(rand(1, 7)),
         ])->create();
     }
 }

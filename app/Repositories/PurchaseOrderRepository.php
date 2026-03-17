@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Repositories;
 
@@ -17,8 +17,8 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
     }
 
     public function paginate(
-        array $filters = [], 
-        int $perPage = 15, 
+        array $filters = [],
+        int $perPage = 15,
         array $with = ['items', 'warehouse', 'createdBy']
     ): LengthAwarePaginator {
         $query = PurchaseOrder::with($with);
@@ -37,15 +37,15 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
         }
 
         if (isset($filters['supplier_name'])) {
-            $query->where('supplier_name', 'like', '%' . $filters['supplier_name'] . '%');
+            $query->where('supplier_name', 'like', '%'.$filters['supplier_name'].'%');
         }
 
         if (isset($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->where('po_number', 'like', '%' . $search . '%')
-                    ->orWhere('supplier_name', 'like', '%' . $search . '%')
-                    ->orWhere('supplier_reference', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('po_number', 'like', '%'.$search.'%')
+                    ->orWhere('supplier_name', 'like', '%'.$search.'%')
+                    ->orWhere('supplier_reference', 'like', '%'.$search.'%');
             });
         }
 
@@ -81,7 +81,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
 
             // Update totals
             $purchaseOrder->updateTotals();
-            
+
             return $purchaseOrder->fresh(['items', 'warehouse', 'createdBy']);
         });
     }
@@ -90,11 +90,11 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
     {
         return DB::transaction(function () use ($purchaseOrder, $data) {
             $updated = $purchaseOrder->update($data);
-            
+
             if ($updated) {
                 $purchaseOrder->updateTotals();
             }
-            
+
             return $updated;
         });
     }
@@ -111,7 +111,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
         return DB::transaction(function () use ($purchaseOrder, $itemData) {
             $item = $purchaseOrder->items()->create($itemData);
             $purchaseOrder->updateTotals();
-            
+
             return $item;
         });
     }
@@ -120,22 +120,22 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
     {
         return DB::transaction(function () use ($purchaseOrder, $itemId, $itemData) {
             $item = $purchaseOrder->items()->find($itemId);
-            
-            if (!$item) {
+
+            if (! $item) {
                 return false;
             }
-            
+
             $updated = $item->update($itemData);
-            
+
             if ($updated) {
                 $item->calculateTotals();
                 $item->updateStatus();
                 $item->save();
-                
+
                 $purchaseOrder->updateTotals();
                 $purchaseOrder->updateReceivingStatus();
             }
-            
+
             return $updated;
         });
     }
@@ -144,18 +144,18 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
     {
         return DB::transaction(function () use ($purchaseOrder, $itemId) {
             $item = $purchaseOrder->items()->find($itemId);
-            
-            if (!$item) {
+
+            if (! $item) {
                 return false;
             }
-            
+
             $deleted = $item->delete();
-            
+
             if ($deleted) {
                 $purchaseOrder->updateTotals();
                 $purchaseOrder->updateReceivingStatus();
             }
-            
+
             return $deleted;
         });
     }
@@ -182,7 +182,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
             ->whereNotIn('status', [
                 PurchaseOrder::STATUS_FULLY_RECEIVED,
                 PurchaseOrder::STATUS_CANCELLED,
-                PurchaseOrder::STATUS_CLOSED
+                PurchaseOrder::STATUS_CLOSED,
             ])
             ->orderBy('expected_delivery_date', 'asc')
             ->get();
@@ -199,7 +199,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
     public function findBySupplier(string $supplierName, array $with = []): Collection
     {
         return PurchaseOrder::with($with)
-            ->where('supplier_name', 'like', '%' . $supplierName . '%')
+            ->where('supplier_name', 'like', '%'.$supplierName.'%')
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -209,14 +209,14 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
         return PurchaseOrder::with(['items', 'warehouse'])
             ->where(function ($query) {
                 $query->where('priority', PurchaseOrder::PRIORITY_URGENT)
-                        ->orWhere('status', PurchaseOrder::STATUS_PENDING_APPROVAL)
-                        ->orWhere(function ($q) {
-                            $q->where('expected_delivery_date', '<', now())
+                    ->orWhere('status', PurchaseOrder::STATUS_PENDING_APPROVAL)
+                    ->orWhere(function ($q) {
+                        $q->where('expected_delivery_date', '<', now())
                             ->whereNotIn('status', [
                                 PurchaseOrder::STATUS_FULLY_RECEIVED,
-                                PurchaseOrder::STATUS_CANCELLED
+                                PurchaseOrder::STATUS_CANCELLED,
                             ]);
-                        });
+                    });
             })
             ->orderBy('priority', 'desc')
             ->orderBy('expected_delivery_date', 'asc')
@@ -231,7 +231,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
         $approvedCount = PurchaseOrder::where('status', PurchaseOrder::STATUS_APPROVED)->count();
         $inProgressCount = PurchaseOrder::whereIn('status', [
             PurchaseOrder::STATUS_SENT_TO_SUPPLIER,
-            PurchaseOrder::STATUS_PARTIALLY_RECEIVED
+            PurchaseOrder::STATUS_PARTIALLY_RECEIVED,
         ])->count();
         $completedCount = PurchaseOrder::where('status', PurchaseOrder::STATUS_FULLY_RECEIVED)->count();
         $overdueCount = $this->findOverdue()->count();
@@ -256,7 +256,7 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
             'percentages' => [
                 'completion_rate' => $totalPOs > 0 ? round(($completedCount / $totalPOs) * 100, 1) : 0,
                 'overdue_rate' => $totalPOs > 0 ? round(($overdueCount / $totalPOs) * 100, 1) : 0,
-            ]
+            ],
         ];
     }
 
@@ -265,14 +265,16 @@ class PurchaseOrderRepository implements PurchaseOrderRepositoryInterface
         $query = PurchaseOrder::with(['items', 'warehouse', 'createdBy']);
 
         foreach ($criteria as $field => $value) {
-            if (empty($value)) continue;
+            if (empty($value)) {
+                continue;
+            }
 
             switch ($field) {
                 case 'po_number':
-                    $query->where('po_number', 'like', '%' . $value . '%');
+                    $query->where('po_number', 'like', '%'.$value.'%');
                     break;
                 case 'supplier':
-                    $query->where('supplier_name', 'like', '%' . $value . '%');
+                    $query->where('supplier_name', 'like', '%'.$value.'%');
                     break;
                 case 'status':
                     if (is_array($value)) {

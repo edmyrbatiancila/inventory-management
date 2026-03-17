@@ -31,7 +31,7 @@ class StoreCustomerRequest extends FormRequest
             'first_name' => 'required_if:customer_type,individual|nullable|string|max:255',
             'last_name' => 'required_if:customer_type,individual|nullable|string|max:255',
             'status' => ['nullable', Rule::in(array_keys(CustomerConstants::STATUSES))],
-            
+
             // Contact Information
             'contact_person' => 'nullable|string|max:255',
             'contact_title' => 'nullable|string|max:255',
@@ -40,7 +40,7 @@ class StoreCustomerRequest extends FormRequest
             'mobile' => 'nullable|string|max:20',
             'fax' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
-            
+
             // Billing Address
             'billing_address_line_1' => 'required|string|max:255',
             'billing_address_line_2' => 'nullable|string|max:255',
@@ -57,20 +57,20 @@ class StoreCustomerRequest extends FormRequest
             'shipping_state_province' => 'nullable|string|max:100',
             'shipping_postal_code' => 'nullable|string|max:20',
             'shipping_country' => 'required_if:same_as_billing,false|nullable|string|max:100',
-            
+
             // Business Information
             'tax_id' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:50',
             'business_description' => 'nullable|string|max:1000',
-            'established_year' => 'nullable|integer|between:1800,' . date('Y'),
+            'established_year' => 'nullable|integer|between:1800,'.date('Y'),
             'company_size' => ['nullable', Rule::in(array_keys(CustomerConstants::COMPANY_SIZES))],
-            
+
             // Financial Information
             'payment_terms' => ['nullable', Rule::in(array_keys(CustomerConstants::PAYMENT_TERMS))],
             'currency' => 'nullable|string|size:3',
             'credit_limit' => 'nullable|numeric|min:0',
             'credit_status' => ['nullable', Rule::in(array_keys(CustomerConstants::CREDIT_STATUSES))],
-            
+
             // Customer Management
             'customer_priority' => ['nullable', Rule::in(array_keys(CustomerConstants::PRIORITIES))],
             'price_tier' => ['nullable', Rule::in(array_keys(CustomerConstants::PRICE_TIERS))],
@@ -78,12 +78,12 @@ class StoreCustomerRequest extends FormRequest
             'assigned_sales_rep' => 'nullable|exists:users,id',
             'default_discount_percentage' => 'nullable|numeric|between:0,100',
 
-             // Preferences & Settings
+            // Preferences & Settings
             'volume_discount_eligible' => 'boolean',
             'seasonal_discount_eligible' => 'boolean',
             'tax_exempt' => 'boolean',
             'newsletter_subscription' => 'boolean',
-            
+
             // Notes
             'special_requirements' => 'nullable|string|max:1000',
             'internal_notes' => 'nullable|string|max:2000',
@@ -128,16 +128,16 @@ class StoreCustomerRequest extends FormRequest
         if ($this->phone) {
             $this->merge(['phone' => preg_replace('/[^0-9+\-\(\)\s]/', '', $this->phone)]);
         }
-        
+
         if ($this->mobile) {
             $this->merge(['mobile' => preg_replace('/[^0-9+\-\(\)\s]/', '', $this->mobile)]);
         }
-        
+
         // Normalize email
         if ($this->email) {
             $this->merge(['email' => strtolower(trim($this->email))]);
         }
-        
+
         // Set default values
         $this->merge([
             'status' => $this->status ?? 'prospect',

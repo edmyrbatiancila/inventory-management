@@ -15,7 +15,7 @@ it('allows admin users to edit sales orders created by others', function () {
         'status' => 'draft',
         'warehouse_id' => $this->warehouse->id,
         'created_by' => $regularUser->id,
-        'customer_name' => 'Original Customer'
+        'customer_name' => 'Original Customer',
     ]);
 
     // Create an admin user
@@ -30,7 +30,7 @@ it('allows admin users to edit sales orders created by others', function () {
 
     $response->assertSessionDoesntHaveErrors();
     $response->assertRedirect();
-    
+
     // Verify the data was updated
     $salesOrder->refresh();
     expect($salesOrder->customer_name)->toBe('Updated by Admin');
@@ -43,7 +43,7 @@ it('allows admin users to edit pending approval sales orders', function () {
         'status' => 'pending_approval',
         'warehouse_id' => $this->warehouse->id,
         'created_by' => $regularUser->id,
-        'customer_name' => 'Pending Order'
+        'customer_name' => 'Pending Order',
     ]);
 
     // Admin should be able to edit pending approval orders
@@ -56,7 +56,7 @@ it('allows admin users to edit pending approval sales orders', function () {
     ]);
 
     $response->assertSessionDoesntHaveErrors();
-    
+
     $salesOrder->refresh();
     expect($salesOrder->customer_name)->toBe('Admin Updated Pending Order');
 });
@@ -86,7 +86,7 @@ it('allows regular users to edit only their own draft sales orders', function ()
     // Create two regular users
     $user1 = User::factory()->create(['type' => 'user']);
     $user2 = User::factory()->create(['type' => 'user']);
-    
+
     // User1 creates a sales order
     $salesOrder = SalesOrder::factory()->create([
         'status' => 'draft',
@@ -96,7 +96,7 @@ it('allows regular users to edit only their own draft sales orders', function ()
 
     // User2 tries to edit User1's sales order
     $this->actingAs($user2);
-    
+
     $response = $this->put(route('admin.sales-orders.update', $salesOrder->id), [
         'customer_name' => 'Should Not Update',
         'warehouse_id' => $this->warehouse->id,
@@ -109,7 +109,7 @@ it('supports legacy admin email pattern', function () {
     // Create a user with the legacy admin email pattern
     $legacyAdmin = User::factory()->create([
         'email' => 'admin@gmail.com',
-        'type' => 'user' // Even with user type, should still be admin due to email
+        'type' => 'user', // Even with user type, should still be admin due to email
     ]);
 
     $regularUser = User::factory()->create(['type' => 'user']);
@@ -128,7 +128,7 @@ it('supports legacy admin email pattern', function () {
     ]);
 
     $response->assertSessionDoesntHaveErrors();
-    
+
     $salesOrder->refresh();
     expect($salesOrder->customer_name)->toBe('Updated by Legacy Admin');
 });
@@ -141,7 +141,7 @@ it('correctly identifies admin users using isAdmin helper method', function () {
     // Test email-based admin (legacy)
     $emailAdmin = User::factory()->create([
         'email' => 'admin@gmail.com',
-        'type' => 'user'
+        'type' => 'user',
     ]);
     expect($emailAdmin->isAdmin())->toBeTrue();
 

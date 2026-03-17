@@ -100,31 +100,31 @@ class ProductAdvancedSearchRequest extends FormRequest
         // Convert string 'true'/'false' to boolean for boolean fields
         if ($this->has('is_active')) {
             $this->merge([
-                'is_active' => filter_var($this->is_active, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                'is_active' => filter_var($this->is_active, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
         }
 
         if ($this->has('track_quantity')) {
             $this->merge([
-                'track_quantity' => filter_var($this->track_quantity, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                'track_quantity' => filter_var($this->track_quantity, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
         }
 
         if ($this->has('has_inventory')) {
             $this->merge([
-                'has_inventory' => filter_var($this->has_inventory, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                'has_inventory' => filter_var($this->has_inventory, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
         }
 
         if ($this->has('is_low_stock')) {
             $this->merge([
-                'is_low_stock' => filter_var($this->is_low_stock, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                'is_low_stock' => filter_var($this->is_low_stock, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
         }
 
         if ($this->has('recently_updated')) {
             $this->merge([
-                'recently_updated' => filter_var($this->recently_updated, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                'recently_updated' => filter_var($this->recently_updated, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
         }
     }
@@ -135,15 +135,15 @@ class ProductAdvancedSearchRequest extends FormRequest
     public function getFilters(): array
     {
         $validated = $this->validated();
-        
+
         // Convert comma-separated strings to arrays
-        if (!empty($validated['categories'])) {
+        if (! empty($validated['categories'])) {
             $validated['categories'] = array_filter(
                 array_map('intval', explode(',', $validated['categories']))
             );
         }
 
-        if (!empty($validated['brands'])) {
+        if (! empty($validated['brands'])) {
             $validated['brands'] = array_filter(
                 array_map('intval', explode(',', $validated['brands']))
             );

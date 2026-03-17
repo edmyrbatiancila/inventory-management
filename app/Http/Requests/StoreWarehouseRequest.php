@@ -32,7 +32,7 @@ class StoreWarehouseRequest extends FormRequest
             'country' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ];
     }
 
@@ -51,7 +51,7 @@ class StoreWarehouseRequest extends FormRequest
             'state.required' => 'The state is required.',
             'postal_code.required' => 'The postal code is required.',
             'country.required' => 'The country is required.',
-            'email.email' => 'Please provide a valid email address.'
+            'email.email' => 'Please provide a valid email address.',
         ];
     }
 
@@ -61,8 +61,7 @@ class StoreWarehouseRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'is_active' => $this->boolean('is_active', true)
+            'is_active' => $this->boolean('is_active', true),
         ]);
     }
-
 }

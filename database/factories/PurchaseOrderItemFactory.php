@@ -33,18 +33,18 @@ class PurchaseOrderItemFactory extends Factory
             'product_sku' => $product->sku,
             'product_name' => $product->name,
             'product_description' => $this->faker->optional(0.4)->sentence(),
-            
+
             'quantity_ordered' => $quantityOrdered,
             'quantity_received' => 0,
             'quantity_pending' => $quantityOrdered,
             'quantity_rejected' => 0,
-            
+
             'unit_cost' => $unitCost,
             'line_total' => $lineTotal,
             'discount_percentage' => 0,
             'discount_amount' => 0,
             'final_line_total' => $lineTotal,
-            
+
             'item_status' => PurchaseOrderItem::STATUS_PENDING,
             'notes' => $this->faker->optional(0.3)->sentence(),
         ];

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Product extends Model
 {
     /** @use HasFactory<\Database\Factories\ProductFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -23,11 +23,11 @@ class Product extends Model
         'barcode',
         'cost_price',
         'slug',
-        'min_stock_level', 
+        'min_stock_level',
         'max_stock_level',
         'images',
-        'specifications', 
-        'track_quantity'
+        'specifications',
+        'track_quantity',
     ];
 
     protected $casts = [
@@ -38,7 +38,7 @@ class Product extends Model
         'images' => 'array',
         'specifications' => 'array',
         'is_active' => 'boolean',
-        'track_quantity' => 'boolean'
+        'track_quantity' => 'boolean',
     ];
 
     public function category()
@@ -46,7 +46,8 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function brand() {
+    public function brand()
+    {
 
         return $this->belongsTo(Brand::class);
     }

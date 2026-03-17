@@ -20,7 +20,7 @@ class AdminMiddleware
         if (Auth::check() && Auth::user()->email === 'admin@gmail.com') {
             return $next($request);
         }
-        
+
         abort(401, 'Unauthorized Access');
     }
 }

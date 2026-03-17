@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Brand extends Model
 {
     /** @use HasFactory<\Database\Factories\BrandFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -18,11 +18,11 @@ class Brand extends Model
         'slug',
         'logo_url',
         'website_url',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     public function products()

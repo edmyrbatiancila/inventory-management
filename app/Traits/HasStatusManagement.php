@@ -7,6 +7,7 @@ trait HasStatusManagement
     public function getStatusLabelAttribute(): string
     {
         $statuses = $this->getStatusConstants();
+
         return $statuses[$this->status] ?? 'Unknown';
     }
 
@@ -32,13 +33,17 @@ trait HasStatusManagement
 
     public function canBeCancelled(): bool
     {
-        return !in_array($this->status, $this->getNonCancellableStatuses());
+        return ! in_array($this->status, $this->getNonCancellableStatuses());
     }
 
     // Abstract methods to be implemented in models
     abstract protected function getStatusConstants(): array;
+
     abstract protected function getStatusColorMapping(): array;
+
     abstract protected function getInactiveStatuses(): array;
+
     abstract protected function getEditableStatuses(): array;
+
     abstract protected function getNonCancellableStatuses(): array;
 }

@@ -217,8 +217,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('insights/bulk-action', [InsightsController::class, 'bulkAction'])->name('insights.bulk-action');
 
         // ============= Supplier & Customer Management =============
-        
-        // Supplier Management Routes  
+
+        // Supplier Management Routes
         Route::prefix('suppliers')->name('suppliers.')->group(function () {
             Route::get('/', [SupplierController::class, 'index'])->name('index');
             Route::get('/create', [SupplierController::class, 'create'])->name('create');

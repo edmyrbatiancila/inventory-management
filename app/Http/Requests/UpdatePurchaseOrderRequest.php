@@ -28,7 +28,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
 
         return [
             // Purchase Order fields - more restrictive based on status
-            'po_number' => 'sometimes|string|unique:purchase_orders,po_number,' . $purchaseOrder->id,
+            'po_number' => 'sometimes|string|unique:purchase_orders,po_number,'.$purchaseOrder->id,
             'supplier_name' => 'sometimes|required|string|max:255',
             'supplier_email' => 'sometimes|nullable|email|max:255',
             'supplier_phone' => 'sometimes|nullable|string|max:50',
@@ -36,7 +36,7 @@ class UpdatePurchaseOrderRequest extends FormRequest
             'supplier_contact_person' => 'sometimes|nullable|string|max:255',
             'warehouse_id' => $canEditItems ? 'sometimes|required|exists:warehouses,id' : 'prohibited',
             'expected_delivery_date' => 'sometimes|nullable|date|after:today',
-            'priority' => 'sometimes|in:' . implode(',', array_keys(PurchaseOrder::PRIORITIES)),
+            'priority' => 'sometimes|in:'.implode(',', array_keys(PurchaseOrder::PRIORITIES)),
             'currency' => 'sometimes|nullable|string|size:3',
             'notes' => 'sometimes|nullable|string',
             'terms_and_conditions' => 'sometimes|nullable|string',

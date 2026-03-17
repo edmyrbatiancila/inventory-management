@@ -10,16 +10,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class InventoryMovement extends Model
 {
     /** @use HasFactory<\Database\Factories\InventoryMovementFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     // Movement type constants
     public const TYPE_STOCK_IN = 'stock_in';
+
     public const TYPE_STOCK_OUT = 'stock_out';
+
     public const TYPE_ADJUSTMENT_IN = 'adjustment_in';
+
     public const TYPE_ADJUSTMENT_OUT = 'adjustment_out';
+
     public const TYPE_TRANSFER_IN = 'transfer_in';
+
     public const TYPE_TRANSFER_OUT = 'transfer_out';
+
     public const TYPE_INCREASE = 'increase';  // For InventoryService compatibility
+
     public const TYPE_DECREASE = 'decrease';  // For InventoryService compatibility
 
     public const TYPES = [
@@ -35,7 +42,7 @@ class InventoryMovement extends Model
 
     protected $fillable = [
         'product_id',
-        'warehouse_id', 
+        'warehouse_id',
         'type',
         'quantity',
         'quantity_before',
@@ -43,14 +50,14 @@ class InventoryMovement extends Model
         'reference_type',
         'reference_id',
         'notes',
-        'movement_date'
+        'movement_date',
     ];
 
     protected $casts = [
         'movement_date' => 'datetime',
         'quantity' => 'integer',
-        'quantity_before' => 'integer', 
-        'quantity_after' => 'integer'
+        'quantity_before' => 'integer',
+        'quantity_after' => 'integer',
     ];
 
     public function product()

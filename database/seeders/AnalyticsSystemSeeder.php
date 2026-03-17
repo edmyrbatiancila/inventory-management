@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\AnalyticsReport;
-use App\Models\DashboardWidget;
 use App\Models\BusinessInsight;
+use App\Models\DashboardWidget;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -13,8 +13,8 @@ class AnalyticsSystemSeeder extends Seeder
     public function run(): void
     {
         $adminUser = User::where('type', 'admin')->first() ?? User::first();
-        
-        if (!$adminUser || !$adminUser->id) {
+
+        if (! $adminUser || ! $adminUser->id) {
             // Create a default admin user for analytics
             $adminUser = User::create([
                 'name' => 'Analytics Admin',
@@ -36,7 +36,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'auto_generate' => true,
                 'email_on_completion' => true,
                 'visibility' => 'shared',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Weekly Stock Movement Analysis',
@@ -45,7 +45,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'frequency' => 'weekly',
                 'auto_generate' => true,
                 'visibility' => 'shared',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Monthly Purchase Analytics',
@@ -54,7 +54,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'frequency' => 'monthly',
                 'auto_generate' => true,
                 'visibility' => 'shared',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Warehouse Performance Dashboard',
@@ -63,8 +63,8 @@ class AnalyticsSystemSeeder extends Seeder
                 'frequency' => 'daily',
                 'auto_generate' => false,
                 'visibility' => 'public',
-                'created_by' => $adminUser->id
-            ]
+                'created_by' => $adminUser->id,
+            ],
         ];
 
         foreach ($reports as $reportData) {
@@ -85,7 +85,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'cache_duration_minutes' => 30,
                 'is_interactive' => false,
                 'allows_export' => true,
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Stock Movement Trends',
@@ -99,7 +99,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'cache_duration_minutes' => 15,
                 'is_interactive' => true,
                 'allows_export' => true,
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Low Stock Alerts',
@@ -115,7 +115,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'alert_thresholds' => ['low_stock' => 10],
                 'is_interactive' => true,
                 'allows_export' => true,
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Purchase Orders Status',
@@ -129,7 +129,7 @@ class AnalyticsSystemSeeder extends Seeder
                 'cache_duration_minutes' => 60,
                 'is_interactive' => true,
                 'allows_export' => true,
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Warehouse Utilization',
@@ -143,8 +143,8 @@ class AnalyticsSystemSeeder extends Seeder
                 'cache_duration_minutes' => 120,
                 'is_interactive' => true,
                 'allows_export' => true,
-                'created_by' => $adminUser->id
-            ]
+                'created_by' => $adminUser->id,
+            ],
         ];
 
         foreach ($widgets as $widgetData) {
@@ -166,13 +166,13 @@ class AnalyticsSystemSeeder extends Seeder
                 'recommendations' => [
                     'Immediately place purchase orders for affected products',
                     'Review reorder points for electronics category',
-                    'Consider increasing safety stock levels'
+                    'Consider increasing safety stock levels',
                 ],
                 'urgency' => 'immediate',
                 'suggested_completion_date' => now()->addDays(1),
                 'priority' => 'critical',
                 'assigned_to' => $adminUser->id,
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Unusual Stock Movement Pattern Detected',
@@ -187,12 +187,12 @@ class AnalyticsSystemSeeder extends Seeder
                 'recommendations' => [
                     'Verify if bulk orders were processed today',
                     'Check for any large inventory adjustments',
-                    'Monitor movement patterns for next few days'
+                    'Monitor movement patterns for next few days',
                 ],
                 'urgency' => 'medium',
                 'suggested_completion_date' => now()->addDays(2),
                 'priority' => 'normal',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Optimization Opportunity: Warehouse Space',
@@ -206,12 +206,12 @@ class AnalyticsSystemSeeder extends Seeder
                 'recommendations' => [
                     'Transfer slow-moving items from Warehouse B to C',
                     'Analyze product placement strategy',
-                    'Consider expanding Warehouse B capacity'
+                    'Consider expanding Warehouse B capacity',
                 ],
                 'urgency' => 'medium',
                 'suggested_completion_date' => now()->addWeeks(1),
                 'priority' => 'normal',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Purchase Order Approval Bottleneck',
@@ -224,12 +224,12 @@ class AnalyticsSystemSeeder extends Seeder
                 'recommendations' => [
                     'Review and approve pending purchase orders',
                     'Implement automated approval for low-value orders',
-                    'Add additional approval authority'
+                    'Add additional approval authority',
                 ],
                 'urgency' => 'high',
                 'suggested_completion_date' => now()->addHours(12),
                 'priority' => 'high',
-                'created_by' => $adminUser->id
+                'created_by' => $adminUser->id,
             ],
             [
                 'title' => 'Seasonal Trend Analysis: Winter Products',
@@ -245,13 +245,13 @@ class AnalyticsSystemSeeder extends Seeder
                 'recommendations' => [
                     'Increase winter product inventory by 30%',
                     'Negotiate volume discounts with suppliers',
-                    'Prepare marketing campaigns for winter products'
+                    'Prepare marketing campaigns for winter products',
                 ],
                 'urgency' => 'medium',
                 'suggested_completion_date' => now()->addWeeks(2),
                 'priority' => 'normal',
-                'created_by' => $adminUser->id
-            ]
+                'created_by' => $adminUser->id,
+            ],
         ];
 
         foreach ($insights as $insightData) {
@@ -260,8 +260,8 @@ class AnalyticsSystemSeeder extends Seeder
 
         $this->command->info('Analytics system seeded successfully!');
         $this->command->info('Created:');
-        $this->command->info('- ' . count($reports) . ' Analytics Reports');
-        $this->command->info('- ' . count($widgets) . ' Dashboard Widgets');
-        $this->command->info('- ' . count($insights) . ' Business Insights');
+        $this->command->info('- '.count($reports).' Analytics Reports');
+        $this->command->info('- '.count($widgets).' Dashboard Widgets');
+        $this->command->info('- '.count($insights).' Business Insights');
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SalesOrder;
 use App\Http\Requests\StoreSalesOrderRequest;
 use App\Http\Requests\UpdateSalesOrderRequest;
 use App\Models\Product;
+use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\Warehouse;
 use App\Services\SalesOrderService;
@@ -34,7 +34,7 @@ class SalesOrderController extends Controller
     {
         $filters = $request->only(['search', 'status', 'priority', 'warehouse_id', 'payment_status', 'per_page']);
         $salesOrders = $this->salesOrderService->getSalesOrders($filters, $filters['per_page'] ?? 15);
-        
+
         return $this->renderIndex($salesOrders, [
             'warehouses' => Warehouse::select('id', 'name')->get(),
             'statuses' => SalesOrder::STATUSES,
@@ -70,7 +70,8 @@ class SalesOrderController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error loading Sales Order create page: ' . $e->getMessage());
+            Log::error('Error loading Sales Order create page: '.$e->getMessage());
+
             return redirect()
                 ->route('admin.sales-orders.index')
                 ->with('error', 'Unable to load create form. Please try again.');
@@ -106,9 +107,9 @@ class SalesOrderController extends Controller
                     'payment_status' => $request->payment_status ?: 'pending',
                     'payment_terms' => $request->payment_terms,
                     'currency' => $request->currency ?: 'USD',
-                    'tax_rate' => $request->tax_rate !== '' ? (float)$request->tax_rate / 100 : null,
-                    'shipping_cost' => $request->shipping_cost !== '' ? (float)$request->shipping_cost : null,
-                    'discount_amount' => $request->discount_amount !== '' ? (float)$request->discount_amount : null,
+                    'tax_rate' => $request->tax_rate !== '' ? (float) $request->tax_rate / 100 : null,
+                    'shipping_cost' => $request->shipping_cost !== '' ? (float) $request->shipping_cost : null,
+                    'discount_amount' => $request->discount_amount !== '' ? (float) $request->discount_amount : null,
                     'shipping_address' => $request->shipping_address,
                     'shipping_method' => $request->shipping_method,
                     'notes' => $request->notes,
@@ -119,12 +120,13 @@ class SalesOrderController extends Controller
                 'items' => collect($request->items)->map(function ($item) {
                     // Convert discount percentage from percentage to decimal
                     if (isset($item['discount_percentage']) && $item['discount_percentage'] !== '') {
-                        $item['discount_percentage'] = (float)$item['discount_percentage'] / 100;
+                        $item['discount_percentage'] = (float) $item['discount_percentage'] / 100;
                     } else {
                         $item['discount_percentage'] = null;
                     }
+
                     return $item;
-                })->toArray()
+                })->toArray(),
             ];
 
             // Create the sales order through the service
@@ -138,7 +140,8 @@ class SalesOrderController extends Controller
             );
 
         } catch (\Exception $e) {
-            Log::error('Error creating sales order: ' . $e->getMessage());
+            Log::error('Error creating sales order: '.$e->getMessage());
+
             return $this->errorResponse('Failed to create sales order. Please try again.');
         }
     }
@@ -158,7 +161,7 @@ class SalesOrderController extends Controller
     {
         try {
             // Check if the sales order can be edited
-            if (!$salesOrder->canBeEdited()) {
+            if (! $salesOrder->canBeEdited()) {
                 return redirect()
                     ->route('admin.sales-orders.show', $salesOrder)
                     ->with('error', 'This sales order cannot be edited in its current status.');
@@ -182,13 +185,14 @@ class SalesOrderController extends Controller
                 'createdBy:id,name',
                 'approvedBy:id,name',
                 'fulfilledBy:id,name',
-                'shippedBy:id,name'
+                'shippedBy:id,name',
             ]);
 
             return $this->renderEdit($salesOrderWithItems, $warehouses, $products);
 
         } catch (\Exception $e) {
-            Log::error('Error loading Sales Order edit page: ' . $e->getMessage());
+            Log::error('Error loading Sales Order edit page: '.$e->getMessage());
+
             return redirect()
                 ->route('admin.sales-orders.index')
                 ->with('error', 'Unable to load edit form. Please try again.');
@@ -203,39 +207,40 @@ class SalesOrderController extends Controller
         try {
             // Convert percentage fields and process items if they exist
             $validatedData = $request->validated();
-            
+
             // Convert percentage fields to decimals for main order
             if (isset($validatedData['tax_rate']) && $validatedData['tax_rate'] !== '') {
-                $validatedData['tax_rate'] = (float)$validatedData['tax_rate'] / 100;
+                $validatedData['tax_rate'] = (float) $validatedData['tax_rate'] / 100;
             }
-            
+
             // Process items discount percentage if items are being updated
             if (isset($validatedData['items'])) {
                 foreach ($validatedData['items'] as &$item) {
                     if (isset($item['discount_percentage']) && $item['discount_percentage'] !== '') {
-                        $item['discount_percentage'] = (float)$item['discount_percentage'] / 100;
+                        $item['discount_percentage'] = (float) $item['discount_percentage'] / 100;
                     }
                 }
             }
 
             $updated = $this->salesOrderService->updateSalesOrder(
-                $salesOrder->id, 
+                $salesOrder->id,
                 $validatedData
             );
 
             if ($updated) {
                 return redirect()->route('admin.sales-orders.edit', $salesOrder->id)->with('success', 'Sales order updated successfully');
             }
-            
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update sales order.');
 
         } catch (\Exception $e) {
-            Log::error('Error updating sales order: ' . $e->getMessage());
+            Log::error('Error updating sales order: '.$e->getMessage());
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error updating sales order: ' . $e->getMessage());
+                ->with('error', 'Error updating sales order: '.$e->getMessage());
         }
     }
 
@@ -245,12 +250,12 @@ class SalesOrderController extends Controller
     public function destroy(SalesOrder $salesOrder): JsonResponse|RedirectResponse
     {
         try {
-            if (!$salesOrder->canBeCancelled()) {
+            if (! $salesOrder->canBeCancelled()) {
                 return $this->errorResponse('Sales order cannot be deleted in its current state');
             }
 
             $salesOrder->delete();
-            
+
             return $this->successResponse('Sales order deleted successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -266,7 +271,7 @@ class SalesOrderController extends Controller
     {
         try {
             $this->salesOrderService->approveSalesOrder($salesOrder->id, Auth::id());
-            
+
             return $this->successResponse('Sales order approved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -280,7 +285,7 @@ class SalesOrderController extends Controller
     {
         try {
             $this->salesOrderService->confirmSalesOrder($salesOrder->id);
-            
+
             return $this->successResponse('Sales order confirmed successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -293,10 +298,10 @@ class SalesOrderController extends Controller
     public function cancel(Request $request, SalesOrder $salesOrder): JsonResponse|RedirectResponse
     {
         $request->validate(['reason' => 'required|string|max:500']);
-        
+
         try {
             $this->salesOrderService->cancelSalesOrder($salesOrder->id, $request->reason);
-            
+
             return $this->successResponse('Sales order cancelled successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -336,7 +341,7 @@ class SalesOrderController extends Controller
 
         try {
             $this->salesOrderService->fulfillItems($salesOrder->id, $request->validated());
-            
+
             return $this->successResponse('Items fulfilled successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -356,7 +361,7 @@ class SalesOrderController extends Controller
 
         try {
             $this->salesOrderService->shipSalesOrder($salesOrder->id, $request->validated());
-            
+
             return $this->successResponse('Sales order shipped successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -370,7 +375,7 @@ class SalesOrderController extends Controller
     {
         try {
             $this->salesOrderService->markAsDelivered($salesOrder->id);
-            
+
             return $this->successResponse('Sales order marked as delivered successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -392,10 +397,10 @@ class SalesOrderController extends Controller
 
         try {
             $item = $this->salesOrderService->addItemToSalesOrder(
-                $salesOrder->id, 
+                $salesOrder->id,
                 $request->only(['product_id', 'quantity_ordered', 'unit_price', 'notes', 'customer_notes'])
             );
-            
+
             return $this->successResponse('Item added successfully', $item);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -414,11 +419,11 @@ class SalesOrderController extends Controller
 
         try {
             $this->salesOrderService->updateItem(
-                $salesOrder->id, 
-                $item->id, 
+                $salesOrder->id,
+                $item->id,
                 $request->only(['quantity_ordered', 'unit_price', 'notes', 'customer_notes'])
             );
-            
+
             return $this->successResponse('Item updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -432,7 +437,7 @@ class SalesOrderController extends Controller
     {
         try {
             $this->salesOrderService->removeItem($salesOrder->id, $item->id);
-            
+
             return $this->successResponse('Item removed successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -447,13 +452,13 @@ class SalesOrderController extends Controller
     public function pendingApprovals(): JsonResponse|Response
     {
         $pendingApprovals = $this->salesOrderService->getPendingApprovals();
-        
+
         if (request()->expectsJson()) {
             return response()->json($pendingApprovals);
         }
-        
+
         return inertia('Admin/SalesOrders/PendingApprovals', [
-            'sales_orders' => $pendingApprovals
+            'sales_orders' => $pendingApprovals,
         ]);
     }
 
@@ -463,13 +468,13 @@ class SalesOrderController extends Controller
     public function overdue(): JsonResponse|Response
     {
         $overdue = $this->salesOrderService->getOverdueSalesOrders();
-        
+
         if (request()->expectsJson()) {
             return response()->json($overdue);
         }
-        
+
         return inertia('Admin/SalesOrders/Overdue', [
-            'sales_orders' => $overdue
+            'sales_orders' => $overdue,
         ]);
     }
 
@@ -479,13 +484,13 @@ class SalesOrderController extends Controller
     public function unfulfilled(): JsonResponse|Response
     {
         $unfulfilled = $this->salesOrderService->getUnfulfilledOrders();
-        
+
         if (request()->expectsJson()) {
             return response()->json($unfulfilled);
         }
-        
+
         return inertia('Admin/SalesOrders/Unfulfilled', [
-            'sales_orders' => $unfulfilled
+            'sales_orders' => $unfulfilled,
         ]);
     }
 
@@ -495,13 +500,13 @@ class SalesOrderController extends Controller
     public function fulfilledUnshipped(): JsonResponse|Response
     {
         $orders = $this->salesOrderService->getFulfilledUnshippedOrders();
-        
+
         if (request()->expectsJson()) {
             return response()->json($orders);
         }
-        
+
         return inertia('Admin/SalesOrders/FulfilledUnshipped', [
-            'sales_orders' => $orders
+            'sales_orders' => $orders,
         ]);
     }
 
@@ -511,7 +516,7 @@ class SalesOrderController extends Controller
     public function statistics(): JsonResponse
     {
         $statistics = $this->salesOrderService->getDashboardStatistics();
-        
+
         return response()->json($statistics);
     }
 
@@ -521,16 +526,16 @@ class SalesOrderController extends Controller
     public function byCustomer(Request $request): JsonResponse|Response
     {
         $request->validate(['customer_name' => 'required|string']);
-        
+
         $orders = $this->salesOrderService->getOrdersByCustomer($request->customer_name);
-        
+
         if (request()->expectsJson()) {
             return response()->json($orders);
         }
-        
+
         return inertia('Admin/SalesOrders/ByCustomer', [
             'sales_orders' => $orders,
-            'customer_name' => $request->customer_name
+            'customer_name' => $request->customer_name,
         ]);
     }
 
@@ -540,16 +545,16 @@ class SalesOrderController extends Controller
     public function byPaymentStatus(Request $request): JsonResponse|Response
     {
         $request->validate(['payment_status' => 'required|string']);
-        
+
         $orders = $this->salesOrderService->getOrdersByPaymentStatus($request->payment_status);
-        
+
         if (request()->expectsJson()) {
             return response()->json($orders);
         }
-        
+
         return inertia('Admin/SalesOrders/ByPaymentStatus', [
             'sales_orders' => $orders,
-            'payment_status' => $request->payment_status
+            'payment_status' => $request->payment_status,
         ]);
     }
 }

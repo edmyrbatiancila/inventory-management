@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Admin;
-use App\Http\Requests\StoreAdminRequest;
 use App\Http\Requests\StoreBrandRequest;
 use App\Http\Requests\StoreCategoryRequest;
-use App\Http\Requests\UpdateAdminRequest;
 use App\Http\Requests\UpdateBrandRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Brand;
@@ -56,9 +53,9 @@ class AdminController extends Controller
      */
     public function editCategory(Category $category)
     {
-        
+
         return Inertia::render('admin/category/Edit', [
-            'category' => $category
+            'category' => $category,
         ]);
     }
 
@@ -79,6 +76,7 @@ class AdminController extends Controller
     {
         try {
             $category->delete();
+
             return redirect()->route('admin.category.index')->with('success', 'Category successfully deleted');
         } catch (\Exception $e) {
             return redirect()->route('admin.category.index')->with('error', 'Failed to delete category. It may be in use.');
@@ -112,7 +110,7 @@ class AdminController extends Controller
         // Handle logo file upload
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('brands', 'public');
-            $validated['logo_url'] = '/storage/' . $path;
+            $validated['logo_url'] = '/storage/'.$path;
         } elseif (empty($validated['logo_url'])) {
             $validated['logo_url'] = null;
         }
@@ -124,7 +122,7 @@ class AdminController extends Controller
             $originalSlug = $validated['slug'];
             $counter = 1;
             while (Brand::where('slug', $validated['slug'])->exists()) {
-                $validated['slug'] = $originalSlug . '-' . $counter;
+                $validated['slug'] = $originalSlug.'-'.$counter;
                 $counter++;
             }
         }
@@ -141,7 +139,7 @@ class AdminController extends Controller
     public function editBrand(Brand $brand)
     {
         return Inertia::render('admin/brand/Edit', [
-            'brand' => $brand
+            'brand' => $brand,
         ]);
     }
 
@@ -152,12 +150,12 @@ class AdminController extends Controller
         // Handle file upload
         if ($request->hasFile('logo')) {
             // Delete old logo if it exists
-            if ($brand->logo_url && file_exists(public_path('storage/' . $brand->logo_url))) {
-                unlink(public_path('storage/' . $brand->logo_url));
+            if ($brand->logo_url && file_exists(public_path('storage/'.$brand->logo_url))) {
+                unlink(public_path('storage/'.$brand->logo_url));
             }
 
             $logoFile = $request->file('logo');
-            $logoName = time() . '_' . $logoFile->getClientOriginalName();
+            $logoName = time().'_'.$logoFile->getClientOriginalName();
             $logoPath = $logoFile->storeAs('brands/logos', $logoName, 'public');
             $validated['logo_url'] = $logoPath;
         }
@@ -167,9 +165,9 @@ class AdminController extends Controller
             $baseSlug = Str::slug($validated['name']);
             $slug = $baseSlug;
             $counter = 1;
-            
+
             while (Brand::where('slug', $slug)->where('id', '!=', $brand->id)->exists()) {
-                $slug = $baseSlug . '-' . $counter;
+                $slug = $baseSlug.'-'.$counter;
                 $counter++;
             }
             $validated['slug'] = $slug;
@@ -189,7 +187,7 @@ class AdminController extends Controller
     {
         try {
             $brand->delete();
-            
+
             return redirect()->route('admin.brand.index')->with('success', 'Brand successfully deleted');
         } catch (\Exception $e) {
             return redirect()->route('admin.brand.index')->with('error', 'Failed to delete brand. It may be in use.');

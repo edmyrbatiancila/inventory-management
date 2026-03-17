@@ -17,29 +17,29 @@ class InventoryRepository implements InventoryRepositoryInterface
         $this->applyAdvancedFilters($query, $filters);
 
         // Apply filters
-        if (isset($filters['search']) && !empty($filters['search'])) {
+        if (isset($filters['search']) && ! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->whereHas('product', function($pq) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('product', function ($pq) use ($search) {
                     $pq->where('name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%");
-                })->orWhereHas('warehouse', function($wq) use ($search) {
+                })->orWhereHas('warehouse', function ($wq) use ($search) {
                     $wq->where('name', 'like', "%{$search}%")
                         ->orWhere('code', 'like', "%{$search}%");
                 });
             });
         }
 
-        if (isset($filters['product_id']) && !empty($filters['product_id'])) {
+        if (isset($filters['product_id']) && ! empty($filters['product_id'])) {
             $query->where('product_id', $filters['product_id']);
         }
 
-        if (isset($filters['warehouse_id']) && !empty($filters['warehouse_id'])) {
+        if (isset($filters['warehouse_id']) && ! empty($filters['warehouse_id'])) {
             $query->where('warehouse_id', $filters['warehouse_id']);
         }
 
         if (isset($filters['low_stock']) && $filters['low_stock']) {
-            $query->whereHas('product', function($q) {
+            $query->whereHas('product', function ($q) {
                 $q->whereColumn('inventories.quantity_available', '<=', 'products.min_stock_level');
             });
         }
@@ -67,11 +67,11 @@ class InventoryRepository implements InventoryRepositoryInterface
                 break;
             case 'value_high':
                 $query->join('products', 'inventories.product_id', '=', 'products.id')
-                      ->orderByRaw('(inventories.quantity_available * products.price) DESC');
+                    ->orderByRaw('(inventories.quantity_available * products.price) DESC');
                 break;
             case 'value_low':
                 $query->join('products', 'inventories.product_id', '=', 'products.id')
-                      ->orderByRaw('(inventories.quantity_available * products.price) ASC');
+                    ->orderByRaw('(inventories.quantity_available * products.price) ASC');
                 break;
             case 'stock_status':
                 $query->join('products', 'inventories.product_id', '=', 'products.id')
@@ -129,7 +129,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 
     public function findLowStock(): Collection
     {
-        return Inventory::whereHas('product', function($query) {
+        return Inventory::whereHas('product', function ($query) {
             $query->whereColumn('inventories.quantity_available', '<=', 'products.min_stock_level');
         })->with(['product', 'warehouse'])->get();
     }
@@ -169,30 +169,30 @@ class InventoryRepository implements InventoryRepositoryInterface
     private function applyAdvancedFilters($query, array $filters)
     {
         // Global search across product name, SKU, warehouse name, and notes
-        if (isset($filters['globalSearch']) && !empty($filters['globalSearch'])) {
+        if (isset($filters['globalSearch']) && ! empty($filters['globalSearch'])) {
             $search = $filters['globalSearch'];
-            $query->where(function($q) use ($search) {
-                $q->whereHas('product', function($productQuery) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('product', function ($productQuery) use ($search) {
                     $productQuery->where('name', 'like', "%{$search}%")
-                            ->orWhere('sku', 'like', "%{$search}%");
+                        ->orWhere('sku', 'like', "%{$search}%");
                 })
-                ->orWhereHas('warehouse', function($warehouseQuery) use ($search) {
-                    $warehouseQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('code', 'like', "%{$search}%");
-                })
-                ->orWhere('notes', 'like', "%{$search}%");
+                    ->orWhereHas('warehouse', function ($warehouseQuery) use ($search) {
+                        $warehouseQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    })
+                    ->orWhere('notes', 'like', "%{$search}%");
             });
         }
 
         // Product-specific filters
-        if (isset($filters['productName']) && !empty($filters['productName'])) {
-            $query->whereHas('product', function($q) use ($filters) {
+        if (isset($filters['productName']) && ! empty($filters['productName'])) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['productName']}%");
             });
         }
 
-        if (isset($filters['productSku']) && !empty($filters['productSku'])) {
-            $query->whereHas('product', function($q) use ($filters) {
+        if (isset($filters['productSku']) && ! empty($filters['productSku'])) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('sku', 'like', "%{$filters['productSku']}%");
             });
         }
@@ -202,26 +202,26 @@ class InventoryRepository implements InventoryRepositoryInterface
         }
 
         if (isset($filters['categoryIds']) && is_array($filters['categoryIds']) && count($filters['categoryIds']) > 0) {
-            $query->whereHas('product', function($q) use ($filters) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->whereIn('category_id', $filters['categoryIds']);
             });
         }
 
         if (isset($filters['brandIds']) && is_array($filters['brandIds']) && count($filters['brandIds']) > 0) {
-            $query->whereHas('product', function($q) use ($filters) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->whereIn('brand_id', $filters['brandIds']);
             });
         }
 
         // Warehouse-specific filters
-        if (isset($filters['warehouseName']) && !empty($filters['warehouseName'])) {
-            $query->whereHas('warehouse', function($q) use ($filters) {
+        if (isset($filters['warehouseName']) && ! empty($filters['warehouseName'])) {
+            $query->whereHas('warehouse', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['warehouseName']}%");
             });
         }
 
-        if (isset($filters['warehouseCode']) && !empty($filters['warehouseCode'])) {
-            $query->whereHas('warehouse', function($q) use ($filters) {
+        if (isset($filters['warehouseCode']) && ! empty($filters['warehouseCode'])) {
+            $query->whereHas('warehouse', function ($q) use ($filters) {
                 $q->where('code', 'like', "%{$filters['warehouseCode']}%");
             });
         }
@@ -231,7 +231,7 @@ class InventoryRepository implements InventoryRepositoryInterface
         }
 
         if (isset($filters['warehouseIsActive'])) {
-            $query->whereHas('warehouse', function($q) use ($filters) {
+            $query->whereHas('warehouse', function ($q) use ($filters) {
                 $q->where('is_active', $filters['warehouseIsActive']);
             });
         }
@@ -263,7 +263,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 
         // Stock status filters
         if (isset($filters['isLowStock']) && $filters['isLowStock']) {
-            $query->whereHas('product', function($q) {
+            $query->whereHas('product', function ($q) {
                 $q->whereColumn('inventories.quantity_available', '<=', 'products.min_stock_level');
             });
         }
@@ -277,19 +277,19 @@ class InventoryRepository implements InventoryRepositoryInterface
         }
 
         // Date filters
-        if (isset($filters['createdAfter']) && !empty($filters['createdAfter'])) {
+        if (isset($filters['createdAfter']) && ! empty($filters['createdAfter'])) {
             $query->where('created_at', '>=', $filters['createdAfter']);
         }
 
-        if (isset($filters['createdBefore']) && !empty($filters['createdBefore'])) {
+        if (isset($filters['createdBefore']) && ! empty($filters['createdBefore'])) {
             $query->where('created_at', '<=', $filters['createdBefore']);
         }
 
-        if (isset($filters['updatedAfter']) && !empty($filters['updatedAfter'])) {
+        if (isset($filters['updatedAfter']) && ! empty($filters['updatedAfter'])) {
             $query->where('updated_at', '>=', $filters['updatedAfter']);
         }
 
-        if (isset($filters['updatedBefore']) && !empty($filters['updatedBefore'])) {
+        if (isset($filters['updatedBefore']) && ! empty($filters['updatedBefore'])) {
             $query->where('updated_at', '<=', $filters['updatedBefore']);
         }
 
@@ -303,13 +303,13 @@ class InventoryRepository implements InventoryRepositoryInterface
         }
 
         if (isset($filters['highValueInventories']) && $filters['highValueInventories']) {
-            $query->whereHas('product', function($q) {
+            $query->whereHas('product', function ($q) {
                 $q->whereRaw('(inventories.quantity_available * products.price) > 1000');
             });
         }
 
         // Notes filter
-        if (isset($filters['notes']) && !empty($filters['notes'])) {
+        if (isset($filters['notes']) && ! empty($filters['notes'])) {
             $query->where('notes', 'like', "%{$filters['notes']}%");
         }
     }
@@ -325,20 +325,20 @@ class InventoryRepository implements InventoryRepositoryInterface
         return [
             'totalResults' => $query->count(),
             'stockCounts' => [
-                'healthy' => (clone $query)->whereHas('product', function($q) {
+                'healthy' => (clone $query)->whereHas('product', function ($q) {
                     $q->whereColumn('inventories.quantity_available', '>', 'products.min_stock_level');
                 })->where('quantity_available', '>', 0)->count(),
-                
-                'low' => (clone $query)->whereHas('product', function($q) {
+
+                'low' => (clone $query)->whereHas('product', function ($q) {
                     $q->whereColumn('inventories.quantity_available', '<=', 'products.min_stock_level')
                         ->whereColumn('inventories.quantity_available', '>', 0);
                 })->count(),
-                
+
                 'outOfStock' => (clone $query)->where('quantity_available', '<=', 0)->count(),
-                
+
                 'withReservation' => (clone $query)->where('quantity_reserved', '>', 0)->count(),
-                
-                'highValue' => (clone $query)->whereHas('product', function($q) {
+
+                'highValue' => (clone $query)->whereHas('product', function ($q) {
                     $q->whereRaw('(inventories.quantity_available * products.price) > 1000');
                 })->count(),
             ],
@@ -347,7 +347,7 @@ class InventoryRepository implements InventoryRepositoryInterface
                 'low' => (clone $query)->whereBetween('quantity_on_hand', [1, 50])->count(),
                 'medium' => (clone $query)->whereBetween('quantity_on_hand', [51, 200])->count(),
                 'high' => (clone $query)->where('quantity_on_hand', '>', 200)->count(),
-            ]
+            ],
         ];
     }
 
@@ -358,10 +358,10 @@ class InventoryRepository implements InventoryRepositoryInterface
     {
         $query = Inventory::query()
             ->leftJoin('products', 'inventories.product_id', '=', 'products.id');
-        
+
         $this->applyAdvancedFilters($query, $filters);
 
-        $results = $query->selectRaw("
+        $results = $query->selectRaw('
             COUNT(*) as total_results,
             COUNT(CASE WHEN inventories.quantity_available > products.min_stock_level AND inventories.quantity_available > 0 THEN 1 END) as healthy_count,
             COUNT(CASE WHEN inventories.quantity_available <= products.min_stock_level AND inventories.quantity_available > 0 THEN 1 END) as low_count,
@@ -372,7 +372,7 @@ class InventoryRepository implements InventoryRepositoryInterface
             COUNT(CASE WHEN inventories.quantity_on_hand BETWEEN 1 AND 50 THEN 1 END) as low_quantity_count,
             COUNT(CASE WHEN inventories.quantity_on_hand BETWEEN 51 AND 200 THEN 1 END) as medium_quantity_count,
             COUNT(CASE WHEN inventories.quantity_on_hand > 200 THEN 1 END) as high_quantity_count
-        ")->first();
+        ')->first();
 
         return [
             'totalResults' => $results->total_results ?? 0,
@@ -388,7 +388,7 @@ class InventoryRepository implements InventoryRepositoryInterface
                 'low' => $results->low_quantity_count ?? 0,
                 'medium' => $results->medium_quantity_count ?? 0,
                 'high' => $results->high_quantity_count ?? 0,
-            ]
+            ],
         ];
     }
 }

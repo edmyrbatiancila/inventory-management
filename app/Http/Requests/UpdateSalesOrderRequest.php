@@ -42,7 +42,7 @@ class UpdateSalesOrderRequest extends FormRequest
         return [
             'so_number' => [
                 'sometimes', 'string', 'max:50',
-                Rule::unique('sales_orders')->ignore($salesOrder?->id)
+                Rule::unique('sales_orders')->ignore($salesOrder?->id),
             ],
             'customer_reference' => $canEditBasicInfo ? ['sometimes', 'nullable', 'string', 'max:255'] : ['prohibited'],
             'warehouse_id' => $canEditBasicInfo ? ['sometimes', 'required', 'exists:warehouses,id'] : ['prohibited'],
@@ -65,7 +65,7 @@ class UpdateSalesOrderRequest extends FormRequest
     protected function getCustomerRules(bool $canEditBasicInfo): array
     {
         $baseRule = $canEditBasicInfo ? 'sometimes' : 'prohibited';
-        
+
         return [
             'customer_name' => [$baseRule, 'required', 'string', 'max:255'],
             'customer_email' => [$baseRule, 'nullable', 'email', 'max:255'],
@@ -78,7 +78,7 @@ class UpdateSalesOrderRequest extends FormRequest
     protected function getFinancialRules(bool $isDraft): array
     {
         $baseRule = $isDraft ? 'sometimes' : 'prohibited';
-        
+
         return [
             'tax_rate' => [$baseRule, 'nullable', 'numeric', 'between:0,100'],
             'shipping_cost' => [$baseRule, 'nullable', 'numeric', 'min:0'],
@@ -91,7 +91,7 @@ class UpdateSalesOrderRequest extends FormRequest
     protected function getItemRules(bool $canEditItems): array
     {
         $baseRule = $canEditItems ? 'sometimes' : 'prohibited';
-        
+
         return [
             'items' => [$baseRule, 'array', 'min:1'],
             'items.*.product_id' => [$baseRule, 'required', 'exists:products,id'],

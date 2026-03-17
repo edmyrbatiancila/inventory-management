@@ -32,7 +32,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'supplier_contact_person' => 'nullable|string|max:255',
             'warehouse_id' => 'required|exists:warehouses,id',
             'expected_delivery_date' => 'nullable|date|after:today',
-            'priority' => 'nullable|in:' . implode(',', array_keys(PurchaseOrder::PRIORITIES)),
+            'priority' => 'nullable|in:'.implode(',', array_keys(PurchaseOrder::PRIORITIES)),
             'currency' => 'nullable|string|size:3',
             'notes' => 'nullable|string',
             'terms_and_conditions' => 'nullable|string',

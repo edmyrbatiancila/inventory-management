@@ -12,7 +12,7 @@ class StockMovement extends Model
 
     protected $fillable = [
         'product_id',
-        'warehouse_id', 
+        'warehouse_id',
         'user_id',
         'reference_number',
         'movement_type',
@@ -28,14 +28,14 @@ class StockMovement extends Model
         'related_document_id',
         'status',
         'approved_by',
-        'approved_at'
+        'approved_at',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'approved_at' => 'datetime',
         'unit_cost' => 'decimal:4',
-        'total_value' => 'decimal:4'
+        'total_value' => 'decimal:4',
     ];
 
     // Relationships
@@ -112,7 +112,7 @@ class StockMovement extends Model
         $prefix = 'SM';
         $date = now()->format('Ymd');
         $sequence = static::whereDate('created_at', today())->count() + 1;
-        
-        return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        return $prefix.$date.str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 }

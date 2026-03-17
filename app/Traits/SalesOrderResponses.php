@@ -21,7 +21,7 @@ trait SalesOrderResponses
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'data' => $data
+                'data' => $data,
             ]);
         }
 
@@ -36,7 +36,7 @@ trait SalesOrderResponses
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => $message
+                'message' => $message,
             ], $status);
         }
 
@@ -57,13 +57,14 @@ trait SalesOrderResponses
     protected function renderIndex($salesOrders, array $additionalData = []): Response
     {
         $user = Auth::user();
+
         return Inertia::render('admin/sales-orders/Index', array_merge([
             'sales_orders' => $salesOrders,
             'filters' => request()->only(['search', 'status', 'priority', 'warehouse_id', 'payment_status']),
             'can' => [
                 'create' => Gate::allows('create', SalesOrder::class),
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
-            ]
+            ],
         ], $additionalData));
     }
 
@@ -79,7 +80,7 @@ trait SalesOrderResponses
             'createdBy',
             'approvedBy',
             'fulfilledBy',
-            'shippedBy'
+            'shippedBy',
         ]);
 
         return Inertia::render('admin/sales-orders/View', [
@@ -97,7 +98,7 @@ trait SalesOrderResponses
                 'ship' => $salesOrder->status === 'fully_fulfilled' && Gate::allows('ship', $salesOrder),
                 'deliver' => $salesOrder->status === 'shipped' && Gate::allows('deliver', $salesOrder),
                 'cancel' => $salesOrder->canBeCancelled() && Gate::allows('cancel', $salesOrder),
-            ]
+            ],
         ]);
     }
 
@@ -119,7 +120,7 @@ trait SalesOrderResponses
                 'delete' => Gate::allows('delete', $salesOrder),
                 'addItems' => $salesOrder->canBeEdited() && Gate::allows('update', $salesOrder),
                 'editItems' => $salesOrder->canBeEdited() && Gate::allows('update', $salesOrder),
-            ]
+            ],
         ]);
     }
 
@@ -150,7 +151,7 @@ trait SalesOrderResponses
             'can' => [
                 'fulfill' => Gate::allows('fulfill', $salesOrder),
                 'updateItems' => Gate::allows('update', $salesOrder),
-            ]
+            ],
         ]);
     }
 
@@ -165,7 +166,7 @@ trait SalesOrderResponses
             'shipping_methods' => ['Standard', 'Express', 'Overnight', 'Ground'],
             'can' => [
                 'ship' => Gate::allows('ship', $salesOrder),
-            ]
+            ],
         ]);
     }
 
@@ -179,7 +180,7 @@ trait SalesOrderResponses
             'can' => [
                 'approve' => Auth::user()->can('approveAny', SalesOrder::class),
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 
@@ -193,7 +194,7 @@ trait SalesOrderResponses
             'can' => [
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
                 'update' => Auth::user()->can('updateAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 
@@ -207,7 +208,7 @@ trait SalesOrderResponses
             'can' => [
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
                 'fulfill' => Auth::user()->can('fulfillAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 
@@ -221,7 +222,7 @@ trait SalesOrderResponses
             'can' => [
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
                 'ship' => Auth::user()->can('shipAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 
@@ -235,7 +236,7 @@ trait SalesOrderResponses
             'customer_name' => $customerName,
             'can' => [
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 
@@ -251,7 +252,7 @@ trait SalesOrderResponses
             'can' => [
                 'viewAny' => Gate::allows('viewAny', SalesOrder::class),
                 'update' => Auth::user()->can('updateAny', SalesOrder::class),
-            ]
+            ],
         ]);
     }
 }

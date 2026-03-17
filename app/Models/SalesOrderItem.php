@@ -12,15 +12,15 @@ class SalesOrderItem extends Model
     use HasFactory, HasItemCalculations;
 
     protected $fillable = [
-        'sales_order_id', 'product_id', 'inventory_id', 'product_sku', 
-        'product_name', 'product_description', 'quantity_ordered', 
-        'quantity_fulfilled', 'quantity_shipped', 'quantity_pending', 
-        'quantity_backordered', 'unit_price', 'line_total', 'discount_percentage', 
-        'discount_amount', 'final_line_total', 'item_status', 'requested_delivery_date', 
-        'promised_delivery_date', 'allocated_at', 'fulfilled_at', 'shipped_at', 
-        'delivered_at', 'fulfillment_notes', 'requires_allocation', 'allocated_quantity', 
-        'allocation_expires_at', 'quantity_returned', 'return_reason', 'metadata', 
-        'notes', 'customer_notes'
+        'sales_order_id', 'product_id', 'inventory_id', 'product_sku',
+        'product_name', 'product_description', 'quantity_ordered',
+        'quantity_fulfilled', 'quantity_shipped', 'quantity_pending',
+        'quantity_backordered', 'unit_price', 'line_total', 'discount_percentage',
+        'discount_amount', 'final_line_total', 'item_status', 'requested_delivery_date',
+        'promised_delivery_date', 'allocated_at', 'fulfilled_at', 'shipped_at',
+        'delivered_at', 'fulfillment_notes', 'requires_allocation', 'allocated_quantity',
+        'allocation_expires_at', 'quantity_returned', 'return_reason', 'metadata',
+        'notes', 'customer_notes',
     ];
 
     protected $attributes = [
@@ -59,7 +59,7 @@ class SalesOrderItem extends Model
         'delivered_at' => 'datetime',
         'allocation_expires_at' => 'datetime',
         'requires_allocation' => 'boolean',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     // Relationships
@@ -81,7 +81,7 @@ class SalesOrderItem extends Model
     // Accessors
     public function getFulfillmentProgressAttribute(): float
     {
-        return $this->quantity_ordered > 0 ? 
+        return $this->quantity_ordered > 0 ?
                ($this->quantity_fulfilled / $this->quantity_ordered) * 100 : 0;
     }
 
@@ -109,7 +109,7 @@ class SalesOrderItem extends Model
     public function scopeRequiringAllocation($query)
     {
         return $query->where('requires_allocation', true)
-                    ->where('allocated_quantity', '<', 'quantity_ordered');
+            ->where('allocated_quantity', '<', 'quantity_ordered');
     }
 
     // Business Logic
@@ -121,10 +121,10 @@ class SalesOrderItem extends Model
 
         $this->quantity_fulfilled += $quantity;
         $this->fulfilled_at = now();
-        
+
         if ($notes) {
-            $this->fulfillment_notes = $this->fulfillment_notes 
-                ? $this->fulfillment_notes . "\n" . $notes 
+            $this->fulfillment_notes = $this->fulfillment_notes
+                ? $this->fulfillment_notes."\n".$notes
                 : $notes;
         }
 
@@ -134,7 +134,7 @@ class SalesOrderItem extends Model
         return true;
     }
 
-     // Trait implementations
+    // Trait implementations
     protected function getUnitCostField(): string
     {
         return 'unit_price';
@@ -178,7 +178,7 @@ class SalesOrderItem extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($item) {
             if ($item->product) {
                 $item->product_sku = $item->product->sku;
@@ -186,11 +186,11 @@ class SalesOrderItem extends Model
             }
             $item->calculateTotals();
         });
-        
+
         static::updating(function ($item) {
             $item->calculateTotals();
         });
-        
+
         static::saved(function ($item) {
             $item->salesOrder->calculateTotals();
         });

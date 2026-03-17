@@ -10,10 +10,6 @@ trait HasSearchAndFilter
     /**
      * Apply search and sort filters to a query builder.
      *
-     * @param  Builder $query
-     * @param  Request $request
-     * @param  array $searchableColumns
-     * @param  string $defaultSortColumn
      * @return Builder
      */
     public function scopeSearchAndFilter(Builder $query, Request $request, array $searchableColumns = ['name'], string $defaultSortColumn = 'created_at')

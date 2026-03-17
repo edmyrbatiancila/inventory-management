@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\InventoryAdvancedSearchRequest;
-use App\Models\Inventory;
 use App\Http\Requests\StoreInventoryRequest;
 use App\Http\Requests\UpdateInventoryRequest;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Warehouse;
-use App\Models\Category;
-use App\Models\Brand;
 use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -43,11 +43,11 @@ class InventoryController extends Controller
                 'quantityAvailableMin', 'quantityAvailableMax', 'stockStatus', 'isLowStock', 'isOutOfStock',
                 'hasReservedStock', 'createdAfter', 'createdBefore', 'updatedAfter', 'updatedBefore',
                 'stockValueMin', 'stockValueMax', 'myInventories', 'recentlyUpdated', 'newInventories',
-                'highValueInventories'
+                'highValueInventories',
             ]);
 
             // Clean up filters
-            $filters = array_filter($filters, function($value) {
+            $filters = array_filter($filters, function ($value) {
                 return $value !== null && $value !== '';
             });
 
@@ -94,8 +94,8 @@ class InventoryController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@index: ' . $e->getMessage());
-        
+            Log::error('Error in InventoryController@index: '.$e->getMessage());
+
             return redirect()->back()
                 ->with('error', 'Error loading inventories.');
         }
@@ -113,11 +113,11 @@ class InventoryController extends Controller
             'quantityAvailableMin', 'quantityAvailableMax', 'stockStatus', 'isLowStock', 'isOutOfStock',
             'hasReservedStock', 'createdAfter', 'createdBefore', 'updatedAfter', 'updatedBefore',
             'stockValueMin', 'stockValueMax', 'myInventories', 'recentlyUpdated', 'newInventories',
-            'highValueInventories'
+            'highValueInventories',
         ];
 
         foreach ($advancedFilterKeys as $key) {
-            if (isset($filters[$key]) && !empty($filters[$key])) {
+            if (isset($filters[$key]) && ! empty($filters[$key])) {
                 return true;
             }
         }
@@ -132,7 +132,7 @@ class InventoryController extends Controller
     {
         try {
             $filters = $request->validated();
-            
+
             $inventories = $this->inventoryService->getAllInventories($filters);
             $searchStats = $this->inventoryService->getSearchStats($filters);
 
@@ -143,11 +143,11 @@ class InventoryController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@advancedSearch: ' . $e->getMessage());
-            
+            Log::error('Error in InventoryController@advancedSearch: '.$e->getMessage());
+
             return response()->json([
                 'message' => 'Search failed. Please try again.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -163,19 +163,19 @@ class InventoryController extends Controller
                 ->with(['category', 'brand'])
                 ->orderBy('name')
                 ->get();
-        
+
             $warehouses = Warehouse::where('is_active', true)
                 ->orderBy('name')
                 ->get();
 
             return Inertia::render('admin/inventory/Create', [
                 'products' => $products,
-                'warehouses' => $warehouses
+                'warehouses' => $warehouses,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@create: ' . $e->getMessage());
-        
+            Log::error('Error in InventoryController@create: '.$e->getMessage());
+
             return redirect()->route('admin.inventories.index')
                 ->with('error', 'Error loading create form.');
         }
@@ -193,11 +193,11 @@ class InventoryController extends Controller
                 ->with('success', 'Inventory created successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@store: ' . $e->getMessage());
+            Log::error('Error in InventoryController@store: '.$e->getMessage());
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error creating inventory: ' . $e->getMessage());
+                ->with('error', 'Error creating inventory: '.$e->getMessage());
         }
     }
 
@@ -221,15 +221,15 @@ class InventoryController extends Controller
             // Add stock status to inventory
             $inventory->is_low_stock = $inventory->isLowStock();
             $inventory->stock_status = $analytics['stock_status'];
-        
+
             return Inertia::render('admin/inventory/View', [
                 'inventory' => $inventory,
-                'analytics' => $analytics
+                'analytics' => $analytics,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@show: ' . $e->getMessage());
-        
+            Log::error('Error in InventoryController@show: '.$e->getMessage());
+
             return redirect()->route('admin.inventories.index')
                 ->with('error', 'Error loading inventory details.');
         }
@@ -243,15 +243,15 @@ class InventoryController extends Controller
         if ($inventory->quantity_available <= 0) {
             return 'out_of_stock';
         }
-        
+
         if ($inventory->quantity_available <= $inventory->product->min_stock_level * 0.5) {
             return 'critical';
         }
-        
+
         if ($inventory->isLowStock()) {
             return 'low';
         }
-        
+
         return 'healthy';
     }
 
@@ -261,11 +261,11 @@ class InventoryController extends Controller
     private function calculateStockPercentage(Inventory $inventory): float
     {
         $maxLevel = $inventory->product->max_stock_level ?? ($inventory->product->min_stock_level * 5);
-        
+
         if ($maxLevel <= 0) {
             return 100.0;
         }
-        
+
         return min(100, ($inventory->quantity_available / $maxLevel) * 100);
     }
 
@@ -276,13 +276,13 @@ class InventoryController extends Controller
     {
         try {
             $inventory->load(['product.category', 'product.brand', 'warehouse']);
-        
+
             $products = Product::where('is_active', true)
                 ->where('track_quantity', true)
                 ->with(['category', 'brand'])
                 ->orderBy('name')
                 ->get();
-            
+
             $warehouses = Warehouse::where('is_active', true)
                 ->orderBy('name')
                 ->get();
@@ -290,12 +290,12 @@ class InventoryController extends Controller
             return Inertia::render('admin/inventory/Edit', [
                 'inventory' => $inventory,
                 'products' => $products,
-                'warehouses' => $warehouses
+                'warehouses' => $warehouses,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@edit: ' . $e->getMessage());
-        
+            Log::error('Error in InventoryController@edit: '.$e->getMessage());
+
             return redirect()->route('admin.inventories.index')
                 ->with('error', 'Error loading edit form.');
         }
@@ -308,22 +308,22 @@ class InventoryController extends Controller
     {
         try {
             $updated = $this->inventoryService->updateInventory($inventory->id, $request->validated());
-        
+
             if ($updated) {
                 return redirect()->route('admin.inventories.edit', $inventory->id)
                     ->with('success', 'Inventory updated successfully.');
             }
-            
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update inventory.');
 
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@update: ' . $e->getMessage());
-        
+            Log::error('Error in InventoryController@update: '.$e->getMessage());
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error updating inventory: ' . $e->getMessage());
+                ->with('error', 'Error updating inventory: '.$e->getMessage());
         }
     }
 
@@ -338,22 +338,22 @@ class InventoryController extends Controller
                 return redirect()->back()
                     ->with('error', 'Cannot delete inventory with reserved quantities. Please release all reserved quantities first.');
             }
-            
+
             $deleted = $this->inventoryService->deleteInventory($inventory->id);
-            
+
             if ($deleted) {
                 return redirect()->route('admin.inventories.index')
                     ->with('success', 'Inventory deleted successfully.');
             }
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to delete inventory.');
-                
+
         } catch (\Exception $e) {
-            Log::error('Error in InventoryController@destroy: ' . $e->getMessage());
-            
+            Log::error('Error in InventoryController@destroy: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Error deleting inventory: ' . $e->getMessage());
+                ->with('error', 'Error deleting inventory: '.$e->getMessage());
         }
     }
 }

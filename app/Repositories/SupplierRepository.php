@@ -19,36 +19,36 @@ class SupplierRepository implements SupplierRepositoryInterface
     public function getAll(array $filters = [], array $relations = []): Collection
     {
         $query = $this->model->with($relations);
-        
+
         // Apply status filter
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        
+
         // Apply type filter using scope
         if (isset($filters['type'])) {
             $query->byType($filters['type']);
         }
-        
+
         // Apply country filter
         if (isset($filters['country'])) {
             $query->byCountry($filters['country']);
         }
-        
+
         // Apply rating filter
         if (isset($filters['min_rating'])) {
             $query->withHighRating($filters['min_rating']);
         }
-        
+
         // Apply search
         if (isset($filters['search'])) {
-            $query->where(function($q) use ($filters) {
+            $query->where(function ($q) use ($filters) {
                 $q->where('company_name', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%");
+                    ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%")
+                    ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%");
             });
         }
-        
+
         return $query->orderBy('company_name')->get();
     }
 
@@ -70,58 +70,59 @@ class SupplierRepository implements SupplierRepositoryInterface
     public function update(int $id, array $data): bool
     {
         $supplier = $this->findById($id);
-        if (!$supplier) {
+        if (! $supplier) {
             return false;
         }
-        
+
         $data['updated_by'] = auth()->id();
+
         return $supplier->update($data);
     }
 
     public function delete(int $id): bool
     {
         $supplier = $this->findById($id);
-        if (!$supplier) {
+        if (! $supplier) {
             return false;
         }
-        
+
         return $supplier->delete();
     }
 
     public function getPaginated(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model->query();
-        
+
         // Apply status filter
         if (isset($filters['status']) && $filters['status'] !== 'all') {
             $query->where('status', $filters['status']);
         }
-        
+
         // Apply type filter using scope
         if (isset($filters['type']) && $filters['type'] !== 'all') {
             $query->byType($filters['type']);
         }
-        
+
         // Apply country filter
         if (isset($filters['country']) && $filters['country'] !== 'all') {
             $query->byCountry($filters['country']);
         }
-        
+
         // Apply rating filter
         if (isset($filters['min_rating']) && $filters['min_rating'] !== 'all') {
             $query->withHighRating((float) $filters['min_rating']);
         }
-        
+
         // Apply search
-        if (isset($filters['search']) && !empty($filters['search'])) {
-            $query->where(function($q) use ($filters) {
+        if (isset($filters['search']) && ! empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
                 $q->where('company_name', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%")
-                  ->orWhere('email', 'LIKE', "%{$filters['search']}%");
+                    ->orWhere('supplier_code', 'LIKE', "%{$filters['search']}%")
+                    ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%")
+                    ->orWhere('email', 'LIKE', "%{$filters['search']}%");
             });
         }
-        
+
         return $query->orderBy('company_name')->paginate($perPage);
     }
 
@@ -137,19 +138,19 @@ class SupplierRepository implements SupplierRepositoryInterface
 
     public function search(string $term, array $filters = []): Collection
     {
-        $query = $this->model->where(function($q) use ($term) {
+        $query = $this->model->where(function ($q) use ($term) {
             $q->where('company_name', 'LIKE', "%{$term}%")
-              ->orWhere('supplier_code', 'LIKE', "%{$term}%")
-              ->orWhere('contact_person', 'LIKE', "%{$term}%")
-              ->orWhere('email', 'LIKE', "%{$term}%");
+                ->orWhere('supplier_code', 'LIKE', "%{$term}%")
+                ->orWhere('contact_person', 'LIKE', "%{$term}%")
+                ->orWhere('email', 'LIKE', "%{$term}%");
         });
-        
+
         foreach ($filters as $key => $value) {
             if ($value !== null) {
                 $query->where($key, $value);
             }
         }
-        
+
         return $query->orderBy('company_name')->get();
     }
 

@@ -18,82 +18,82 @@ class StockTransferRepository implements StockTransferRepositoryInterface
         $this->model = $model;
     }
 
-    // Core CRUD operations can be implemented here 
+    // Core CRUD operations can be implemented here
     public function findAll(array $filters = []): LengthAwarePaginator
     {
         $query = $this->model->withRelations();
 
         // Apply filters if provided
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->byStatus($filters['status']);
         }
 
-        if (!empty($filters['warehouse_id'])) {
+        if (! empty($filters['warehouse_id'])) {
             $query->byWarehouse($filters['warehouse_id'], $filters['warehouse_type'] ?? 'both');
         }
 
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->byProduct($filters['product_id']);
         }
 
         // Comprehensive search implementation
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $searchTerm = $filters['search'];
 
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 // Search in reference number
-                $q->where('reference_number', 'like', '%' . $searchTerm . '%')
-                
+                $q->where('reference_number', 'like', '%'.$searchTerm.'%')
+
                 // Search in notes
-                ->orWhere('notes', 'like', '%' . $searchTerm . '%')
-                
+                    ->orWhere('notes', 'like', '%'.$searchTerm.'%')
+
                 // Search in cancellation reason
-                ->orWhere('cancellation_reason', 'like', '%' . $searchTerm . '%')
-                
+                    ->orWhere('cancellation_reason', 'like', '%'.$searchTerm.'%')
+
                 // Search in related product name
-                ->orWhereHas('product', function($productQuery) use ($searchTerm) {
-                    $productQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('sku', 'like', '%' . $searchTerm . '%');
-                })
-                
+                    ->orWhereHas('product', function ($productQuery) use ($searchTerm) {
+                        $productQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('sku', 'like', '%'.$searchTerm.'%');
+                    })
+
                 // Search in from warehouse
-                ->orWhereHas('fromWarehouse', function($warehouseQuery) use ($searchTerm) {
-                    $warehouseQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('code', 'like', '%' . $searchTerm . '%');
-                })
-                
+                    ->orWhereHas('fromWarehouse', function ($warehouseQuery) use ($searchTerm) {
+                        $warehouseQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('code', 'like', '%'.$searchTerm.'%');
+                    })
+
                 // Search in to warehouse
-                ->orWhereHas('toWarehouse', function($warehouseQuery) use ($searchTerm) {
-                    $warehouseQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('code', 'like', '%' . $searchTerm . '%');
-                })
-                
+                    ->orWhereHas('toWarehouse', function ($warehouseQuery) use ($searchTerm) {
+                        $warehouseQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('code', 'like', '%'.$searchTerm.'%');
+                    })
+
                 // Search in user who initiated
-                ->orWhereHas('initiatedBy', function($userQuery) use ($searchTerm) {
-                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
-                })
-                
+                    ->orWhereHas('initiatedBy', function ($userQuery) use ($searchTerm) {
+                        $userQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('email', 'like', '%'.$searchTerm.'%');
+                    })
+
                 // Search in user who approved
-                ->orWhereHas('approvedBy', function($userQuery) use ($searchTerm) {
-                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
-                })
-                
+                    ->orWhereHas('approvedBy', function ($userQuery) use ($searchTerm) {
+                        $userQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('email', 'like', '%'.$searchTerm.'%');
+                    })
+
                 // Search in user who completed
-                ->orWhereHas('completedBy', function($userQuery) use ($searchTerm) {
-                    $userQuery->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('email', 'like', '%' . $searchTerm . '%');
-                });
+                    ->orWhereHas('completedBy', function ($userQuery) use ($searchTerm) {
+                        $userQuery->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('email', 'like', '%'.$searchTerm.'%');
+                    });
             });
         }
 
         // Apply sorting
         $sortField = 'created_at';
         $sortDirection = 'desc';
-        
-        if (!empty($filters['sort'])) {
+
+        if (! empty($filters['sort'])) {
             switch ($filters['sort']) {
                 case 'oldest':
                     $sortDirection = 'asc';
@@ -139,12 +139,14 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function update(int $id, array $data): bool
     {
         $transfer = $this->findById($id);
+
         return $transfer ? $transfer->update($data) : false;
     }
 
     public function delete(int $id): bool
     {
         $transfer = $this->findById($id);
+
         return $transfer ? $transfer->delete() : false;
     }
 
@@ -190,14 +192,14 @@ class StockTransferRepository implements StockTransferRepositoryInterface
 
     public function getTransferHistory(int $productId, int $warehouseId): Collection
     {
-        return $this->model->where(function($query) use ($warehouseId) {
-                    $query->where('from_warehouse_id', $warehouseId)
-                        ->orWhere('to_warehouse_id', $warehouseId);
-                })
-                ->where('product_id', $productId)
-                ->withRelations()
-                ->orderBy('created_at', 'desc')
-                ->get();
+        return $this->model->where(function ($query) use ($warehouseId) {
+            $query->where('from_warehouse_id', $warehouseId)
+                ->orWhere('to_warehouse_id', $warehouseId);
+        })
+            ->where('product_id', $productId)
+            ->withRelations()
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function getTransfersByDateRange(string $startDate, string $endDate): Collection
@@ -212,12 +214,12 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function updateStatus(int $transferId, string $status, int $userId, array $additionalData = []): bool
     {
         $transfer = $this->findById($transferId);
-        if (!$transfer) {
+        if (! $transfer) {
             return false;
         }
 
         $updateData = ['transfer_status' => $status];
-        
+
         switch ($status) {
             case StockTransfer::STATUS_APPROVED:
                 $updateData['approved_by'] = $userId;
@@ -246,6 +248,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function markAsInTransit(int $transferId): bool
     {
         $transfer = $this->findById($transferId);
+
         return $transfer ? $transfer->update(['transfer_status' => StockTransfer::STATUS_IN_TRANSIT]) : false;
     }
 
@@ -257,17 +260,17 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function markAsCancelled(int $transferId, string $reason): bool
     {
         return $this->updateStatus($transferId, StockTransfer::STATUS_CANCELLED, 0, [
-            'cancellation_reason' => $reason
+            'cancellation_reason' => $reason,
         ]);
     }
 
     // Analytics & Reporting Methods
-    public function getTransferAnalytics(int $warehouseId = null): array
+    public function getTransferAnalytics(?int $warehouseId = null): array
     {
         $query = $this->model->query();
-        
+
         if ($warehouseId) {
-            $query->where(function($q) use ($warehouseId) {
+            $query->where(function ($q) use ($warehouseId) {
                 $q->where('from_warehouse_id', $warehouseId)
                     ->orWhere('to_warehouse_id', $warehouseId);
             });
@@ -286,7 +289,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function getTransferSummary(string $period = 'month'): array
     {
         $dateRange = $this->getDateRange($period);
-        
+
         return $this->model->whereBetween('created_at', $dateRange)
             ->selectRaw('
                 transfer_status,
@@ -342,7 +345,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     public function getOverdueTransfers(int $daysOverdue = 7): Collection
     {
         $cutoffDate = Carbon::now()->subDays($daysOverdue);
-        
+
         return $this->model->where('transfer_status', StockTransfer::STATUS_IN_TRANSIT)
             ->where('approved_at', '<', $cutoffDate)
             ->withRelations()
@@ -352,7 +355,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
 
     public function getTransfersByUser(int $userId, string $role = 'initiated'): Collection
     {
-        $column = match($role) {
+        $column = match ($role) {
             'approved' => 'approved_by',
             'completed' => 'completed_by',
             default => 'initiated_by'
@@ -372,6 +375,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
         }
 
         $availableQuantity = $this->getAvailableQuantity($fromWarehouseId, $productId);
+
         return $availableQuantity >= $quantity;
     }
 
@@ -398,7 +402,7 @@ class StockTransferRepository implements StockTransferRepositoryInterface
     // Helper Methods
     private function getDateRange(string $period): array
     {
-        return match($period) {
+        return match ($period) {
             'week' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
             'year' => [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()],
             default => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]

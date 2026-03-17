@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Inventory;
 use App\Models\StockAdjustment;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class StockAdjustmentSeeder extends Seeder
@@ -18,11 +17,13 @@ class StockAdjustmentSeeder extends Seeder
         // Check if we have the required data
         if (Inventory::count() === 0) {
             $this->command->error('No inventories found. Please run InventorySeeder first.');
+
             return;
         }
 
         if (User::count() === 0) {
             $this->command->error('No users found. Please run UserSeeder first.');
+
             return;
         }
 
@@ -51,18 +52,18 @@ class StockAdjustmentSeeder extends Seeder
         $this->command->info('Creating damage adjustments...');
 
         $damageReasons = ['damage', 'expired', 'theft'];
-        
+
         foreach ($damageReasons as $reason) {
             $selectedInventories = $inventories->random(rand(3, 8));
-            
+
             foreach ($selectedInventories as $inventory) {
                 $user = $users->random();
                 $quantityBefore = $inventory->quantity_on_hand;
                 $maxAdjustment = min(20, $quantityBefore);
-                
+
                 if ($maxAdjustment > 0) {
                     $quantityAdjusted = rand(1, $maxAdjustment);
-                    
+
                     StockAdjustment::create([
                         'inventory_id' => $inventory->id,
                         'adjustment_type' => 'decrease',
@@ -88,12 +89,12 @@ class StockAdjustmentSeeder extends Seeder
         $this->command->info('Creating found inventory adjustments...');
 
         $selectedInventories = $inventories->random(rand(5, 12));
-        
+
         foreach ($selectedInventories as $inventory) {
             $user = $users->random();
             $quantityBefore = $inventory->quantity_on_hand;
             $quantityAdjusted = rand(1, 25);
-            
+
             StockAdjustment::create([
                 'inventory_id' => $inventory->id,
                 'adjustment_type' => 'increase',
@@ -105,7 +106,7 @@ class StockAdjustmentSeeder extends Seeder
                     'Items found during monthly physical count',
                     'Previously misplaced inventory located in different section',
                     'Stock discovered after warehouse reorganization',
-                    'Items found during routine inspection'
+                    'Items found during routine inspection',
                 ]),
                 'reference_number' => StockAdjustment::generateReferenceNumber(),
                 'adjusted_by' => $user->id,
@@ -122,27 +123,29 @@ class StockAdjustmentSeeder extends Seeder
         $this->command->info('Creating transfer adjustments...');
 
         $transferReasons = ['transfer_in', 'transfer_out'];
-        
+
         foreach ($transferReasons as $reason) {
             $selectedInventories = $inventories->random(rand(4, 10));
-            
+
             foreach ($selectedInventories as $inventory) {
                 $user = $users->random();
                 $quantityBefore = $inventory->quantity_on_hand;
-                
+
                 if ($reason === 'transfer_in') {
                     $quantityAdjusted = rand(5, 50);
                     $quantityAfter = $quantityBefore + $quantityAdjusted;
                     $adjustmentType = 'increase';
                 } else {
                     $maxTransfer = min(30, $quantityBefore);
-                    if ($maxTransfer <= 0) continue;
-                    
+                    if ($maxTransfer <= 0) {
+                        continue;
+                    }
+
                     $quantityAdjusted = rand(1, $maxTransfer);
                     $quantityAfter = $quantityBefore - $quantityAdjusted;
                     $adjustmentType = 'decrease';
                 }
-                
+
                 StockAdjustment::create([
                     'inventory_id' => $inventory->id,
                     'adjustment_type' => $adjustmentType,
@@ -150,7 +153,7 @@ class StockAdjustmentSeeder extends Seeder
                     'quantity_before' => $quantityBefore,
                     'quantity_after' => $quantityAfter,
                     'reason' => $reason,
-                    'notes' => $reason === 'transfer_in' 
+                    'notes' => $reason === 'transfer_in'
                         ? 'Stock transferred from another warehouse'
                         : 'Stock transferred to another location',
                     'reference_number' => StockAdjustment::generateReferenceNumber(),
@@ -169,25 +172,27 @@ class StockAdjustmentSeeder extends Seeder
         $this->command->info('Creating correction adjustments...');
 
         $selectedInventories = $inventories->random(rand(6, 15));
-        
+
         foreach ($selectedInventories as $inventory) {
             $user = $users->random();
             $quantityBefore = $inventory->quantity_on_hand;
-            
+
             // Random correction (could be increase or decrease)
             $adjustmentType = fake()->randomElement(['increase', 'decrease']);
-            
+
             if ($adjustmentType === 'increase') {
                 $quantityAdjusted = rand(1, 20);
                 $quantityAfter = $quantityBefore + $quantityAdjusted;
             } else {
                 $maxCorrection = min(15, $quantityBefore);
-                if ($maxCorrection <= 0) continue;
-                
+                if ($maxCorrection <= 0) {
+                    continue;
+                }
+
                 $quantityAdjusted = rand(1, $maxCorrection);
                 $quantityAfter = $quantityBefore - $quantityAdjusted;
             }
-            
+
             StockAdjustment::create([
                 'inventory_id' => $inventory->id,
                 'adjustment_type' => $adjustmentType,
@@ -199,7 +204,7 @@ class StockAdjustmentSeeder extends Seeder
                     'System count correction after audit',
                     'Physical count discrepancy resolved',
                     'Data entry error correction',
-                    'Inventory recount adjustment'
+                    'Inventory recount adjustment',
                 ]),
                 'reference_number' => StockAdjustment::generateReferenceNumber(),
                 'adjusted_by' => $user->id,
@@ -216,29 +221,31 @@ class StockAdjustmentSeeder extends Seeder
         $this->command->info('Creating recent adjustments...');
 
         $selectedInventories = $inventories->random(rand(8, 20));
-        
+
         foreach ($selectedInventories as $inventory) {
             $user = $users->random();
             $quantityBefore = $inventory->quantity_on_hand;
-            
+
             $reasons = ['returned', 'correction', 'found', 'damage'];
             $reason = fake()->randomElement($reasons);
-            
-            $adjustmentType = in_array($reason, ['returned', 'found', 'correction']) 
+
+            $adjustmentType = in_array($reason, ['returned', 'found', 'correction'])
                 ? fake()->randomElement(['increase', 'decrease'])
                 : 'decrease';
-            
+
             if ($adjustmentType === 'increase') {
                 $quantityAdjusted = rand(1, 30);
                 $quantityAfter = $quantityBefore + $quantityAdjusted;
             } else {
                 $maxAdjustment = min(25, $quantityBefore);
-                if ($maxAdjustment <= 0) continue;
-                
+                if ($maxAdjustment <= 0) {
+                    continue;
+                }
+
                 $quantityAdjusted = rand(1, $maxAdjustment);
                 $quantityAfter = $quantityBefore - $quantityAdjusted;
             }
-            
+
             StockAdjustment::create([
                 'inventory_id' => $inventory->id,
                 'adjustment_type' => $adjustmentType,
@@ -284,20 +291,20 @@ class StockAdjustmentSeeder extends Seeder
                 'Items damaged during transport',
                 'Water damage in storage area',
                 'Packaging defects found during inspection',
-                'Products damaged during handling'
+                'Products damaged during handling',
             ],
             'expired' => [
                 'Products expired due to storage conditions',
                 'Items past expiration date removed',
                 'Expired inventory identified during audit',
-                'Products removed due to quality concerns'
+                'Products removed due to quality concerns',
             ],
             'theft' => [
                 'Items reported missing during count',
                 'Security incident - items unaccounted for',
                 'Inventory shrinkage identified',
-                'Missing items after security review'
-            ]
+                'Missing items after security review',
+            ],
         ];
 
         return fake()->randomElement($notes[$reason] ?? ['Adjustment made']);
@@ -309,12 +316,12 @@ class StockAdjustmentSeeder extends Seeder
     private function getRecentNote(string $reason, string $type): string
     {
         $notes = [
-            'returned' => $type === 'increase' 
-                ? 'Customer returns processed' 
+            'returned' => $type === 'increase'
+                ? 'Customer returns processed'
                 : 'Returns sent back to supplier',
             'correction' => 'System correction after review',
             'found' => 'Items located during routine check',
-            'damage' => 'Items removed due to damage'
+            'damage' => 'Items removed due to damage',
         ];
 
         return $notes[$reason] ?? 'Recent adjustment';

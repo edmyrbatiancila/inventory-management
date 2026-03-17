@@ -17,13 +17,14 @@ class BrandFactory extends Factory
     public function definition(): array
     {
         $brandName = $this->faker->unique()->company();
+
         return [
             'name' => $brandName,
             'description' => $this->faker->sentence(),
             'slug' => $this->faker->unique()->slug(),
             'logo_url' => $this->faker->imageUrl(200, 200, 'business'),
             'website_url' => $this->faker->url(),
-            'is_active' => $this->faker->boolean(80) // 80%
+            'is_active' => $this->faker->boolean(80), // 80%
         ];
     }
 }

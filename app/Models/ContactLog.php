@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class ContactLog extends Model
 {
     /** @use HasFactory<\Database\Factories\ContactLogFactory> */
-    use HasFactory, ContactLogScopes;
+    use ContactLogScopes, HasFactory;
 
     protected $fillable = [
         'contactable_type',

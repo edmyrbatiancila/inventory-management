@@ -10,23 +10,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Warehouse extends Model
 {
     /** @use HasFactory<\Database\Factories\WarehouseFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'name',
         'code',
-        'address', 
+        'address',
         'city',
         'state',
         'postal_code',
         'country',
         'phone',
         'email',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     protected $appends = ['full_address'];
@@ -58,11 +58,10 @@ class Warehouse extends Model
         $addressParts = array_filter([
             $this->address,
             $this->city,
-            $this->state . ' ' . $this->postal_code,
-            $this->country
+            $this->state.' '.$this->postal_code,
+            $this->country,
         ]);
-    
+
         return implode(', ', $addressParts);
     }
-
 }

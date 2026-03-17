@@ -99,36 +99,36 @@ class WarehouseAdvancedSearchRequest extends FormRequest
     {
         // Convert string boolean values to actual booleans
         $booleanFields = [
-            'isActive', 'isMain', 'hasZones', 'myWarehouses', 
-            'recentlyUpdated', 'newWarehouses', 'largeWarehouses'
+            'isActive', 'isMain', 'hasZones', 'myWarehouses',
+            'recentlyUpdated', 'newWarehouses', 'largeWarehouses',
         ];
 
         foreach ($booleanFields as $field) {
             if ($this->has($field)) {
                 $this->merge([
-                    $field => $this->boolean($field)
+                    $field => $this->boolean($field),
                 ]);
             }
         }
 
         // Convert numeric string values to integers
         $numericFields = ['capacityMin', 'capacityMax', 'zoneCount', 'per_page'];
-        
+
         foreach ($numericFields as $field) {
             if ($this->has($field) && $this->input($field) !== null && $this->input($field) !== '') {
                 $this->merge([
-                    $field => (int) $this->input($field)
+                    $field => (int) $this->input($field),
                 ]);
             }
         }
 
         // Set default sorting if not provided
-        if (!$this->has('sort') || empty($this->input('sort'))) {
+        if (! $this->has('sort') || empty($this->input('sort'))) {
             $this->merge(['sort' => 'newest']);
         }
 
         // Set default per_page if not provided
-        if (!$this->has('per_page') || empty($this->input('per_page'))) {
+        if (! $this->has('per_page') || empty($this->input('per_page'))) {
             $this->merge(['per_page' => 15]);
         }
     }
@@ -143,11 +143,11 @@ class WarehouseAdvancedSearchRequest extends FormRequest
             // For example, checking if at least one filter is provided
             $hasFilters = false;
             $filterFields = [
-                'globalSearch', 'name', 'code', 'address', 'city', 'state', 
-                'country', 'postalCode', 'phone', 'email', 'isActive', 
-                'isMain', 'createdAfter', 'createdBefore', 'updatedAfter', 
-                'updatedBefore', 'hasZones', 'myWarehouses', 'recentlyUpdated', 
-                'newWarehouses', 'largeWarehouses'
+                'globalSearch', 'name', 'code', 'address', 'city', 'state',
+                'country', 'postalCode', 'phone', 'email', 'isActive',
+                'isMain', 'createdAfter', 'createdBefore', 'updatedAfter',
+                'updatedBefore', 'hasZones', 'myWarehouses', 'recentlyUpdated',
+                'newWarehouses', 'largeWarehouses',
             ];
 
             foreach ($filterFields as $field) {
@@ -157,7 +157,7 @@ class WarehouseAdvancedSearchRequest extends FormRequest
                 }
             }
 
-            if (!$hasFilters) {
+            if (! $hasFilters) {
                 $validator->errors()->add('filters', 'At least one search filter must be provided.');
             }
         });

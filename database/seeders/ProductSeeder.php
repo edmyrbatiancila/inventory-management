@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product;
-use App\Models\Category;
 use App\Models\Brand;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
@@ -18,11 +17,13 @@ class ProductSeeder extends Seeder
         // Ensure we have categories and brands first
         if (Category::count() === 0) {
             $this->command->info('No categories found. Please run CategorySeeder first.');
+
             return;
         }
 
         if (Brand::count() === 0) {
             $this->command->info('No brands found. Please run BrandSeeder first.');
+
             return;
         }
 
@@ -57,11 +58,11 @@ class ProductSeeder extends Seeder
     private function createSpecificProducts(): void
     {
         // Get existing categories and brands
-        $electronicsCategory = Category::where('name', 'like', '%Electronics%')->first() 
+        $electronicsCategory = Category::where('name', 'like', '%Electronics%')->first()
                             ?? Category::first();
-        $clothingCategory = Category::where('name', 'like', '%Clothing%')->first() 
+        $clothingCategory = Category::where('name', 'like', '%Clothing%')->first()
                           ?? Category::skip(1)->first() ?? Category::first();
-        
+
         $brand1 = Brand::first();
         $brand2 = Brand::skip(1)->first() ?? Brand::first();
 
@@ -82,8 +83,8 @@ class ProductSeeder extends Seeder
                 'storage' => '512GB SSD',
                 'display' => '16.2-inch Liquid Retina XDR',
                 'weight' => '2.15kg',
-                'warranty' => '1 year'
-            ]
+                'warranty' => '1 year',
+            ],
         ]);
 
         // Budget smartphone
@@ -102,8 +103,8 @@ class ProductSeeder extends Seeder
                 'storage' => '64GB',
                 'camera' => '12MP main camera',
                 'battery' => '3000mAh',
-                'weight' => '180g'
-            ]
+                'weight' => '180g',
+            ],
         ]);
 
         // Premium t-shirt
@@ -121,8 +122,8 @@ class ProductSeeder extends Seeder
                 'material' => '100% Organic Cotton',
                 'fit' => 'Regular',
                 'care' => 'Machine wash cold',
-                'sizes_available' => ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-            ]
+                'sizes_available' => ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            ],
         ]);
 
         // Out of stock product for testing
@@ -141,8 +142,8 @@ class ProductSeeder extends Seeder
                 'case_material' => 'Stainless Steel',
                 'band_material' => 'Leather',
                 'water_resistance' => '50m',
-                'movement' => 'Automatic'
-            ]
+                'movement' => 'Automatic',
+            ],
         ]);
     }
 }

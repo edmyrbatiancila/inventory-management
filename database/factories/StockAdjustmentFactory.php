@@ -18,21 +18,20 @@ class StockAdjustmentFactory extends Factory
      * @return array<string, mixed>
      */
     public function definition(): array
-    {   
+    {
         $adjustmentType = $this->faker->randomElement(['increase', 'decrease']);
         $quantityAdjusted = $this->faker->numberBetween(1, 100);
         $quantityBefore = $this->faker->numberBetween(50, 500);
-        
+
         // Calculate quantity_after based on adjustment type
-        $quantityAfter = $adjustmentType === 'increase' 
+        $quantityAfter = $adjustmentType === 'increase'
             ? $quantityBefore + $quantityAdjusted
             : max(0, $quantityBefore - $quantityAdjusted);
 
         $reasons = [
             'damage', 'theft', 'found', 'expired', 'returned',
-            'transfer_in', 'transfer_out', 'correction', 'recount', 'other'
+            'transfer_in', 'transfer_out', 'correction', 'recount', 'other',
         ];
-
 
         return [
             'inventory_id' => Inventory::factory(),
@@ -56,7 +55,7 @@ class StockAdjustmentFactory extends Factory
         return $this->state(function (array $attributes) {
             $quantityBefore = $this->faker->numberBetween(50, 500);
             $quantityAdjusted = $this->faker->numberBetween(10, 100);
-            
+
             return [
                 'adjustment_type' => 'increase',
                 'quantity_adjusted' => $quantityAdjusted,
@@ -75,7 +74,7 @@ class StockAdjustmentFactory extends Factory
         return $this->state(function (array $attributes) {
             $quantityBefore = $this->faker->numberBetween(50, 500);
             $quantityAdjusted = $this->faker->numberBetween(1, min(50, $quantityBefore));
-            
+
             return [
                 'adjustment_type' => 'decrease',
                 'quantity_adjusted' => $quantityAdjusted,
@@ -94,7 +93,7 @@ class StockAdjustmentFactory extends Factory
         return $this->state(function (array $attributes) {
             $quantityBefore = $this->faker->numberBetween(20, 200);
             $quantityAdjusted = $this->faker->numberBetween(1, min(20, $quantityBefore));
-            
+
             return [
                 'adjustment_type' => 'decrease',
                 'quantity_adjusted' => $quantityAdjusted,
@@ -105,7 +104,7 @@ class StockAdjustmentFactory extends Factory
                     'Items damaged during transport',
                     'Water damage in storage area',
                     'Products expired due to storage conditions',
-                    'Packaging defects found during inspection'
+                    'Packaging defects found during inspection',
                 ]),
             ];
         });
@@ -119,7 +118,7 @@ class StockAdjustmentFactory extends Factory
         return $this->state(function (array $attributes) {
             $quantityBefore = $this->faker->numberBetween(10, 100);
             $quantityAdjusted = $this->faker->numberBetween(1, 30);
-            
+
             return [
                 'adjustment_type' => 'increase',
                 'quantity_adjusted' => $quantityAdjusted,
@@ -130,7 +129,7 @@ class StockAdjustmentFactory extends Factory
                     'Items found during physical count',
                     'Previously misplaced inventory located',
                     'Items discovered in different warehouse section',
-                    'Stock found after reorganization'
+                    'Stock found after reorganization',
                 ]),
             ];
         });

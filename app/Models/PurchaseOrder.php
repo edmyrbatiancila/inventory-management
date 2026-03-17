@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PurchaseOrder extends Model
 {
     /** @use HasFactory<\Database\Factories\PurchaseOrderFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'po_number',
@@ -45,7 +45,7 @@ class PurchaseOrder extends Model
         'cancellation_reason',
         'metadata',
         'is_recurring',
-        'currency'
+        'currency',
     ];
 
     protected $casts = [
@@ -61,17 +61,24 @@ class PurchaseOrder extends Model
         'received_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'metadata' => 'array',
-        'is_recurring' => 'boolean'
+        'is_recurring' => 'boolean',
     ];
 
     // Status Constants
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_SENT_TO_SUPPLIER = 'sent_to_supplier';
+
     public const STATUS_PARTIALLY_RECEIVED = 'partially_received';
+
     public const STATUS_FULLY_RECEIVED = 'fully_received';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_CLOSED = 'closed';
 
     public const STATUSES = [
@@ -87,8 +94,11 @@ class PurchaseOrder extends Model
 
     // Priority Constants
     public const PRIORITY_LOW = 'low';
+
     public const PRIORITY_NORMAL = 'normal';
+
     public const PRIORITY_HIGH = 'high';
+
     public const PRIORITY_URGENT = 'urgent';
 
     public const PRIORITIES = [
@@ -127,7 +137,7 @@ class PurchaseOrder extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'related_document_id')
-                    ->where('related_document_type', 'purchase_order');
+            ->where('related_document_type', 'purchase_order');
     }
 
     // Accessors
@@ -143,7 +153,7 @@ class PurchaseOrder extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_DRAFT => 'gray',
             self::STATUS_PENDING_APPROVAL => 'yellow',
             self::STATUS_APPROVED => 'blue',
@@ -158,7 +168,7 @@ class PurchaseOrder extends Model
 
     public function getPriorityColorAttribute(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             self::PRIORITY_LOW => 'gray',
             self::PRIORITY_NORMAL => 'blue',
             self::PRIORITY_HIGH => 'orange',
@@ -174,21 +184,21 @@ class PurchaseOrder extends Model
 
     public function getDaysUntilDeliveryAttribute(): ?int
     {
-        if (!$this->expected_delivery_date) {
+        if (! $this->expected_delivery_date) {
             return null;
         }
-        
+
         return Carbon::now()->diffInDays($this->expected_delivery_date, false);
     }
 
     public function getIsOverdueAttribute(): bool
     {
-        if (!$this->expected_delivery_date) {
+        if (! $this->expected_delivery_date) {
             return false;
         }
-        
-        return $this->expected_delivery_date->isPast() && 
-                !in_array($this->status, [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
+
+        return $this->expected_delivery_date->isPast() &&
+                ! in_array($this->status, [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
     }
 
     // Query Scopes
@@ -220,7 +230,7 @@ class PurchaseOrder extends Model
     public function scopeOverdue($query)
     {
         return $query->where('expected_delivery_date', '<', Carbon::now())
-                    ->whereNotIn('status', [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
+            ->whereNotIn('status', [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
     }
 
     public function scopeByWarehouse($query, int $warehouseId)
@@ -242,9 +252,9 @@ class PurchaseOrder extends Model
     {
         return $query->with([
             'warehouse', 'createdBy', 'approvedBy', 'receivedBy',
-            'items.product', 'items' => function($query) {
+            'items.product', 'items' => function ($query) {
                 $query->orderBy('created_at');
-            }
+            },
         ]);
     }
 
@@ -266,7 +276,7 @@ class PurchaseOrder extends Model
 
     public function canBeCancelled(): bool
     {
-        return !in_array($this->status, [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
+        return ! in_array($this->status, [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED, self::STATUS_CLOSED]);
     }
 
     public function canBeClosed(): bool
@@ -298,7 +308,7 @@ class PurchaseOrder extends Model
     {
         $totalOrdered = $this->getTotalQuantityOrdered();
         $totalReceived = $this->getTotalQuantityReceived();
-        
+
         return $totalOrdered > 0 ? ($totalReceived / $totalOrdered) * 100 : 0;
     }
 
@@ -306,7 +316,7 @@ class PurchaseOrder extends Model
     {
         $totalReceived = $this->getTotalQuantityReceived();
         $totalOrdered = $this->getTotalQuantityOrdered();
-        
+
         if ($totalReceived === 0) {
             $this->status = self::STATUS_SENT_TO_SUPPLIER;
         } elseif ($totalReceived < $totalOrdered) {
@@ -315,7 +325,7 @@ class PurchaseOrder extends Model
             $this->status = self::STATUS_FULLY_RECEIVED;
             $this->received_at = Carbon::now();
         }
-        
+
         $this->save();
     }
 
@@ -338,14 +348,14 @@ class PurchaseOrder extends Model
         $prefix = 'PO';
         $year = date('Y');
         $month = date('m');
-        
+
         $lastPo = static::whereYear('created_at', $year)
-                        ->whereMonth('created_at', $month)
-                        ->orderBy('id', 'desc')
-                        ->first();
-        
+            ->whereMonth('created_at', $month)
+            ->orderBy('id', 'desc')
+            ->first();
+
         $sequence = $lastPo ? (int) substr($lastPo->po_number, -3) + 1 : 1;
-        
+
         return sprintf('%s-%s%s-%03d', $prefix, $year, $month, $sequence);
     }
 
@@ -353,13 +363,13 @@ class PurchaseOrder extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($purchaseOrder) {
-            if (!$purchaseOrder->po_number) {
+            if (! $purchaseOrder->po_number) {
                 $purchaseOrder->po_number = static::generatePoNumber();
             }
         });
-        
+
         static::deleting(function ($purchaseOrder) {
             // Soft delete related items
             $purchaseOrder->items()->delete();

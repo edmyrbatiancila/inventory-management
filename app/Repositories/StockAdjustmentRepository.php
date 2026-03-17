@@ -14,13 +14,13 @@ class StockAdjustmentRepository implements StockAdjustmentRepositoryInterface
         $query = StockAdjustment::with(['inventory.product', 'inventory.warehouse', 'adjustedBy']);
 
         // Apply Filters
-        if (isset($filters['search']) && !empty($filters['search'])) {
+        if (isset($filters['search']) && ! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('reference_number', 'like', "%{$search}%")
                     ->orWhere('reason', 'like', "%{$search}%")
                     ->orWhere('notes', 'like', "%{$search}%")
-                    ->orWhereHas('inventory.product', function($productQuery) use ($search) {
+                    ->orWhereHas('inventory.product', function ($productQuery) use ($search) {
                         $productQuery->where('name', 'like', "%{$search}%");
                     });
             });

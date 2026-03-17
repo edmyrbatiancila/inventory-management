@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class PurchaseOrderFactory extends Factory
 {
-    use HasSupplierData, HasPurchaseOrderStates;
+    use HasPurchaseOrderStates, HasSupplierData;
 
     /**
      * Define the model's default state.
@@ -40,18 +40,18 @@ class PurchaseOrderFactory extends Factory
             'priority' => $this->faker->randomElement(array_keys(PurchaseOrder::PRIORITIES)),
             'warehouse_id' => Warehouse::inRandomOrder()->first()?->id ?? Warehouse::factory(),
             'created_by' => User::inRandomOrder()->first()?->id ?? User::factory(),
-            
+
             // Financial data
             'subtotal' => $subtotal,
             'tax_amount' => $taxAmount,
             'shipping_cost' => $shippingCost,
             'discount_amount' => $discountAmount ?? 0,
             'total_amount' => $subtotal + $taxAmount + $shippingCost - ($discountAmount ?? 0),
-            
+
             // Dates
             'expected_delivery_date' => $this->faker->dateTimeBetween('+1 week', '+2 months'),
             'notes' => $this->faker->optional(0.6)->sentence(),
-            
+
             // Status-specific fields (will be overridden by state methods)
             'approved_by' => null,
             'received_by' => null,
@@ -66,6 +66,6 @@ class PurchaseOrderFactory extends Factory
      */
     private function generatePoNumber(): string
     {
-        return 'PO-' . date('Y') . '-' . str_pad($this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT);
+        return 'PO-'.date('Y').'-'.str_pad($this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT);
     }
 }

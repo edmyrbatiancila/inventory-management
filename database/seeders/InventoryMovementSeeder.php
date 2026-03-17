@@ -7,7 +7,6 @@ use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Warehouse;
 use Carbon\Carbon;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class InventoryMovementSeeder extends Seeder
@@ -20,6 +19,7 @@ class InventoryMovementSeeder extends Seeder
         // Check Dependencies
         if (Inventory::count() === 0) {
             $this->command->info('No inventory records found. Please run InventorySeeder first.');
+
             return;
         }
 
@@ -60,12 +60,12 @@ class InventoryMovementSeeder extends Seeder
             // Create subsequent movements
             for ($i = 1; $i < $movementCount; $i++) {
                 $movementDate = $movementDate->addDays(fake()->numberBetween(1, 10));
-                
+
                 $movementType = fake()->randomElement(['stock_in', 'stock_out', 'adjustment_in', 'adjustment_out']);
                 $quantity = $this->getQuantityForMovement($movementType, $currentStock);
-                
+
                 $this->createMovement($inventory, $movementType, $quantity, $currentStock, $movementDate);
-                
+
                 $currentStock += $quantity;
                 $currentStock = max(0, $currentStock); // Never go below 0
             }
@@ -73,7 +73,7 @@ class InventoryMovementSeeder extends Seeder
             // Update final inventory to match movement history
             // Ensure quantity_reserved doesn't exceed quantity_on_hand
             $adjustedReserved = min($inventory->quantity_reserved, $currentStock);
-            
+
             $inventory->update([
                 'quantity_on_hand' => $currentStock,
                 'quantity_reserved' => $adjustedReserved,
@@ -141,7 +141,7 @@ class InventoryMovementSeeder extends Seeder
                     'reference_type' => 'adjustment',
                     'notes' => 'Found missing units during cycle count',
                     'movement_date' => Carbon::now()->subDays(7),
-                ]
+                ],
             ];
 
             $currentStock = 0;
@@ -190,7 +190,7 @@ class InventoryMovementSeeder extends Seeder
         }
     }
 
-    private function createMovement($inventory, $type, $quantity, $quantityBefore, $movementDate) 
+    private function createMovement($inventory, $type, $quantity, $quantityBefore, $movementDate)
     {
         $quantityAfter = max(0, $quantityBefore + $quantity);
 
@@ -210,7 +210,7 @@ class InventoryMovementSeeder extends Seeder
 
     private function getQuantityForMovement($type, $currentStock): int
     {
-        return match($type) {
+        return match ($type) {
             'stock_in', 'adjustment_in', 'transfer_in' => fake()->numberBetween(10, 50),
             'stock_out', 'adjustment_out', 'transfer_out' => -fake()->numberBetween(1, min($currentStock, 20)),
             default => fake()->numberBetween(-5, 5),
@@ -219,7 +219,7 @@ class InventoryMovementSeeder extends Seeder
 
     private function getReferenceType($type): string
     {
-        return match($type) {
+        return match ($type) {
             'stock_in', 'transfer_in' => fake()->randomElement(['purchase_order', 'return', 'transfer']),
             'stock_out', 'transfer_out' => fake()->randomElement(['sale', 'damage', 'transfer']),
             'adjustment_in', 'adjustment_out' => 'adjustment',
@@ -229,42 +229,42 @@ class InventoryMovementSeeder extends Seeder
 
     private function getNotesForMovement($type): string
     {
-        $notes = match($type) {
+        $notes = match ($type) {
             'stock_in' => fake()->randomElement([
                 'Stock received from supplier',
                 'Customer return processed',
                 'Transfer from another location',
-                'Initial inventory setup'
+                'Initial inventory setup',
             ]),
             'stock_out' => fake()->randomElement([
                 'Product sold to customer',
                 'Damaged goods removed',
                 'Transfer to another location',
-                'Promotional giveaway'
+                'Promotional giveaway',
             ]),
             'transfer_in' => fake()->randomElement([
                 'Stock transferred in from warehouse',
                 'Received from distribution center',
-                'Inventory moved from branch'
+                'Inventory moved from branch',
             ]),
             'transfer_out' => fake()->randomElement([
                 'Stock transferred out to warehouse',
                 'Sent to distribution center',
-                'Inventory moved to branch'
+                'Inventory moved to branch',
             ]),
             'adjustment_in' => fake()->randomElement([
                 'Cycle count adjustment - increase',
                 'System correction - positive',
-                'Found missing inventory'
+                'Found missing inventory',
             ]),
             'adjustment_out' => fake()->randomElement([
                 'Cycle count adjustment - decrease',
                 'System correction - negative',
-                'Damaged goods write-off'
+                'Damaged goods write-off',
             ]),
             default => 'Inventory movement'
         };
 
-        return $notes . ' - ' . fake()->sentence(3);
+        return $notes.' - '.fake()->sentence(3);
     }
 }

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Warehouse;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class WarehouseSeeder extends Seeder
@@ -57,7 +56,7 @@ class WarehouseSeeder extends Seeder
             'country' => 'United States',
             'phone' => '+1-555-123-4567',
             'email' => 'main.dc@inventrackapp.com',
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // East Coast Hub
@@ -71,7 +70,7 @@ class WarehouseSeeder extends Seeder
             'country' => 'United States',
             'phone' => '+1-555-987-6543',
             'email' => 'east.hub@inventrackapp.com',
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // West Coast Storage
@@ -85,7 +84,7 @@ class WarehouseSeeder extends Seeder
             'country' => 'United States',
             'phone' => '+1-555-456-7890',
             'email' => 'west.storage@inventrackapp.com',
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Inactive warehouse for testing
@@ -99,8 +98,7 @@ class WarehouseSeeder extends Seeder
             'country' => 'United States',
             'phone' => null,
             'email' => null,
-            'is_active' => false
+            'is_active' => false,
         ]);
     }
-
 }

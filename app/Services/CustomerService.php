@@ -29,11 +29,11 @@ class CustomerService
     public function getCustomerById(int $id): Customer
     {
         $customer = $this->customerRepository->findById($id, ['createdBy', 'updatedBy', 'salesRep', 'contactLogs']);
-        
-        if (!$customer) {
+
+        if (! $customer) {
             throw new ModelNotFoundException('Customer not found');
         }
-        
+
         return $customer;
     }
 
@@ -45,27 +45,28 @@ class CustomerService
     public function createCustomer(array $data): Customer
     {
         DB::beginTransaction();
-        
+
         try {
             // Validate data
             $validatedData = $this->validateCustomerData($data);
-            
+
             // Generate customer code if not provided
             if (empty($validatedData['customer_code'])) {
                 $validatedData['customer_code'] = $this->generateCustomerCode();
             }
-            
+
             // Set created_by
             $validatedData['created_by'] = auth()->id();
-            
+
             $customer = $this->customerRepository->create($validatedData);
-            
+
             // Log activity
             $this->logCustomerActivity($customer, 'created', 'Customer created successfully');
-            
+
             DB::commit();
+
             return $customer;
-            
+
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -75,26 +76,27 @@ class CustomerService
     public function updateCustomer(int $id, array $data): Customer
     {
         DB::beginTransaction();
-        
+
         try {
             // Validate data
             $validatedData = $this->validateCustomerData($data, $id);
-            
+
             // Update customer
             $updated = $this->customerRepository->update($id, $validatedData);
-            
-            if (!$updated) {
+
+            if (! $updated) {
                 throw new ModelNotFoundException('Customer not found');
             }
-            
+
             $customer = $this->getCustomerById($id);
-            
+
             // Log activity
             $this->logCustomerActivity($customer, 'updated', 'Customer information updated');
-            
+
             DB::commit();
+
             return $customer;
-            
+
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -104,23 +106,24 @@ class CustomerService
     public function deleteCustomer(int $id): bool
     {
         DB::beginTransaction();
-        
+
         try {
             $customer = $this->getCustomerById($id);
-            
+
             // Check if customer has active orders or outstanding balance
             if ($customer->total_orders > 0 && $customer->current_balance > 0) {
                 throw new \Exception('Cannot delete customer with outstanding balance');
             }
-            
+
             // Log activity before deletion
             $this->logCustomerActivity($customer, 'deleted', 'Customer marked for deletion');
-            
+
             $deleted = $this->customerRepository->delete($id);
-            
+
             DB::commit();
+
             return $deleted;
-            
+
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -130,7 +133,7 @@ class CustomerService
     public function generateCustomerCode(): string
     {
         do {
-            $code = 'CUS-' . date('Y') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+            $code = 'CUS-'.date('Y').'-'.str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
         } while (Customer::where('customer_code', $code)->exists());
 
         return $code;
@@ -140,17 +143,17 @@ class CustomerService
     {
         $rules = [
             // Basic Information
-            'customer_type' => ['required', 'in:' . implode(',', array_keys(CustomerConstants::CUSTOMER_TYPES))],
+            'customer_type' => ['required', 'in:'.implode(',', array_keys(CustomerConstants::CUSTOMER_TYPES))],
             'company_name' => 'required_if:customer_type,business,government,non_profit|nullable|string|max:255',
             'trade_name' => 'nullable|string|max:255',
             'first_name' => 'required_if:customer_type,individual|nullable|string|max:255',
             'last_name' => 'required_if:customer_type,individual|nullable|string|max:255',
-            'status' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::STATUSES))],
-            
+            'status' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::STATUSES))],
+
             // Contact Information
             'contact_person' => 'nullable|string|max:255',
             'contact_title' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255' . ($customerId ? '|unique:customers,email,' . $customerId : '|unique:customers,email'),
+            'email' => 'nullable|email|max:255'.($customerId ? '|unique:customers,email,'.$customerId : '|unique:customers,email'),
             'phone' => 'nullable|string|max:20',
             'mobile' => 'nullable|string|max:20',
             'fax' => 'nullable|string|max:20',
@@ -163,33 +166,33 @@ class CustomerService
             'billing_state_province' => 'nullable|string|max:100',
             'billing_postal_code' => 'nullable|string|max:20',
             'billing_country' => 'required|string|max:100',
-            
+
             // Shipping Address
             'same_as_billing' => 'boolean',
             'shipping_address_line_1' => 'required_if:same_as_billing,false|nullable|string|max:255',
             'shipping_city' => 'required_if:same_as_billing,false|nullable|string|max:100',
             'shipping_country' => 'required_if:same_as_billing,false|nullable|string|max:100',
-            
+
             // Business Information
             'tax_id' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:50',
             'business_description' => 'nullable|string|max:1000',
-            'established_year' => 'nullable|integer|between:1800,' . date('Y'),
-            'company_size' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::COMPANY_SIZES))],
+            'established_year' => 'nullable|integer|between:1800,'.date('Y'),
+            'company_size' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::COMPANY_SIZES))],
 
             // Financial Information
-            'payment_terms' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::PAYMENT_TERMS))],
+            'payment_terms' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::PAYMENT_TERMS))],
             'currency' => 'nullable|string|size:3',
             'credit_limit' => 'nullable|numeric|min:0',
-            'credit_status' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::CREDIT_STATUSES))],
-            
+            'credit_status' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::CREDIT_STATUSES))],
+
             // Customer Management
-            'customer_priority' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::PRIORITIES))],
-            'price_tier' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::PRICE_TIERS))],
-            'lead_source' => ['nullable', 'in:' . implode(',', array_keys(CustomerConstants::LEAD_SOURCES))],
+            'customer_priority' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::PRIORITIES))],
+            'price_tier' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::PRICE_TIERS))],
+            'lead_source' => ['nullable', 'in:'.implode(',', array_keys(CustomerConstants::LEAD_SOURCES))],
             'assigned_sales_rep' => 'nullable|exists:users,id',
             'default_discount_percentage' => 'nullable|numeric|between:0,100',
-            
+
             // Preferences
             'special_requirements' => 'nullable|string|max:1000',
             'internal_notes' => 'nullable|string|max:2000',
@@ -208,7 +211,7 @@ class CustomerService
     public function getCustomerMetrics(int $id): array
     {
         $customer = $this->getCustomerById($id);
-        
+
         return [
             'lifetime_value' => $customer->lifetime_value ?? 0,
             'total_orders' => $customer->total_orders ?? 0,
@@ -217,7 +220,7 @@ class CustomerService
             'return_rate' => $customer->return_rate_percentage ?? 0,
             'complaint_count' => $customer->complaint_count ?? 0,
             'last_order_date' => $customer->last_order_date,
-            'credit_utilization' => $customer->credit_limit > 0 ? 
+            'credit_utilization' => $customer->credit_limit > 0 ?
                 round(($customer->current_balance / $customer->credit_limit) * 100, 2) : 0,
             'satisfaction_rating' => $customer->customer_satisfaction_rating ?? 0,
             'contact_logs_count' => $customer->contactLogs->count(),
@@ -242,9 +245,9 @@ class CustomerService
     public function getFullName(Customer $customer): string
     {
         if ($customer->customer_type === 'individual') {
-            return trim($customer->first_name . ' ' . $customer->last_name);
+            return trim($customer->first_name.' '.$customer->last_name);
         }
-        
+
         return $customer->trade_name ?: $customer->company_name;
     }
 
@@ -257,17 +260,17 @@ class CustomerService
     {
         $address = $customer->billing_address_line_1;
         if ($customer->billing_address_line_2) {
-            $address .= ', ' . $customer->billing_address_line_2;
+            $address .= ', '.$customer->billing_address_line_2;
         }
-        $address .= ', ' . $customer->billing_city;
+        $address .= ', '.$customer->billing_city;
         if ($customer->billing_state_province) {
-            $address .= ', ' . $customer->billing_state_province;
+            $address .= ', '.$customer->billing_state_province;
         }
         if ($customer->billing_postal_code) {
-            $address .= ' ' . $customer->billing_postal_code;
+            $address .= ' '.$customer->billing_postal_code;
         }
-        $address .= ', ' . $customer->billing_country;
-        
+        $address .= ', '.$customer->billing_country;
+
         return $address;
     }
 
@@ -276,26 +279,26 @@ class CustomerService
         if ($customer->same_as_billing) {
             return $this->getBillingAddress($customer);
         }
-        
+
         $address = $customer->shipping_address_line_1;
         if ($customer->shipping_address_line_2) {
-            $address .= ', ' . $customer->shipping_address_line_2;
+            $address .= ', '.$customer->shipping_address_line_2;
         }
-        $address .= ', ' . $customer->shipping_city;
+        $address .= ', '.$customer->shipping_city;
         if ($customer->shipping_state_province) {
-            $address .= ', ' . $customer->shipping_state_province;
+            $address .= ', '.$customer->shipping_state_province;
         }
         if ($customer->shipping_postal_code) {
-            $address .= ' ' . $customer->shipping_postal_code;
+            $address .= ' '.$customer->shipping_postal_code;
         }
-        $address .= ', ' . $customer->shipping_country;
-        
+        $address .= ', '.$customer->shipping_country;
+
         return $address;
     }
 
     public function getCreditStatusColor(Customer $customer): string
     {
-        return match($customer->credit_status) {
+        return match ($customer->credit_status) {
             'good' => 'green',
             'watch' => 'yellow',
             'hold' => 'red',
@@ -324,7 +327,7 @@ class CustomerService
         if ($customer->default_discount_percentage > 0) {
             return $amount * (1 - $customer->default_discount_percentage / 100);
         }
-        
+
         return $amount;
     }
 
@@ -335,7 +338,7 @@ class CustomerService
             ->get();
 
         $firstOrder = $orders->min('created_at');
-        
+
         $customer->update([
             'total_orders' => $orders->count(),
             'total_order_value' => $orders->sum('total_amount'),

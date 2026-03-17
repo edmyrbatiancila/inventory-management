@@ -57,6 +57,7 @@ class InventoryFactory extends Factory
     public function highReservation()
     {
         $onHand = $this->faker->numberBetween(100, 300);
+
         return $this->state(fn (array $attributes) => [
             'quantity_on_hand' => $onHand,
             'quantity_reserved' => $this->faker->numberBetween(50, min($onHand, 150)),

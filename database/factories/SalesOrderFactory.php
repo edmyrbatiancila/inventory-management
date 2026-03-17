@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\SalesOrder;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Factories\traits\HasCustomerData;
@@ -40,7 +39,7 @@ class SalesOrderFactory extends Factory
             'priority' => $this->faker->randomElement(['low', 'normal', 'high', 'urgent']),
             'warehouse_id' => Warehouse::inRandomOrder()->first()?->id ?? Warehouse::factory(),
             'created_by' => User::inRandomOrder()->first()?->id ?? User::factory(),
-            
+
             // Financial data
             'subtotal' => $subtotal,
             'tax_rate' => $taxRate,
@@ -48,25 +47,25 @@ class SalesOrderFactory extends Factory
             'shipping_cost' => $shippingCost,
             'discount_amount' => $discountAmount ?? 0,
             'total_amount' => $subtotal + $taxAmount + $shippingCost - ($discountAmount ?? 0),
-            
+
             // Dates
             'requested_delivery_date' => $this->faker->dateTimeBetween('+3 days', '+6 weeks'),
             'promised_delivery_date' => $this->faker->optional(0.8)->dateTimeBetween('+3 days', '+6 weeks'),
-            
+
             // Shipping
             'shipping_method' => $this->faker->randomElement(['Standard', 'Express', 'Overnight', 'Ground']),
             'carrier' => $this->faker->optional(0.6)->randomElement(['FedEx', 'UPS', 'DHL', 'USPS']),
-            
+
             // Payment
             'payment_status' => $this->faker->randomElement(['pending', 'partial', 'paid']),
             'payment_terms' => $this->faker->randomElement(['Net 30', 'Net 15', 'Cash on Delivery', 'Prepaid']),
             'currency' => 'USD',
-            
+
             // Notes
             'notes' => $this->faker->optional(0.4)->sentence(),
             'customer_notes' => $this->faker->optional(0.3)->sentence(),
             'terms_and_conditions' => $this->faker->optional(0.5)->paragraph(),
-            
+
             // Status-specific fields (will be overridden by state methods)
             'approved_by' => null,
             'fulfilled_by' => null,
@@ -84,6 +83,6 @@ class SalesOrderFactory extends Factory
      */
     private function generateSoNumber(): string
     {
-        return 'SO-' . date('Y') . date('m') . '-' . str_pad($this->faker->unique()->numberBetween(1, 999), 3, '0', STR_PAD_LEFT);
+        return 'SO-'.date('Y').date('m').'-'.str_pad($this->faker->unique()->numberBetween(1, 999), 3, '0', STR_PAD_LEFT);
     }
 }

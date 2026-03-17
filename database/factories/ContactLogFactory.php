@@ -31,32 +31,32 @@ class ContactLogFactory extends Factory
             'subject' => $this->faker->sentence(6),
             'description' => $this->faker->paragraph(3),
             'outcome' => $this->faker->randomElement(['successful', 'no_answer', 'follow_up_needed', 'resolved']),
-            
+
             // Participants
             'contact_person_id' => User::inRandomOrder()->first()?->id ?? User::factory(),
             'external_contact_person' => $this->faker->name(),
             'external_contact_email' => $this->faker->optional(0.7)->email(),
             'external_contact_phone' => $this->faker->optional(0.6)->phoneNumber(),
-            
+
             // Timing
             'contact_date' => $contactDate,
             'duration_minutes' => $this->faker->numberBetween(5, 120),
-            'follow_up_date' => $needsFollowUp ? 
+            'follow_up_date' => $needsFollowUp ?
                 $this->faker->dateTimeBetween($contactDate, '+2 weeks') : null,
-            
+
             // Additional Information
             'attachments' => $this->faker->optional(0.2)->randomElements([
-                'meeting_notes.pdf', 
-                'contract_proposal.docx', 
-                'price_list.xlsx'
+                'meeting_notes.pdf',
+                'contract_proposal.docx',
+                'price_list.xlsx',
             ], rand(1, 2)),
             'priority' => $this->faker->randomElement(['low', 'normal', 'high']),
             'tags' => $this->faker->optional(0.4)->randomElements([
-                'follow-up', 
-                'urgent', 
-                'pricing', 
-                'contract', 
-                'support'
+                'follow-up',
+                'urgent',
+                'pricing',
+                'contract',
+                'support',
             ], rand(1, 2)),
         ];
     }
@@ -67,7 +67,7 @@ class ContactLogFactory extends Factory
     public function forSupplier(?Supplier $supplier = null): static
     {
         $supplier = $supplier ?? Supplier::inRandomOrder()->first() ?? Supplier::factory()->create();
-        
+
         return $this->state([
             'contactable_type' => Supplier::class,
             'contactable_id' => $supplier->id,
@@ -80,7 +80,7 @@ class ContactLogFactory extends Factory
     public function forCustomer(?Customer $customer = null): static
     {
         $customer = $customer ?? Customer::inRandomOrder()->first() ?? Customer::factory()->create();
-        
+
         return $this->state([
             'contactable_type' => Customer::class,
             'contactable_id' => $customer->id,

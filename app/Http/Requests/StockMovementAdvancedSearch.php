@@ -115,8 +115,8 @@ class StockMovementAdvancedSearch extends FormRequest
     {
         // Convert string boolean values to actual booleans
         $booleanFields = [
-            'myMovements', 'recentMovements', 'pendingApproval', 
-            'highValueMovements', 'hasApprover', 'hasDocumentReference'
+            'myMovements', 'recentMovements', 'pendingApproval',
+            'highValueMovements', 'hasApprover', 'hasDocumentReference',
         ];
 
         foreach ($booleanFields as $field) {
@@ -130,22 +130,22 @@ class StockMovementAdvancedSearch extends FormRequest
         $numericFields = [
             'quantityMovedMin', 'quantityMovedMax', 'quantityBeforeMin', 'quantityBeforeMax',
             'quantityAfterMin', 'quantityAfterMax', 'unitCostMin', 'unitCostMax',
-            'totalValueMin', 'totalValueMax', 'per_page'
+            'totalValueMin', 'totalValueMax', 'per_page',
         ];
-        
+
         foreach ($numericFields as $field) {
             if ($this->has($field) && $this->input($field) !== null && $this->input($field) !== '') {
                 $value = $this->input($field);
-                $this->merge([$field => is_numeric($value) ? (strpos($value, '.') !== false ? (float)$value : (int)$value) : null]);
+                $this->merge([$field => is_numeric($value) ? (strpos($value, '.') !== false ? (float) $value : (int) $value) : null]);
             }
         }
 
         // Set defaults
-        if (!$this->has('sort') || empty($this->input('sort'))) {
+        if (! $this->has('sort') || empty($this->input('sort'))) {
             $this->merge(['sort' => 'newest']);
         }
 
-        if (!$this->has('per_page') || empty($this->input('per_page'))) {
+        if (! $this->has('per_page') || empty($this->input('per_page'))) {
             $this->merge(['per_page' => 15]);
         }
     }

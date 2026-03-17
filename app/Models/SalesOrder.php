@@ -17,22 +17,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SalesOrder extends Model
 {
+    use HasDeliveryTracking, HasNumberGeneration, HasOrderItems;
+
     /** @use HasFactory<\Database\Factories\SalesOrderFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
-    use HasStatusManagement, HasPriorityManagement, HasFinancialCalculations;
-    use HasOrderItems, HasDeliveryTracking, HasNumberGeneration;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
+    use HasFinancialCalculations, HasPriorityManagement, HasStatusManagement;
 
     protected $fillable = [
-        'so_number', 'customer_reference', 'customer_name', 'customer_email', 
+        'so_number', 'customer_reference', 'customer_name', 'customer_email',
         'customer_phone', 'customer_address', 'customer_contact_person',
-        'status', 'priority', 'warehouse_id', 'created_by', 'approved_by', 
-        'fulfilled_by', 'shipped_by', 'subtotal', 'tax_rate', 'tax_amount', 
-        'shipping_cost', 'discount_amount', 'total_amount', 'requested_delivery_date', 
-        'promised_delivery_date', 'approved_at', 'confirmed_at', 'fulfilled_at', 
-        'shipped_at', 'delivered_at', 'cancelled_at', 'shipping_address', 
-        'shipping_method', 'tracking_number', 'carrier', 'notes', 'customer_notes', 
-        'terms_and_conditions', 'cancellation_reason', 'metadata', 'is_recurring', 
-        'currency', 'payment_terms', 'payment_status'
+        'status', 'priority', 'warehouse_id', 'created_by', 'approved_by',
+        'fulfilled_by', 'shipped_by', 'subtotal', 'tax_rate', 'tax_amount',
+        'shipping_cost', 'discount_amount', 'total_amount', 'requested_delivery_date',
+        'promised_delivery_date', 'approved_at', 'confirmed_at', 'fulfilled_at',
+        'shipped_at', 'delivered_at', 'cancelled_at', 'shipping_address',
+        'shipping_method', 'tracking_number', 'carrier', 'notes', 'customer_notes',
+        'terms_and_conditions', 'cancellation_reason', 'metadata', 'is_recurring',
+        'currency', 'payment_terms', 'payment_status',
     ];
 
     protected $casts = [
@@ -51,7 +52,7 @@ class SalesOrder extends Model
         'delivered_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'metadata' => 'array',
-        'is_recurring' => 'boolean'
+        'is_recurring' => 'boolean',
     ];
 
     // Status Constants
@@ -110,7 +111,7 @@ class SalesOrder extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'related_document_id')
-                    ->where('related_document_type', 'sales_order');
+            ->where('related_document_type', 'sales_order');
     }
 
     // Payment Status
@@ -121,7 +122,7 @@ class SalesOrder extends Model
 
     public function getPaymentStatusColorAttribute(): string
     {
-        return match($this->payment_status) {
+        return match ($this->payment_status) {
             'pending' => 'yellow',
             'partial' => 'orange',
             'paid' => 'green',
@@ -157,7 +158,7 @@ class SalesOrder extends Model
     {
         $totalOrdered = $this->getTotalQuantityOrdered();
         $totalFulfilled = $this->getTotalQuantityFulfilled();
-        
+
         return $totalOrdered > 0 ? ($totalFulfilled / $totalOrdered) * 100 : 0;
     }
 
@@ -165,7 +166,7 @@ class SalesOrder extends Model
     {
         $totalFulfilled = $this->getTotalQuantityFulfilled();
         $totalOrdered = $this->getTotalQuantityOrdered();
-        
+
         if ($totalFulfilled === 0) {
             $this->status = 'confirmed';
         } elseif ($totalFulfilled < $totalOrdered) {
@@ -174,7 +175,7 @@ class SalesOrder extends Model
             $this->status = 'fully_fulfilled';
             $this->fulfilled_at = now();
         }
-        
+
         $this->save();
     }
 
@@ -228,13 +229,13 @@ class SalesOrder extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($salesOrder) {
-            if (!$salesOrder->so_number) {
+            if (! $salesOrder->so_number) {
                 $salesOrder->so_number = static::generateNumber('SO');
             }
         });
-        
+
         static::deleting(function ($salesOrder) {
             $salesOrder->items()->delete();
         });

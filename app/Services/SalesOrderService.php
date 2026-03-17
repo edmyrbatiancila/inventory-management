@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services;
 
@@ -25,22 +25,22 @@ class SalesOrderService
     public function createSalesOrder(array $data): SalesOrder
     {
         // Set created_by if not provided
-        if (!isset($data['sales_order']['created_by'])) {
+        if (! isset($data['sales_order']['created_by'])) {
             $data['sales_order']['created_by'] = Auth::id();
         }
 
         // Generate SO number if not provided
-        if (!isset($data['sales_order']['so_number'])) {
+        if (! isset($data['sales_order']['so_number'])) {
             $data['sales_order']['so_number'] = SalesOrder::generateNumber('SO');
         }
 
         // Set default status
-        if (!isset($data['sales_order']['status'])) {
+        if (! isset($data['sales_order']['status'])) {
             $data['sales_order']['status'] = 'draft';
         }
 
         // Set default payment status
-        if (!isset($data['sales_order']['payment_status'])) {
+        if (! isset($data['sales_order']['payment_status'])) {
             $data['sales_order']['payment_status'] = 'pending';
         }
 
@@ -58,13 +58,13 @@ class SalesOrderService
     public function updateSalesOrder(int $id, array $data): SalesOrder
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder) {
+
+        if (! $salesOrder) {
             throw new InvalidArgumentException("Sales order not found with ID: {$id}");
         }
 
         // Business rule: Can't modify certain fields after confirmation
-        if (!$salesOrder->canBeEdited()) {
+        if (! $salesOrder->canBeEdited()) {
             $restrictedFields = ['warehouse_id', 'customer_name', 'customer_email'];
             foreach ($restrictedFields as $field) {
                 if (isset($data[$field])) {
@@ -74,7 +74,7 @@ class SalesOrderService
         }
 
         $this->repository->update($salesOrder, $data);
-        
+
         return $this->repository->find($id);
     }
 
@@ -84,13 +84,13 @@ class SalesOrderService
     public function approveSalesOrder(int $id, int $approvedBy): bool
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         if ($salesOrder->status !== 'pending_approval') {
-            throw new InvalidArgumentException("Sales order cannot be approved in its current state");
+            throw new InvalidArgumentException('Sales order cannot be approved in its current state');
         }
 
         return $this->repository->update($salesOrder, [
@@ -106,13 +106,13 @@ class SalesOrderService
     public function confirmSalesOrder(int $id): bool
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
-        if (!in_array($salesOrder->status, ['draft', 'approved'])) {
-            throw new InvalidArgumentException("Sales order cannot be confirmed in its current state");
+        if (! in_array($salesOrder->status, ['draft', 'approved'])) {
+            throw new InvalidArgumentException('Sales order cannot be confirmed in its current state');
         }
 
         return $this->repository->update($salesOrder, [
@@ -127,9 +127,9 @@ class SalesOrderService
     public function cancelSalesOrder(int $id, string $reason): bool
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder || !$salesOrder->canBeCancelled()) {
-            throw new InvalidArgumentException("Sales order cannot be cancelled");
+
+        if (! $salesOrder || ! $salesOrder->canBeCancelled()) {
+            throw new InvalidArgumentException('Sales order cannot be cancelled');
         }
 
         return $this->repository->update($salesOrder, [
@@ -145,13 +145,13 @@ class SalesOrderService
     public function shipSalesOrder(int $id, array $shippingData): bool
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         if ($salesOrder->status !== 'fully_fulfilled') {
-            throw new InvalidArgumentException("Sales order must be fully fulfilled before shipping");
+            throw new InvalidArgumentException('Sales order must be fully fulfilled before shipping');
         }
 
         $updateData = [
@@ -177,13 +177,13 @@ class SalesOrderService
     public function markAsDelivered(int $id): bool
     {
         $salesOrder = $this->repository->find($id);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         if ($salesOrder->status !== 'shipped') {
-            throw new InvalidArgumentException("Sales order must be shipped before marking as delivered");
+            throw new InvalidArgumentException('Sales order must be shipped before marking as delivered');
         }
 
         return $this->repository->update($salesOrder, [
@@ -200,18 +200,18 @@ class SalesOrderService
     public function addItemToSalesOrder(int $soId, array $itemData): SalesOrderItem
     {
         $salesOrder = $this->repository->find($soId);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         // Business rule: Can't add items after confirmation
-        if (!$salesOrder->canBeEdited()) {
-            throw new InvalidArgumentException("Cannot add items to sales order in current status");
+        if (! $salesOrder->canBeEdited()) {
+            throw new InvalidArgumentException('Cannot add items to sales order in current status');
         }
 
         $this->validateItemData($itemData);
-        
+
         return $this->repository->addItem($salesOrder, $itemData);
     }
 
@@ -221,9 +221,9 @@ class SalesOrderService
     public function updateItem(int $soId, int $itemId, array $itemData): bool
     {
         $salesOrder = $this->repository->find($soId);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         return $this->repository->updateItem($salesOrder, $itemId, $itemData);
@@ -235,14 +235,14 @@ class SalesOrderService
     public function removeItem(int $soId, int $itemId): bool
     {
         $salesOrder = $this->repository->find($soId);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
         // Only allow item removal if SO is editable
-        if (!$salesOrder->canBeEdited()) {
-            throw new InvalidArgumentException("Can only remove items from draft or pending approval sales orders");
+        if (! $salesOrder->canBeEdited()) {
+            throw new InvalidArgumentException('Can only remove items from draft or pending approval sales orders');
         }
 
         return $this->repository->removeItem($salesOrder, $itemId);
@@ -254,29 +254,29 @@ class SalesOrderService
     public function fulfillItems(int $soId, array $fulfillmentData): bool
     {
         $salesOrder = $this->repository->find($soId);
-        
-        if (!$salesOrder) {
-            throw new InvalidArgumentException("Sales order not found");
+
+        if (! $salesOrder) {
+            throw new InvalidArgumentException('Sales order not found');
         }
 
-        if (!in_array($salesOrder->status, ['confirmed', 'partially_fulfilled'])) {
-            throw new InvalidArgumentException("Sales order cannot be fulfilled in its current status");
+        if (! in_array($salesOrder->status, ['confirmed', 'partially_fulfilled'])) {
+            throw new InvalidArgumentException('Sales order cannot be fulfilled in its current status');
         }
 
         return DB::transaction(function () use ($salesOrder, $fulfillmentData) {
             foreach ($fulfillmentData['items'] as $itemData) {
                 $item = $this->repository->getItem($salesOrder, $itemData['item_id']);
-                
+
                 if ($item && isset($itemData['quantity_fulfilled'])) {
                     $item->fulfillQuantity(
-                        $itemData['quantity_fulfilled'], 
+                        $itemData['quantity_fulfilled'],
                         $itemData['notes'] ?? null
                     );
                 }
             }
 
             // Update fulfilled_by if this is the first fulfillment
-            if (!$salesOrder->fulfilled_by) {
+            if (! $salesOrder->fulfilled_by) {
                 $this->repository->update($salesOrder, [
                     'fulfilled_by' => $fulfillmentData['fulfilled_by'] ?? Auth::id(),
                 ]);
@@ -345,19 +345,19 @@ class SalesOrderService
     private function validateItemData(array $itemData): void
     {
         $required = ['product_id', 'quantity_ordered', 'unit_price'];
-        
+
         foreach ($required as $field) {
-            if (!isset($itemData[$field])) {
+            if (! isset($itemData[$field])) {
                 throw new InvalidArgumentException("Missing required field: {$field}");
             }
         }
 
         if ($itemData['quantity_ordered'] <= 0) {
-            throw new InvalidArgumentException("Quantity ordered must be greater than 0");
+            throw new InvalidArgumentException('Quantity ordered must be greater than 0');
         }
 
         if ($itemData['unit_price'] < 0) {
-            throw new InvalidArgumentException("Unit price cannot be negative");
+            throw new InvalidArgumentException('Unit price cannot be negative');
         }
     }
 }

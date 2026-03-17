@@ -17,7 +17,7 @@ class WarehouseFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->randomElement(['Distribution Center', 'Warehouse', 'Storage Facility', 'Fulfillment Center']) . ' - ' . $this->faker->city(),
+            'name' => $this->faker->randomElement(['Distribution Center', 'Warehouse', 'Storage Facility', 'Fulfillment Center']).' - '.$this->faker->city(),
             'code' => $this->faker->unique()->bothify('WH###'),
             'phone' => $this->faker->optional(0.7)->phoneNumber(),
             'email' => $this->faker->optional(0.6)->email(),
@@ -33,7 +33,7 @@ class WarehouseFactory extends Factory
     public function distributionCenter()
     {
         return $this->state(fn (array $attributes) => [
-            'name' => 'Distribution Center - ' . $this->faker->city(),
+            'name' => 'Distribution Center - '.$this->faker->city(),
             'code' => $this->faker->unique()->bothify('DC###'),
         ]);
     }
@@ -41,7 +41,7 @@ class WarehouseFactory extends Factory
     public function regionalHub()
     {
         return $this->state(fn (array $attributes) => [
-            'name' => 'Regional Hub - ' . $this->faker->city(),
+            'name' => 'Regional Hub - '.$this->faker->city(),
             'code' => $this->faker->unique()->bothify('RH###'),
         ]);
     }
@@ -49,7 +49,7 @@ class WarehouseFactory extends Factory
     public function retailStore()
     {
         return $this->state(fn (array $attributes) => [
-            'name' => $this->faker->company() . ' Store',
+            'name' => $this->faker->company().' Store',
             'code' => $this->faker->unique()->bothify('ST###'),
         ]);
     }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PurchaseOrderItem;
 use App\Http\Requests\StorePurchaseOrderItemRequest;
 use App\Http\Requests\UpdatePurchaseOrderItemRequest;
+use App\Models\PurchaseOrderItem;
 
 class PurchaseOrderItemController extends Controller
 {

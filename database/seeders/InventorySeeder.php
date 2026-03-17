@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Warehouse;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class InventorySeeder extends Seeder
@@ -18,11 +17,13 @@ class InventorySeeder extends Seeder
         // Check Dependencies
         if (Product::count() === 0) {
             $this->command->info('No products found. Please run ProductSeeder first.');
+
             return;
         }
 
         if (Warehouse::where('is_active', true)->count() === 0) {
             $this->command->info('No active warehouses found. Please run WarehouseSeeder first.');
+
             return;
         }
 
@@ -31,7 +32,7 @@ class InventorySeeder extends Seeder
         // 60% Strategic Distribution
         $this->createStrategicInventory();
 
-        // 40% Random Distribution  
+        // 40% Random Distribution
         $this->createRandomInventory();
 
         // Specific demo scenarios
@@ -60,11 +61,11 @@ class InventorySeeder extends Seeder
             foreach ($popularProducts->take(20) as $product) {
                 $quantityOnHand = fake()->numberBetween(200, 1000);
                 $quantityReserved = fake()->numberBetween(0, min($quantityOnHand, 20));
-                
+
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'warehouse_id' => $mainDC->id
+                        'warehouse_id' => $mainDC->id,
                     ],
                     [
                         'quantity_on_hand' => $quantityOnHand,
@@ -79,11 +80,11 @@ class InventorySeeder extends Seeder
             foreach ($popularProducts->skip(5)->take(15) as $product) {
                 $quantityOnHand = fake()->numberBetween(50, 300);
                 $quantityReserved = fake()->numberBetween(0, min($quantityOnHand, 10));
-                
+
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'warehouse_id' => $eastHub->id
+                        'warehouse_id' => $eastHub->id,
                     ],
                     [
                         'quantity_on_hand' => $quantityOnHand,
@@ -98,11 +99,11 @@ class InventorySeeder extends Seeder
             foreach ($popularProducts->skip(10)->take(10) as $product) {
                 $quantityOnHand = fake()->numberBetween(5, 50);
                 $quantityReserved = fake()->numberBetween(0, min($quantityOnHand, 5));
-                
+
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'warehouse_id' => $westStorage->id
+                        'warehouse_id' => $westStorage->id,
                     ],
                     [
                         'quantity_on_hand' => $quantityOnHand,
@@ -129,11 +130,11 @@ class InventorySeeder extends Seeder
             foreach ($selectedWarehouses as $warehouse) {
                 $quantityOnHand = fake()->numberBetween(0, 500);
                 $quantityReserved = fake()->numberBetween(0, min($quantityOnHand, 50)); // Never more than on_hand
-                
+
                 Inventory::firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'warehouse_id' => $warehouse->id
+                        'warehouse_id' => $warehouse->id,
                     ],
                     [
                         'quantity_on_hand' => $quantityOnHand,
@@ -152,20 +153,20 @@ class InventorySeeder extends Seeder
 
         foreach ($allProducts as $product) {
             $existingInventory = Inventory::where('product_id', $product->id)->count();
-            
+
             if ($existingInventory < 2) {
                 // Give this product inventory in 1-2 warehouses
                 $warehouseCount = fake()->numberBetween(1, 2);
                 $selectedWarehouses = $activeWarehouses->random($warehouseCount);
-                
+
                 foreach ($selectedWarehouses as $warehouse) {
                     $quantityOnHand = fake()->numberBetween(10, 200);
                     $quantityReserved = fake()->numberBetween(0, min($quantityOnHand, 10));
-                    
+
                     Inventory::firstOrCreate(
                         [
                             'product_id' => $product->id,
-                            'warehouse_id' => $warehouse->id
+                            'warehouse_id' => $warehouse->id,
                         ],
                         [
                             'quantity_on_hand' => $quantityOnHand,
@@ -185,15 +186,15 @@ class InventorySeeder extends Seeder
         $activeProducts = Product::where('is_active', true)
             ->where('track_quantity', true)
             ->get();
-        
+
         $activeWarehouses = Warehouse::where('is_active', true)->get();
 
         // Create various inventory scenarios using factory states with duplicate prevention
-        
+
         // High stock items (20 records)
         $this->createInventoryWithoutDuplicates($activeProducts, $activeWarehouses, 'highStock', 20);
 
-        // Low stock items (15 records)  
+        // Low stock items (15 records)
         $this->createInventoryWithoutDuplicates($activeProducts, $activeWarehouses, 'lowStock', 15);
 
         // Out of stock items (10 records)
@@ -214,14 +215,14 @@ class InventorySeeder extends Seeder
 
         while ($created < $count && $attempts < $maxAttempts) {
             $attempts++;
-            
+
             $product = $products->random();
             $warehouse = $warehouses->random();
 
             // Check if this combination already exists
             if (Inventory::where('product_id', $product->id)
-                       ->where('warehouse_id', $warehouse->id)
-                       ->exists()) {
+                ->where('warehouse_id', $warehouse->id)
+                ->exists()) {
                 continue; // Skip this combination, it already exists
             }
 
@@ -230,12 +231,12 @@ class InventorySeeder extends Seeder
                 if ($factoryState === 'default') {
                     Inventory::factory()->create([
                         'product_id' => $product->id,
-                        'warehouse_id' => $warehouse->id
+                        'warehouse_id' => $warehouse->id,
                     ]);
                 } else {
                     Inventory::factory()->{$factoryState}()->create([
                         'product_id' => $product->id,
-                        'warehouse_id' => $warehouse->id
+                        'warehouse_id' => $warehouse->id,
                     ]);
                 }
                 $created++;
@@ -257,7 +258,7 @@ class InventorySeeder extends Seeder
         // Get specific products for demo
         $macbook = Product::where('sku', 'LAPTOP-MBP16-001')->first();
         $smartphone = Product::where('sku', 'PHONE-BSX1-001')->first();
-    
+
         // Get specific warehouses
         $mainDC = Warehouse::where('code', 'MAIN-DC')->first();
         $eastHub = Warehouse::where('code', 'EAST-HUB')->first();

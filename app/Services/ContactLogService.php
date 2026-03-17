@@ -30,8 +30,8 @@ class ContactLogService
     public function getContactLogById(int $id): ContactLog
     {
         $contactLog = $this->contactLogRepository->findById($id, ['contactable', 'contactPerson']);
-        
-        if (!$contactLog) {
+
+        if (! $contactLog) {
             throw new ModelNotFoundException("Contact log not found with ID: {$id}");
         }
 
@@ -74,7 +74,7 @@ class ContactLogService
 
             $updated = $this->contactLogRepository->update($id, $data);
 
-            if (!$updated) {
+            if (! $updated) {
                 throw new \Exception('Failed to update contact log.');
             }
 
@@ -95,7 +95,7 @@ class ContactLogService
             $contactLog = $this->getContactLogById($id);
             $deleted = $this->contactLogRepository->delete($id);
 
-            if (!$deleted) {
+            if (! $deleted) {
                 throw new \Exception('Failed to delete contact log.');
             }
 
@@ -135,17 +135,17 @@ class ContactLogService
 
     public function getFormattedDuration(ContactLog $contactLog): string
     {
-        if (!$contactLog->duration_minutes) {
+        if (! $contactLog->duration_minutes) {
             return 'N/A';
         }
-        
+
         $hours = floor($contactLog->duration_minutes / 60);
         $minutes = $contactLog->duration_minutes % 60;
-        
+
         if ($hours > 0) {
             return "{$hours}h {$minutes}m";
         }
-        
+
         return "{$minutes}m";
     }
 
@@ -159,15 +159,15 @@ class ContactLogService
         $query = ContactLog::query();
 
         // Apply filters
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('contact_date', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('contact_date', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['contactable_type'])) {
+        if (! empty($filters['contactable_type'])) {
             $query->where('contactable_type', $filters['contactable_type']);
         }
 
@@ -192,11 +192,11 @@ class ContactLogService
         $rules = [
             'contactable_type' => 'required|string|in:App\\Models\\Supplier,App\\Models\\Customer',
             'contactable_id' => 'required|integer|min:1',
-            'contact_type' => 'required|in:' . implode(',', array_keys(ContactLogConstants::CONTACT_TYPES)),
-            'direction' => 'required|in:' . implode(',', array_keys(ContactLogConstants::DIRECTIONS)),
+            'contact_type' => 'required|in:'.implode(',', array_keys(ContactLogConstants::CONTACT_TYPES)),
+            'direction' => 'required|in:'.implode(',', array_keys(ContactLogConstants::DIRECTIONS)),
             'subject' => 'required|string|max:255',
             'description' => 'required|string|min:10',
-            'outcome' => 'nullable|in:' . implode(',', array_keys(ContactLogConstants::OUTCOMES)),
+            'outcome' => 'nullable|in:'.implode(',', array_keys(ContactLogConstants::OUTCOMES)),
             'contact_person_id' => 'nullable|exists:users,id',
             'external_contact_person' => 'nullable|string|max:255',
             'external_contact_email' => 'nullable|email|max:255',
@@ -205,7 +205,7 @@ class ContactLogService
             'duration_minutes' => 'nullable|integer|min:1|max:1440',
             'follow_up_date' => 'nullable|date|after:contact_date',
             'attachments' => 'nullable|array|max:10',
-            'priority' => 'required|in:' . implode(',', array_keys(ContactLogConstants::PRIORITIES)),
+            'priority' => 'required|in:'.implode(',', array_keys(ContactLogConstants::PRIORITIES)),
             'tags' => 'nullable|array|max:20',
         ];
 
@@ -220,13 +220,13 @@ class ContactLogService
 
     private function validateContactable(string $type, int $id): void
     {
-        $model = match($type) {
+        $model = match ($type) {
             'App\\Models\\Supplier' => Supplier::find($id),
             'App\\Models\\Customer' => Customer::find($id),
             default => null
         };
 
-        if (!$model) {
+        if (! $model) {
             throw new ModelNotFoundException("Contact entity not found: {$type} with ID {$id}");
         }
     }

@@ -32,7 +32,7 @@ class PurchaseOrderItem extends Model
         'quantity_rejected',
         'rejection_reason',
         'metadata',
-        'notes'
+        'notes',
     ];
 
     protected $casts = [
@@ -47,14 +47,18 @@ class PurchaseOrderItem extends Model
         'final_line_total' => 'decimal:4',
         'expected_delivery_date' => 'date',
         'last_received_at' => 'datetime',
-        'metadata' => 'array'
+        'metadata' => 'array',
     ];
 
     // Status Constants
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_PARTIALLY_RECEIVED = 'partially_received';
+
     public const STATUS_FULLY_RECEIVED = 'fully_received';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_BACKORDERED = 'backordered';
 
     public const STATUSES = [
@@ -84,7 +88,7 @@ class PurchaseOrderItem extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->item_status) {
+        return match ($this->item_status) {
             self::STATUS_PENDING => 'yellow',
             self::STATUS_PARTIALLY_RECEIVED => 'orange',
             self::STATUS_FULLY_RECEIVED => 'green',
@@ -96,7 +100,7 @@ class PurchaseOrderItem extends Model
 
     public function getReceivingProgressAttribute(): float
     {
-        return $this->quantity_ordered > 0 ? 
+        return $this->quantity_ordered > 0 ?
                ($this->quantity_received / $this->quantity_ordered) * 100 : 0;
     }
 
@@ -154,29 +158,29 @@ class PurchaseOrderItem extends Model
     public function scopeOverdue($query)
     {
         return $query->where('expected_delivery_date', '<', now())
-                    ->whereNotIn('item_status', [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED]);
+            ->whereNotIn('item_status', [self::STATUS_FULLY_RECEIVED, self::STATUS_CANCELLED]);
     }
 
     // Business Logic Methods
     public function canReceiveQuantity(int $quantity): bool
     {
-        return $quantity > 0 && 
+        return $quantity > 0 &&
                 ($this->quantity_received + $quantity) <= $this->quantity_ordered &&
                 $this->item_status !== self::STATUS_CANCELLED;
     }
 
     public function receiveQuantity(int $quantity, ?string $notes = null): bool
     {
-        if (!$this->canReceiveQuantity($quantity)) {
+        if (! $this->canReceiveQuantity($quantity)) {
             return false;
         }
 
         $this->quantity_received += $quantity;
         $this->last_received_at = now();
-        
+
         if ($notes) {
-            $this->receiving_notes = $this->receiving_notes 
-                ? $this->receiving_notes . "\n" . $notes 
+            $this->receiving_notes = $this->receiving_notes
+                ? $this->receiving_notes."\n".$notes
                 : $notes;
         }
 
@@ -196,11 +200,12 @@ class PurchaseOrderItem extends Model
         }
 
         $this->quantity_rejected += $quantity;
-        $this->rejection_reason = $this->rejection_reason 
-            ? $this->rejection_reason . "\n" . $reason 
+        $this->rejection_reason = $this->rejection_reason
+            ? $this->rejection_reason."\n".$reason
             : $reason;
 
         $this->save();
+
         return true;
     }
 
@@ -218,11 +223,11 @@ class PurchaseOrderItem extends Model
     public function calculateTotals(): void
     {
         $this->line_total = $this->quantity_ordered * $this->unit_cost;
-        
+
         if ($this->discount_percentage > 0) {
             $this->discount_amount = $this->line_total * ($this->discount_percentage / 100);
         }
-        
+
         $this->final_line_total = $this->line_total - $this->discount_amount;
         $this->quantity_pending = $this->quantity_ordered - $this->quantity_received;
     }
@@ -231,21 +236,21 @@ class PurchaseOrderItem extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($item) {
             // Capture product information at the time of order creation
             if ($item->product) {
                 $item->product_sku = $item->product->sku;
                 $item->product_name = $item->product->name;
             }
-            
+
             $item->calculateTotals();
         });
-        
+
         static::updating(function ($item) {
             $item->calculateTotals();
         });
-        
+
         static::saved(function ($item) {
             // Update the parent purchase order totals whenever an item changes
             $item->purchaseOrder->calculateTotals();

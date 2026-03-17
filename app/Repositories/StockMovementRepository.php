@@ -103,9 +103,9 @@ class StockMovementRepository implements StockMovementRepositoryInterface
             'movementTypes' => $movementTypes,
             'statusCounts' => array_merge([
                 'pending' => 0,
-                'approved' => 0, 
+                'approved' => 0,
                 'rejected' => 0,
-                'applied' => 0
+                'applied' => 0,
             ], $statusCounts),
             'valueAnalysis' => [
                 'valueIn' => round($valueStats->value_in ?? 0, 2),
@@ -119,14 +119,14 @@ class StockMovementRepository implements StockMovementRepositoryInterface
                 'netQuantity' => $quantityStats->net_quantity ?? 0,
                 'avgQuantity' => round($quantityStats->avg_quantity ?? 0, 2),
             ],
-            'generatedAt' => now()->toISOString()
+            'generatedAt' => now()->toISOString(),
         ];
     }
 
     private function applyFilters($query, array $filters)
     {
         // Global search
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('reference_number', 'like', "%{$search}%")
@@ -134,7 +134,7 @@ class StockMovementRepository implements StockMovementRepositoryInterface
                     ->orWhere('notes', 'like', "%{$search}%")
                     ->orWhereHas('product', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%");
+                            ->orWhere('sku', 'like', "%{$search}%");
                     })
                     ->orWhereHas('warehouse', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
@@ -146,39 +146,39 @@ class StockMovementRepository implements StockMovementRepositoryInterface
         }
 
         // Movement type filter
-        if (!empty($filters['movement_types'])) {
-            $types = is_array($filters['movement_types']) 
-                ? $filters['movement_types'] 
+        if (! empty($filters['movement_types'])) {
+            $types = is_array($filters['movement_types'])
+                ? $filters['movement_types']
                 : explode(',', $filters['movement_types']);
             $query->whereIn('movement_type', $types);
         }
 
         // Status filter
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
         // Product filter
-        if (!empty($filters['product_id'])) {
+        if (! empty($filters['product_id'])) {
             $query->where('product_id', $filters['product_id']);
         }
 
         // Warehouse filter
-        if (!empty($filters['warehouse_id'])) {
+        if (! empty($filters['warehouse_id'])) {
             $query->where('warehouse_id', $filters['warehouse_id']);
         }
 
         // User filter
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }
 
         // Date filters
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
@@ -320,82 +320,82 @@ class StockMovementRepository implements StockMovementRepositoryInterface
     private function applyAdvancedFilters($query, array $filters)
     {
         // Global search across multiple fields
-        if (!empty($filters['globalSearch'])) {
+        if (! empty($filters['globalSearch'])) {
             $globalSearch = $filters['globalSearch'];
-            $query->where(function($q) use ($globalSearch) {
+            $query->where(function ($q) use ($globalSearch) {
                 $q->where('reference_number', 'like', "%{$globalSearch}%")
                     ->orWhere('reason', 'like', "%{$globalSearch}%")
                     ->orWhere('notes', 'like', "%{$globalSearch}%")
-                    ->orWhereHas('product', function($productQuery) use ($globalSearch) {
+                    ->orWhereHas('product', function ($productQuery) use ($globalSearch) {
                         $productQuery->where('name', 'like', "%{$globalSearch}%")
-                                    ->orWhere('sku', 'like', "%{$globalSearch}%");
+                            ->orWhere('sku', 'like', "%{$globalSearch}%");
                     })
-                    ->orWhereHas('warehouse', function($warehouseQuery) use ($globalSearch) {
+                    ->orWhereHas('warehouse', function ($warehouseQuery) use ($globalSearch) {
                         $warehouseQuery->where('name', 'like', "%{$globalSearch}%");
                     })
-                    ->orWhereHas('user', function($userQuery) use ($globalSearch) {
+                    ->orWhereHas('user', function ($userQuery) use ($globalSearch) {
                         $userQuery->where('name', 'like', "%{$globalSearch}%");
                     });
             });
         }
 
         // Text field filters
-        if (!empty($filters['referenceNumber'])) {
+        if (! empty($filters['referenceNumber'])) {
             $query->where('reference_number', 'like', "%{$filters['referenceNumber']}%");
         }
 
-        if (!empty($filters['reason'])) {
+        if (! empty($filters['reason'])) {
             $query->where('reason', 'like', "%{$filters['reason']}%");
         }
 
-        if (!empty($filters['notes'])) {
+        if (! empty($filters['notes'])) {
             $query->where('notes', 'like', "%{$filters['notes']}%");
         }
 
-        if (!empty($filters['productName'])) {
-            $query->whereHas('product', function($q) use ($filters) {
+        if (! empty($filters['productName'])) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['productName']}%");
             });
         }
 
-        if (!empty($filters['productSku'])) {
-            $query->whereHas('product', function($q) use ($filters) {
+        if (! empty($filters['productSku'])) {
+            $query->whereHas('product', function ($q) use ($filters) {
                 $q->where('sku', 'like', "%{$filters['productSku']}%");
             });
         }
 
-        if (!empty($filters['warehouseName'])) {
-            $query->whereHas('warehouse', function($q) use ($filters) {
+        if (! empty($filters['warehouseName'])) {
+            $query->whereHas('warehouse', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['warehouseName']}%");
             });
         }
 
-        if (!empty($filters['userName'])) {
-            $query->whereHas('user', function($q) use ($filters) {
+        if (! empty($filters['userName'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['userName']}%");
             });
         }
 
         // Movement type filters
-        if (!empty($filters['movementTypes'])) {
+        if (! empty($filters['movementTypes'])) {
             $query->whereIn('movement_type', $filters['movementTypes']);
         }
 
         // Status filters
-        if (!empty($filters['statuses'])) {
+        if (! empty($filters['statuses'])) {
             $query->whereIn('status', $filters['statuses']);
         }
 
         // Entity ID filters
-        if (!empty($filters['productIds'])) {
+        if (! empty($filters['productIds'])) {
             $query->whereIn('product_id', $filters['productIds']);
         }
 
-        if (!empty($filters['warehouseIds'])) {
+        if (! empty($filters['warehouseIds'])) {
             $query->whereIn('warehouse_id', $filters['warehouseIds']);
         }
 
-        if (!empty($filters['userIds'])) {
+        if (! empty($filters['userIds'])) {
             $query->whereIn('user_id', $filters['userIds']);
         }
 
@@ -442,24 +442,24 @@ class StockMovementRepository implements StockMovementRepositoryInterface
         }
 
         // Date filters
-        if (!empty($filters['createdAfter'])) {
+        if (! empty($filters['createdAfter'])) {
             $query->where('created_at', '>=', $filters['createdAfter']);
         }
 
-        if (!empty($filters['createdBefore'])) {
+        if (! empty($filters['createdBefore'])) {
             $query->where('created_at', '<=', $filters['createdBefore']);
         }
 
-        if (!empty($filters['approvedAfter'])) {
+        if (! empty($filters['approvedAfter'])) {
             $query->where('approved_at', '>=', $filters['approvedAfter']);
         }
 
-        if (!empty($filters['approvedBefore'])) {
+        if (! empty($filters['approvedBefore'])) {
             $query->where('approved_at', '<=', $filters['approvedBefore']);
         }
 
         // Movement direction filters
-        if (!empty($filters['movementDirection'])) {
+        if (! empty($filters['movementDirection'])) {
             if ($filters['movementDirection'] === 'increase') {
                 $query->where('quantity_moved', '>', 0);
             } elseif ($filters['movementDirection'] === 'decrease') {
@@ -468,32 +468,32 @@ class StockMovementRepository implements StockMovementRepositoryInterface
         }
 
         // Related document type filters
-        if (!empty($filters['relatedDocumentTypes'])) {
+        if (! empty($filters['relatedDocumentTypes'])) {
             $query->whereIn('related_document_type', $filters['relatedDocumentTypes']);
         }
 
         // Quick filters
-        if (!empty($filters['myMovements'])) {
+        if (! empty($filters['myMovements'])) {
             $query->where('user_id', auth()->id());
         }
 
-        if (!empty($filters['recentMovements'])) {
+        if (! empty($filters['recentMovements'])) {
             $query->where('created_at', '>=', now()->subDays(7));
         }
 
-        if (!empty($filters['pendingApproval'])) {
+        if (! empty($filters['pendingApproval'])) {
             $query->where('status', 'pending');
         }
 
-        if (!empty($filters['highValueMovements'])) {
+        if (! empty($filters['highValueMovements'])) {
             $query->where('total_value', '>', 1000); // Adjust threshold as needed
         }
 
-        if (!empty($filters['hasApprover'])) {
+        if (! empty($filters['hasApprover'])) {
             $query->whereNotNull('approved_by');
         }
 
-        if (!empty($filters['hasDocumentReference'])) {
+        if (! empty($filters['hasDocumentReference'])) {
             $query->whereNotNull('related_document_type')
                 ->whereNotNull('related_document_id');
         }

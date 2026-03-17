@@ -304,8 +304,8 @@ const SuppliersIndex = ({
     // Helper functions (moved after supplierArray definition)
     const getCountries = () => {
         if (!supplierArray || supplierArray.length === 0) return [];
-        const countries = [...new Set(supplierArray
-            .map(s => s.address?.country)
+        const countries = [...new Set((supplierArray || [])
+            .map(s => s?.address?.country)
             .filter(Boolean)
         )].sort();
         return countries;
@@ -323,37 +323,37 @@ const SuppliersIndex = ({
         );
     };
 
-    const sortedSuppliers = [...supplierArray].sort((a, b) => {
+    const sortedSuppliers = (supplierArray || []).slice().sort((a, b) => {
         let aValue, bValue;
         
         switch (sortBy) {
             case 'company_name':
-                aValue = a.company_name.toLowerCase();
-                bValue = b.company_name.toLowerCase();
+                aValue = a?.company_name?.toLowerCase() || '';
+                bValue = b?.company_name?.toLowerCase() || '';
                 break;
             case 'status':
-                aValue = a.status;
-                bValue = b.status;
+                aValue = a?.status || '';
+                bValue = b?.status || '';
                 break;
             case 'type':
-                aValue = a.supplier_type;
-                bValue = b.supplier_type;
+                aValue = a?.supplier_type || '';
+                bValue = b?.supplier_type || '';
                 break;
             case 'rating':
-                aValue = a.performance_metrics.overall_rating;
-                bValue = b.performance_metrics.overall_rating;
+                aValue = a?.performance_metrics?.overall_rating || 0;
+                bValue = b?.performance_metrics?.overall_rating || 0;
                 break;
             case 'orders':
-                aValue = a.performance_metrics.total_orders;
-                bValue = b.performance_metrics.total_orders;
+                aValue = a?.performance_metrics?.total_orders || 0;
+                bValue = b?.performance_metrics?.total_orders || 0;
                 break;
             case 'created_at':
-                aValue = new Date(a.timestamps.created_at).getTime();
-                bValue = new Date(b.timestamps.created_at).getTime();
+                aValue = new Date(a?.timestamps?.created_at || '').getTime() || 0;
+                bValue = new Date(b?.timestamps?.created_at || '').getTime() || 0;
                 break;
             default:
-                aValue = a.company_name.toLowerCase();
-                bValue = b.company_name.toLowerCase();
+                aValue = a?.company_name?.toLowerCase() || '';
+                bValue = b?.company_name?.toLowerCase() || '';
         }
         
         if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -552,7 +552,7 @@ const SuppliersIndex = ({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Statuses</SelectItem>
-                                        {Object.entries(constants.statuses).map(([key, label]) => (
+                                        {constants?.statuses && Object.entries(constants.statuses).map(([key, label]) => (
                                             <SelectItem key={key} value={key}>{label}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -564,7 +564,7 @@ const SuppliersIndex = ({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Types</SelectItem>
-                                        {Object.entries(constants.supplier_types).map(([key, label]) => (
+                                        {constants?.supplier_types && Object.entries(constants.supplier_types).map(([key, label]) => (
                                             <SelectItem key={key} value={key}>{label}</SelectItem>
                                         ))}
                                     </SelectContent>

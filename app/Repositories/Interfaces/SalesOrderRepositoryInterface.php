@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Repositories\Interfaces;
 
@@ -73,39 +73,39 @@ interface SalesOrderRepositoryInterface
      * Get overdue sales orders
      */
     public function findOverdue(array $with = []): Collection;
-    
+
     /**
      * Get sales orders by warehouse
      */
     public function findByWarehouse(int $warehouseId, array $with = []): Collection;
-    
+
     /**
      * Get sales orders by customer
      */
     public function findByCustomer(string $customerName, array $with = []): Collection;
-    
+
     /**
      * Get sales orders requiring attention (urgent, overdue, etc.)
      */
     public function findRequiringAttention(): Collection;
-    
+
     /**
      * Get sales order statistics
      */
     public function getStatistics(): array;
 
     // ====== SEARCH AND FILTER METHODS ======
-    
+
     /**
      * Search sales orders with advanced filters
      */
     public function search(array $criteria): Collection;
-    
+
     /**
      * Get sales orders with pending approvals
      */
     public function getPendingApprovals(): Collection;
-    
+
     /**
      * Get recent sales orders
      */

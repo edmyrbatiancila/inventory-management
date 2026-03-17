@@ -27,30 +27,30 @@ class StoreStockTransferRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:warehouses,id',
-                'different:to_warehouse_id'
+                'different:to_warehouse_id',
             ],
             'to_warehouse_id' => [
                 'required',
                 'integer',
                 'exists:warehouses,id',
-                'different:from_warehouse_id'
+                'different:from_warehouse_id',
             ],
             'product_id' => [
                 'required',
                 'integer',
-                'exists:products,id'
+                'exists:products,id',
             ],
             'quantity_transferred' => [
                 'required',
                 'integer',
                 'min:1',
-                'max:999999'
+                'max:999999',
             ],
             'notes' => [
                 'nullable',
                 'string',
-                'max:1000'
-            ]
+                'max:1000',
+            ],
         ];
     }
 

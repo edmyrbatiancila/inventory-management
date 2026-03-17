@@ -7,19 +7,20 @@ use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use App\Repositories\Interfaces\StockAdjustmentRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class StockAdjustmentService
 {
     protected StockAdjustmentRepositoryInterface $stockAdjustmentRepository;
+
     protected InventoryRepositoryInterface $inventoryRepository;
 
     public function __construct(
         StockAdjustmentRepositoryInterface $stockAdjustmentRepository,
         InventoryRepositoryInterface $inventoryRepository
-    ){
+    ) {
         $this->stockAdjustmentRepository = $stockAdjustmentRepository;
         $this->inventoryRepository = $inventoryRepository;
     }
@@ -53,8 +54,8 @@ class StockAdjustmentService
             return DB::transaction(function () use ($data) {
                 // Get inventory record
                 $inventory = $this->inventoryRepository->findById($data['inventory_id']);
-                
-                if (!$inventory) {
+
+                if (! $inventory) {
                     throw new \Exception('Inventory record not found');
                 }
 
@@ -62,7 +63,7 @@ class StockAdjustmentService
                 $quantityBefore = $inventory->quantity_on_hand;
                 $adjustmentType = $data['adjustment_type'];
                 $quantityAdjusted = abs($data['quantity_adjusted']); // Ensure positive number
-                
+
                 // Calculate new quantity
                 if ($adjustmentType === 'increase') {
                     $quantityAfter = $quantityBefore + $quantityAdjusted;
@@ -91,8 +92,8 @@ class StockAdjustmentService
             });
 
         } catch (\Exception $e) {
-            Log::error('Error creating stock adjustment: ' . $e->getMessage());
-            throw new \Exception('Failed to create stock adjustment: ' . $e->getMessage());
+            Log::error('Error creating stock adjustment: '.$e->getMessage());
+            throw new \Exception('Failed to create stock adjustment: '.$e->getMessage());
         }
     }
 
@@ -126,7 +127,7 @@ class StockAdjustmentService
     public function getAdjustmentAnalytics(): array
     {
         $totalsByType = $this->stockAdjustmentRepository->getTotalAdjustmentsByType();
-        
+
         return [
             'total_adjustments' => collect($totalsByType)->sum('count'),
             'increases' => $totalsByType['increase'] ?? ['count' => 0, 'total_quantity' => 0],

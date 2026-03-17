@@ -1,16 +1,16 @@
 <?php
 
+use App\Models\Product;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Product;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['type' => 'admin']);
     $this->warehouse = Warehouse::factory()->create();
     $this->product = Product::factory()->create(['price' => 100.00]);
-    
+
     $this->salesOrder = SalesOrder::factory()->create([
         'status' => 'draft',
         'warehouse_id' => $this->warehouse->id,
@@ -24,7 +24,7 @@ beforeEach(function () {
         'product_id' => $this->product->id,
         'quantity_ordered' => 10,
         'unit_price' => 100.00,
-        'line_total' => 1000.00
+        'line_total' => 1000.00,
     ]);
 
     $this->actingAs($this->user);
@@ -39,7 +39,7 @@ it('can update sales order with tax rate as percentage', function () {
     ]);
 
     $response->assertSessionDoesntHaveErrors(['tax_rate']);
-    
+
     // Verify the tax_rate was converted to decimal
     $this->salesOrder->refresh();
     expect((float) $this->salesOrder->tax_rate)->toBe(0.22);

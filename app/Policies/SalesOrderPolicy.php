@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\SalesOrder;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SalesOrderPolicy
 {
@@ -41,7 +40,7 @@ class SalesOrderPolicy
         if ($this->isAdmin($user)) {
             return in_array($salesOrder->status, ['draft', 'pending_approval']);
         }
-        
+
         // Regular users can only edit their own draft sales orders
         return $salesOrder->status === 'draft' &&
                 $salesOrder->created_by === $user->id;
@@ -56,7 +55,7 @@ class SalesOrderPolicy
         if ($this->isAdmin($user)) {
             return $salesOrder->status === 'draft';
         }
-        
+
         // Regular users can only delete their own draft sales orders
         return $salesOrder->status === 'draft' &&
                 $salesOrder->created_by === $user->id;
@@ -129,7 +128,7 @@ class SalesOrderPolicy
     public function cancel(User $user, SalesOrder $salesOrder): bool
     {
         // Admins and authorized users can cancel orders that aren't delivered, closed, or already cancelled
-        return !in_array($salesOrder->status, ['delivered', 'closed', 'cancelled']);
+        return ! in_array($salesOrder->status, ['delivered', 'closed', 'cancelled']);
     }
 
     /**

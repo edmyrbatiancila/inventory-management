@@ -8,19 +8,18 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-
     public function dashboard()
     {
         $user = Auth::user();
 
         if (Auth::check() && $user->type === 'admin') {
             return Inertia::render('admin/AdminDashboard', [
-                'user' => $user
+                'user' => $user,
             ]);
         }
 
         return Inertia::render('Dashboard', [
-            'user' => $user
+            'user' => $user,
         ]);
     }
 

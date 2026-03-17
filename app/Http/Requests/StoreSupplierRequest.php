@@ -29,7 +29,7 @@ class StoreSupplierRequest extends FormRequest
             'trade_name' => 'nullable|string|max:255',
             'supplier_type' => ['required', Rule::in(array_keys(SupplierConstants::SUPPLIER_TYPES))],
             'status' => ['nullable', Rule::in(array_keys(SupplierConstants::STATUSES))],
-            
+
             // Contact Information
             'contact_person' => 'nullable|string|max:255',
             'contact_title' => 'nullable|string|max:255',
@@ -38,7 +38,7 @@ class StoreSupplierRequest extends FormRequest
             'mobile' => 'nullable|string|max:20',
             'fax' => 'nullable|string|max:20',
             'website' => 'nullable|url|max:255',
-            
+
             // Address Information
             'address_line_1' => 'required|string|max:500',
             'address_line_2' => 'nullable|string|max:500',
@@ -51,24 +51,24 @@ class StoreSupplierRequest extends FormRequest
             'tax_id' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:100',
             'business_description' => 'nullable|string|max:1000',
-            'established_year' => 'nullable|integer|min:1800|max:' . date('Y'),
-            
+            'established_year' => 'nullable|integer|min:1800|max:'.date('Y'),
+
             // Financial Information
             'payment_terms' => ['nullable', Rule::in(array_keys(SupplierConstants::PAYMENT_TERMS))],
             'currency' => 'nullable|string|size:3|in:USD,EUR,GBP,JPY,CAD,AUD',
             'credit_limit' => 'nullable|numeric|min:0|max:999999999.99',
             'payment_method' => ['nullable', Rule::in(array_keys(SupplierConstants::PAYMENT_METHODS))],
-            
+
             // Banking Information
             'bank_name' => 'nullable|string|max:255',
             'bank_account_number' => 'nullable|string|max:50',
             'bank_routing_number' => 'nullable|string|max:20',
-            
+
             // Lead Times
             'standard_lead_time' => 'nullable|integer|min:0|max:365',
             'rush_order_lead_time' => 'nullable|integer|min:0|max:365',
             'minimum_order_value' => 'nullable|numeric|min:0',
-            
+
             // Compliance
             'tax_exempt' => 'boolean',
             'required_documents' => 'nullable|array',
@@ -78,11 +78,11 @@ class StoreSupplierRequest extends FormRequest
             'shipping_methods' => 'nullable|array',
             'product_categories' => 'nullable|array',
             'tags' => 'nullable|array',
-            
+
             // Notes
             'internal_notes' => 'nullable|string|max:2000',
             'special_instructions' => 'nullable|string|max:1000',
-            
+
             // Contract Information
             'contract_type' => ['nullable', Rule::in(array_keys(SupplierConstants::CONTRACT_TYPES))],
             'contract_start_date' => 'nullable|date',
@@ -127,18 +127,18 @@ class StoreSupplierRequest extends FormRequest
         if ($this->phone) {
             $this->merge(['phone' => preg_replace('/[^0-9+\-\(\)\s]/', '', $this->phone)]);
         }
-        
+
         if ($this->mobile) {
             $this->merge(['mobile' => preg_replace('/[^0-9+\-\(\)\s]/', '', $this->mobile)]);
         }
-        
+
         // Normalize email
         if ($this->email) {
             $this->merge(['email' => strtolower(trim($this->email))]);
         }
-        
+
         // Set default status
-        if (!$this->status) {
+        if (! $this->status) {
             $this->merge(['status' => 'pending_approval']);
         }
     }

@@ -20,7 +20,7 @@ class CustomerResource extends JsonResource
             'customer_code' => $this->customer_code,
             'customer_type' => $this->customer_type,
             'customer_type_label' => CustomerConstants::CUSTOMER_TYPES[$this->customer_type] ?? $this->customer_type,
-            
+
             // Name Information
             'company_name' => $this->company_name,
             'trade_name' => $this->trade_name,
@@ -28,12 +28,12 @@ class CustomerResource extends JsonResource
             'last_name' => $this->last_name,
             'display_name' => $this->getDisplayName(),
             'full_name' => $this->getFullName(),
-            
+
             // Status
             'status' => $this->status,
             'status_label' => CustomerConstants::STATUSES[$this->status] ?? $this->status,
             'status_color' => $this->getStatusBadgeColor(),
-            
+
             // Contact Information
             'contact_person' => $this->contact_person,
             'contact_title' => $this->contact_title,
@@ -72,7 +72,7 @@ class CustomerResource extends JsonResource
             'established_year' => $this->established_year,
             'company_size' => $this->company_size,
             'company_size_label' => CustomerConstants::COMPANY_SIZES[$this->company_size] ?? $this->company_size,
-            
+
             // Financial Information
             'payment_terms' => $this->payment_terms,
             'payment_terms_label' => CustomerConstants::PAYMENT_TERMS[$this->payment_terms] ?? $this->payment_terms,
@@ -98,14 +98,14 @@ class CustomerResource extends JsonResource
                     'email' => $this->salesRep->email,
                 ];
             }),
-            
+
             // Pricing & Discounts
             'price_tier' => $this->price_tier,
             'price_tier_label' => CustomerConstants::PRICE_TIERS[$this->price_tier] ?? $this->price_tier,
             'default_discount_percentage' => $this->default_discount_percentage,
             'volume_discount_eligible' => $this->volume_discount_eligible,
             'seasonal_discount_eligible' => $this->seasonal_discount_eligible,
-            
+
             // Performance Metrics
             'customer_satisfaction_rating' => $this->customer_satisfaction_rating,
             'total_orders' => $this->total_orders,
@@ -124,15 +124,15 @@ class CustomerResource extends JsonResource
             'newsletter_subscription' => $this->newsletter_subscription,
             'tax_exempt' => $this->tax_exempt,
             'tax_exempt_certificate' => $this->tax_exempt_certificate,
-            
+
             // Categories & Tags
             'customer_categories' => $this->customer_categories,
             'tags' => $this->tags,
-            
+
             // Notes
             'internal_notes' => $this->internal_notes,
             'sales_notes' => $this->sales_notes,
-            
+
             // Dates
             'last_order_date' => $this->last_order_date?->format('Y-m-d'),
             'last_contact_date' => $this->last_contact_date?->format('Y-m-d'),
@@ -161,11 +161,11 @@ class CustomerResource extends JsonResource
             'can_place_orders' => $this->canPlaceOrders(),
             'is_active' => $this->isActive(),
             'has_available_credit' => $this->hasAvailableCredit(),
-            'credit_utilization_percentage' => $this->credit_limit > 0 ? 
+            'credit_utilization_percentage' => $this->credit_limit > 0 ?
                 round(($this->current_balance / $this->credit_limit) * 100, 2) : 0,
-            
+
             // Related Data
-            'contact_logs_count' => $this->whenLoaded('contactLogs', fn() => $this->contactLogs->count()),
+            'contact_logs_count' => $this->whenLoaded('contactLogs', fn () => $this->contactLogs->count()),
             'recent_contact_logs' => $this->whenLoaded('contactLogs', function () {
                 return $this->contactLogs->take(3)->map(function ($log) {
                     return [
@@ -182,7 +182,7 @@ class CustomerResource extends JsonResource
 
     private function getStatusBadgeColor(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'active' => 'green',
             'inactive' => 'gray',
             'suspended' => 'red',
@@ -194,9 +194,9 @@ class CustomerResource extends JsonResource
     private function getDisplayName(): string
     {
         if ($this->customer_type === 'individual') {
-            return trim($this->first_name . ' ' . $this->last_name);
+            return trim($this->first_name.' '.$this->last_name);
         }
-        
+
         return $this->trade_name ?: $this->company_name;
     }
 
@@ -209,17 +209,17 @@ class CustomerResource extends JsonResource
     {
         $address = $this->billing_address_line_1;
         if ($this->billing_address_line_2) {
-            $address .= ', ' . $this->billing_address_line_2;
+            $address .= ', '.$this->billing_address_line_2;
         }
-        $address .= ', ' . $this->billing_city;
+        $address .= ', '.$this->billing_city;
         if ($this->billing_state_province) {
-            $address .= ', ' . $this->billing_state_province;
+            $address .= ', '.$this->billing_state_province;
         }
         if ($this->billing_postal_code) {
-            $address .= ' ' . $this->billing_postal_code;
+            $address .= ' '.$this->billing_postal_code;
         }
-        $address .= ', ' . $this->billing_country;
-        
+        $address .= ', '.$this->billing_country;
+
         return $address;
     }
 
@@ -231,23 +231,23 @@ class CustomerResource extends JsonResource
 
         $address = $this->shipping_address_line_1;
         if ($this->shipping_address_line_2) {
-            $address .= ', ' . $this->shipping_address_line_2;
+            $address .= ', '.$this->shipping_address_line_2;
         }
-        $address .= ', ' . $this->shipping_city;
+        $address .= ', '.$this->shipping_city;
         if ($this->shipping_state_province) {
-            $address .= ', ' . $this->shipping_state_province;
+            $address .= ', '.$this->shipping_state_province;
         }
         if ($this->shipping_postal_code) {
-            $address .= ' ' . $this->shipping_postal_code;
+            $address .= ' '.$this->shipping_postal_code;
         }
-        $address .= ', ' . $this->shipping_country;
-        
+        $address .= ', '.$this->shipping_country;
+
         return $address;
     }
 
     private function getCreditStatusColor(): string
     {
-        return match($this->credit_status) {
+        return match ($this->credit_status) {
             'good' => 'green',
             'watch' => 'yellow',
             'hold' => 'red',

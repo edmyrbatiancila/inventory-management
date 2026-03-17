@@ -17,19 +17,13 @@ class InsightsController extends Controller
     public function index(Request $request)
     {
         $insights = BusinessInsight::with(['assignedTo', 'createdBy'])
-            ->when($request->search, fn($q, $search) => 
-                $q->where('title', 'like', "%{$search}%")
+            ->when($request->search, fn ($q, $search) => $q->where('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%"))
-            ->when($request->type, fn($q, $type) => 
-                $q->where('type', $type))
-            ->when($request->category, fn($q, $category) => 
-                $q->where('category', $category))
-            ->when($request->severity, fn($q, $severity) => 
-                $q->where('severity', $severity))
-            ->when($request->status, fn($q, $status) => 
-                $q->where('status', $status))
-            ->when($request->priority, fn($q, $priority) => 
-                $q->where('priority', $priority))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($request->category, fn ($q, $category) => $q->where('category', $category))
+            ->when($request->severity, fn ($q, $severity) => $q->where('severity', $severity))
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->priority, fn ($q, $priority) => $q->where('priority', $priority))
             ->orderByRaw("FIELD(status, 'new', 'acknowledged', 'in_progress', 'resolved', 'dismissed')")
             ->orderByRaw("FIELD(severity, 'critical', 'high', 'medium', 'low')")
             ->latest('detected_at')
@@ -38,17 +32,17 @@ class InsightsController extends Controller
         return Inertia::render('Admin/Insights/Index', [
             'insights' => $insights,
             'filters' => $request->only(['search', 'type', 'category', 'severity', 'status', 'priority']),
-            'stats' => $this->getInsightStats()
+            'stats' => $this->getInsightStats(),
         ]);
     }
 
     public function show(BusinessInsight $insight)
     {
         $insight->load(['assignedTo', 'createdBy', 'acknowledgedBy', 'resolvedBy']);
-        
+
         return Inertia::render('Admin/Insights/Show', [
             'insight' => $insight,
-            'relatedInsights' => $this->getRelatedInsights($insight)
+            'relatedInsights' => $this->getRelatedInsights($insight),
         ]);
     }
 
@@ -57,7 +51,7 @@ class InsightsController extends Controller
         $insight->update([
             'status' => BusinessInsight::STATUS_ACKNOWLEDGED,
             'acknowledged_by' => auth()->id(),
-            'acknowledged_at' => now()
+            'acknowledged_at' => now(),
         ]);
 
         return back()->with('success', 'Insight acknowledged successfully');
@@ -66,7 +60,7 @@ class InsightsController extends Controller
     public function assign(Request $request, BusinessInsight $insight)
     {
         $validated = $request->validate([
-            'assigned_to' => 'required|exists:users,id'
+            'assigned_to' => 'required|exists:users,id',
         ]);
 
         $insight->update($validated);
@@ -78,7 +72,7 @@ class InsightsController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:new,acknowledged,in_progress,resolved,dismissed',
-            'resolution_notes' => 'nullable|string'
+            'resolution_notes' => 'nullable|string',
         ]);
 
         $updateData = ['status' => $validated['status']];
@@ -86,7 +80,7 @@ class InsightsController extends Controller
         if ($validated['status'] === BusinessInsight::STATUS_RESOLVED) {
             $updateData['resolved_by'] = auth()->id();
             $updateData['resolved_at'] = now();
-            
+
             if ($request->resolution_notes) {
                 $updateData['resolution_notes'] = $validated['resolution_notes'];
             }
@@ -101,12 +95,12 @@ class InsightsController extends Controller
     {
         $validated = $request->validate([
             'feedback_positive' => 'required|boolean',
-            'feedback_notes' => 'nullable|string'
+            'feedback_notes' => 'nullable|string',
         ]);
 
         $insight->update([
             'user_feedback_positive' => $validated['feedback_positive'],
-            'user_feedback_notes' => $validated['feedback_notes'] ?? null
+            'user_feedback_notes' => $validated['feedback_notes'] ?? null,
         ]);
 
         return back()->with('success', 'Feedback submitted successfully');
@@ -116,7 +110,7 @@ class InsightsController extends Controller
     {
         try {
             $detectedInsights = $this->analyticsService->detectAnomalies();
-            
+
             $createdCount = 0;
             foreach ($detectedInsights as $insightData) {
                 // Check if similar insight exists recently
@@ -126,7 +120,7 @@ class InsightsController extends Controller
                     ->where('detected_at', '>=', now()->subHours(24))
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     BusinessInsight::create($insightData);
                     $createdCount++;
                 }
@@ -134,7 +128,7 @@ class InsightsController extends Controller
 
             return back()->with('success', "Detected {$createdCount} new insights");
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to detect insights: ' . $e->getMessage());
+            return back()->with('error', 'Failed to detect insights: '.$e->getMessage());
         }
     }
 
@@ -145,7 +139,7 @@ class InsightsController extends Controller
             'insight_ids' => 'required|array',
             'insight_ids.*' => 'exists:business_insights,id',
             'assigned_to' => 'nullable|exists:users,id',
-            'resolution_notes' => 'nullable|string'
+            'resolution_notes' => 'nullable|string',
         ]);
 
         $insights = BusinessInsight::whereIn('id', $validated['insight_ids']);
@@ -155,7 +149,7 @@ class InsightsController extends Controller
                 $insights->update([
                     'status' => BusinessInsight::STATUS_ACKNOWLEDGED,
                     'acknowledged_by' => auth()->id(),
-                    'acknowledged_at' => now()
+                    'acknowledged_at' => now(),
                 ]);
                 break;
 
@@ -170,7 +164,7 @@ class InsightsController extends Controller
                     'status' => BusinessInsight::STATUS_RESOLVED,
                     'resolved_by' => auth()->id(),
                     'resolved_at' => now(),
-                    'resolution_notes' => $validated['resolution_notes'] ?? null
+                    'resolution_notes' => $validated['resolution_notes'] ?? null,
                 ]);
                 break;
 
@@ -178,12 +172,13 @@ class InsightsController extends Controller
                 $insights->update([
                     'status' => BusinessInsight::STATUS_DISMISSED,
                     'resolved_by' => auth()->id(),
-                    'resolved_at' => now()
+                    'resolved_at' => now(),
                 ]);
                 break;
         }
 
         $count = count($validated['insight_ids']);
+
         return back()->with('success', "Successfully {$validated['action']}d {$count} insights");
     }
 
@@ -196,16 +191,16 @@ class InsightsController extends Controller
             'high_priority' => BusinessInsight::whereIn('priority', ['high', 'critical'])->active()->count(),
             'critical_severity' => BusinessInsight::where('severity', 'critical')->active()->count(),
             'resolved_today' => BusinessInsight::where('status', BusinessInsight::STATUS_RESOLVED)
-                ->whereDate('resolved_at', today())->count()
+                ->whereDate('resolved_at', today())->count(),
         ];
     }
 
     private function getRelatedInsights(BusinessInsight $insight, int $limit = 5): \Illuminate\Database\Eloquent\Collection
     {
         return BusinessInsight::where('id', '!=', $insight->id)
-            ->where(function($query) use ($insight) {
+            ->where(function ($query) use ($insight) {
                 $query->where('category', $insight->category)
-                      ->orWhere('type', $insight->type);
+                    ->orWhere('type', $insight->type);
             })
             ->where('status', '!=', BusinessInsight::STATUS_DISMISSED)
             ->latest('detected_at')

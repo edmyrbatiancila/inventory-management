@@ -46,7 +46,7 @@ trait HasSalesOrderItemStates
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
             $allocatedQuantity = $this->faker->numberBetween(1, $quantityOrdered);
-            
+
             return [
                 'item_status' => 'allocated',
                 'allocated_quantity' => $allocatedQuantity,
@@ -69,7 +69,7 @@ trait HasSalesOrderItemStates
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
             $quantityFulfilled = $this->faker->numberBetween(1, $quantityOrdered - 1);
-            
+
             return [
                 'item_status' => 'partially_fulfilled',
                 'allocated_quantity' => $quantityOrdered,
@@ -90,7 +90,7 @@ trait HasSalesOrderItemStates
     {
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
-            
+
             return [
                 'item_status' => 'fully_fulfilled',
                 'allocated_quantity' => $quantityOrdered,
@@ -112,7 +112,7 @@ trait HasSalesOrderItemStates
     {
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
-            
+
             return [
                 'item_status' => 'shipped',
                 'allocated_quantity' => $quantityOrdered,
@@ -134,7 +134,7 @@ trait HasSalesOrderItemStates
     {
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
-            
+
             return [
                 'item_status' => 'delivered',
                 'allocated_quantity' => $quantityOrdered,
@@ -157,7 +157,7 @@ trait HasSalesOrderItemStates
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? 10;
             $backorderedQuantity = $this->faker->numberBetween(1, $quantityOrdered);
-            
+
             return [
                 'item_status' => 'backordered',
                 'quantity_backordered' => $backorderedQuantity,
@@ -181,7 +181,7 @@ trait HasSalesOrderItemStates
             $lineTotal = $attributes['line_total'] ?? 100;
             $discountPercentage = $this->faker->randomFloat(4, 0.05, 0.15); // 5% to 15% as decimal
             $discountAmount = $lineTotal * $discountPercentage;
-            
+
             return [
                 'discount_percentage' => $discountPercentage,
                 'discount_amount' => $discountAmount,

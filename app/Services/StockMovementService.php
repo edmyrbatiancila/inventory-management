@@ -46,7 +46,7 @@ class StockMovementService
                 ->where('warehouse_id', $data['warehouse_id'])
                 ->first();
 
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new \Exception('Inventory not found for this product and warehouse');
             }
 
@@ -73,25 +73,25 @@ class StockMovementService
                 'unit_cost' => $unitCost,
                 'total_value' => $totalValue,
                 'user_id' => Auth::id(),
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
 
             // Create movement record
             $movement = $this->stockMovementRepository->create($movementData);
 
             // Auto-approve simple movements (adjustments under $100)
-            if (in_array($movement->movement_type, ['adjustment_increase', 'adjustment_decrease']) 
+            if (in_array($movement->movement_type, ['adjustment_increase', 'adjustment_decrease'])
                 && abs($totalValue) < 100) {
                 $this->approveMovement($movement->id);
             }
 
             DB::commit();
-            
+
             Log::info('Stock movement created', [
                 'movement_id' => $movement->id,
                 'reference' => $movement->reference_number,
                 'product_id' => $movement->product_id,
-                'warehouse_id' => $movement->warehouse_id
+                'warehouse_id' => $movement->warehouse_id,
             ]);
 
             return $movement;
@@ -100,7 +100,7 @@ class StockMovementService
             DB::rollback();
             Log::error('Stock movement creation failed', [
                 'error' => $e->getMessage(),
-                'data' => $data
+                'data' => $data,
             ]);
             throw $e;
         }
@@ -112,8 +112,8 @@ class StockMovementService
 
         try {
             $movement = $this->stockMovementRepository->findById($movementId);
-            
-            if (!$movement || $movement->status !== 'pending') {
+
+            if (! $movement || $movement->status !== 'pending') {
                 throw new \Exception('Movement cannot be approved');
             }
 
@@ -121,7 +121,7 @@ class StockMovementService
             $this->stockMovementRepository->update($movementId, [
                 'status' => 'approved',
                 'approved_by' => Auth::id(),
-                'approved_at' => now()
+                'approved_at' => now(),
             ]);
 
             // Apply to inventory
@@ -129,14 +129,14 @@ class StockMovementService
 
             // Update status to applied
             $this->stockMovementRepository->update($movementId, [
-                'status' => 'applied'
+                'status' => 'applied',
             ]);
 
             DB::commit();
-            
+
             Log::info('Stock movement approved and applied', [
                 'movement_id' => $movementId,
-                'approved_by' => Auth::id()
+                'approved_by' => Auth::id(),
             ]);
 
             return true;
@@ -145,7 +145,7 @@ class StockMovementService
             DB::rollback();
             Log::error('Stock movement approval failed', [
                 'movement_id' => $movementId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -154,8 +154,8 @@ class StockMovementService
     public function rejectMovement(int $movementId, string $reason = ''): bool
     {
         $movement = $this->stockMovementRepository->findById($movementId);
-        
-        if (!$movement || $movement->status !== 'pending') {
+
+        if (! $movement || $movement->status !== 'pending') {
             throw new \Exception('Movement cannot be rejected');
         }
 
@@ -163,7 +163,7 @@ class StockMovementService
             'status' => 'rejected',
             'approved_by' => Auth::id(),
             'approved_at' => now(),
-            'notes' => $movement->notes . "\n\nRejected: " . $reason
+            'notes' => $movement->notes."\n\nRejected: ".$reason,
         ]);
     }
 
@@ -173,7 +173,7 @@ class StockMovementService
             ->where('warehouse_id', $movement->warehouse_id)
             ->first();
 
-        if (!$inventory) {
+        if (! $inventory) {
             throw new \Exception('Inventory record not found');
         }
 
@@ -188,14 +188,14 @@ class StockMovementService
         $inventory->update([
             'quantity_available' => $newQuantityAvailable,
             'quantity_on_hand' => $newQuantityOnHand,
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         Log::info('Inventory updated from stock movement', [
             'inventory_id' => $inventory->id,
             'movement_id' => $movement->id,
             'quantity_change' => $movement->quantity_moved,
-            'new_available' => $newQuantityAvailable
+            'new_available' => $newQuantityAvailable,
         ]);
     }
 
@@ -221,7 +221,7 @@ class StockMovementService
             'todayMovements' => StockMovement::whereDate('created_at', today())->count(),
             'weekMovements' => StockMovement::whereBetween('created_at', [
                 now()->startOfWeek(),
-                now()->endOfWeek()
+                now()->endOfWeek(),
             ])->count(),
             'monthMovements' => StockMovement::whereMonth('created_at', now()->month)->count(),
         ];

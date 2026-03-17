@@ -27,20 +27,20 @@ class StoreContactLogRequest extends FormRequest
             // Polymorphic relationship
             'contactable_type' => 'required|string|in:App\\Models\\Supplier,App\\Models\\Customer',
             'contactable_id' => 'required|integer|min:1',
-            
+
             // Contact Information
             'contact_type' => ['required', Rule::in(array_keys(ContactLogConstants::CONTACT_TYPES))],
             'direction' => ['required', Rule::in(array_keys(ContactLogConstants::DIRECTIONS))],
             'subject' => 'required|string|max:255',
             'description' => 'required|string|min:10',
             'outcome' => ['nullable', Rule::in(array_keys(ContactLogConstants::OUTCOMES))],
-            
+
             // Participants
             'contact_person_id' => 'nullable|exists:users,id',
             'external_contact_person' => 'nullable|string|max:255',
             'external_contact_email' => 'nullable|email|max:255',
             'external_contact_phone' => 'nullable|string|max:20',
-            
+
             // Timing
             'contact_date' => 'required|date|before_or_equal:now',
             'duration_minutes' => 'nullable|integer|min:1|max:1440', // Max 24 hours
@@ -92,19 +92,19 @@ class StoreContactLogRequest extends FormRequest
         // Clean phone number
         if ($this->external_contact_phone) {
             $this->merge([
-                'external_contact_phone' => preg_replace('/[^\d+\-\(\)\s]/', '', $this->external_contact_phone)
+                'external_contact_phone' => preg_replace('/[^\d+\-\(\)\s]/', '', $this->external_contact_phone),
             ]);
         }
 
         // Normalize email
         if ($this->external_contact_email) {
             $this->merge([
-                'external_contact_email' => strtolower(trim($this->external_contact_email))
+                'external_contact_email' => strtolower(trim($this->external_contact_email)),
             ]);
         }
 
         // Set default priority
-        if (!$this->priority) {
+        if (! $this->priority) {
             $this->merge(['priority' => 'normal']);
         }
     }

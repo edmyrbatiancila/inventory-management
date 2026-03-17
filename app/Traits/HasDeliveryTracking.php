@@ -9,7 +9,7 @@ trait HasDeliveryTracking
     public function getDaysUntilDeliveryAttribute(): ?int
     {
         $deliveryDate = $this->getDeliveryDate();
-        if (!$deliveryDate) {
+        if (! $deliveryDate) {
             return null;
         }
 
@@ -19,21 +19,22 @@ trait HasDeliveryTracking
     public function getIsOverdueAttribute(): bool
     {
         $deliveryDate = $this->getDeliveryDate();
-        if (!$deliveryDate) {
+        if (! $deliveryDate) {
             return false;
         }
 
-        return $deliveryDate->isPast() && 
-                !in_array($this->status, $this->getInactiveStatuses());
+        return $deliveryDate->isPast() &&
+                ! in_array($this->status, $this->getInactiveStatuses());
     }
 
     public function scopeOverdue($query)
     {
         return $query->where($this->getDeliveryDateColumn(), '<', Carbon::now())
-                    ->whereNotIn('status', $this->getInactiveStatuses());
+            ->whereNotIn('status', $this->getInactiveStatuses());
     }
 
     // Abstract methods
     abstract protected function getDeliveryDate();
+
     abstract protected function getDeliveryDateColumn(): string;
 }

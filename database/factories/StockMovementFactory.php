@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Product;
-use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,30 +20,30 @@ class StockMovementFactory extends Factory
     public function definition(): array
     {
         $movementTypes = [
-            'adjustment_increase', 
+            'adjustment_increase',
             'adjustment_decrease',
-            'transfer_in', 
+            'transfer_in',
             'transfer_out',
-            'purchase_receive', 
+            'purchase_receive',
             'sale_fulfill',
-            'return_customer', 
+            'return_customer',
             'return_supplier',
-            'damage_write_off', 
-            'expiry_write_off'
+            'damage_write_off',
+            'expiry_write_off',
         ];
 
         $movementType = $this->faker->randomElement($movementTypes);
-        
+
         // Determine if it's an increase or decrease
         $isIncrease = in_array($movementType, [
-            'adjustment_increase', 'transfer_in', 'purchase_receive', 'return_customer'
+            'adjustment_increase', 'transfer_in', 'purchase_receive', 'return_customer',
         ]);
 
         $quantityBefore = $this->faker->numberBetween(0, 1000);
-        $quantityMoved = $isIncrease 
+        $quantityMoved = $isIncrease
             ? $this->faker->numberBetween(1, 100)
             : -$this->faker->numberBetween(1, min(100, $quantityBefore));
-        
+
         $quantityAfter = $quantityBefore + $quantityMoved;
 
         $unitCost = $this->faker->randomFloat(2, 1, 500);
@@ -83,8 +82,8 @@ class StockMovementFactory extends Factory
         $prefix = 'SM';
         $date = $this->faker->dateTimeBetween('-60 days', 'now')->format('Ymd');
         $sequence = $this->faker->unique()->numberBetween(1, 9999);
-        
-        return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        return $prefix.$date.str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -94,56 +93,56 @@ class StockMovementFactory extends Factory
     {
         $reasons = [
             'adjustment_increase' => [
-                'Stock count correction', 
-                'Found additional inventory', 
+                'Stock count correction',
+                'Found additional inventory',
                 'Supplier credit adjustment',
-                'Return from customer'
+                'Return from customer',
             ],
             'adjustment_decrease' => [
-                'Stock count correction', 
-                'Damaged goods write-off', 
+                'Stock count correction',
+                'Damaged goods write-off',
                 'Expired products removal',
-                'Theft or loss'
+                'Theft or loss',
             ],
             'transfer_in' => [
-                'Inter-warehouse transfer', 
+                'Inter-warehouse transfer',
                 'Consolidation from branch',
-                'Seasonal stock movement'
+                'Seasonal stock movement',
             ],
             'transfer_out' => [
-                'Inter-warehouse transfer', 
+                'Inter-warehouse transfer',
                 'Distribution to branch',
-                'Seasonal stock movement'
+                'Seasonal stock movement',
             ],
             'purchase_receive' => [
-                'Purchase order receipt', 
+                'Purchase order receipt',
                 'Supplier delivery',
-                'Bulk order received'
+                'Bulk order received',
             ],
             'sale_fulfill' => [
-                'Customer order fulfillment', 
+                'Customer order fulfillment',
                 'Online order shipment',
-                'Retail sale'
+                'Retail sale',
             ],
             'return_customer' => [
-                'Customer return - defective', 
+                'Customer return - defective',
                 'Customer return - unwanted',
-                'Exchange process'
+                'Exchange process',
             ],
             'return_supplier' => [
-                'Return to supplier - defective', 
+                'Return to supplier - defective',
                 'Return to supplier - overstock',
-                'Warranty return'
+                'Warranty return',
             ],
             'damage_write_off' => [
-                'Physical damage', 
+                'Physical damage',
                 'Water damage',
-                'Transportation damage'
+                'Transportation damage',
             ],
             'expiry_write_off' => [
-                'Expired products', 
+                'Expired products',
                 'Near expiry disposal',
-                'Quality control failure'
+                'Quality control failure',
             ],
         ];
 
@@ -167,19 +166,19 @@ class StockMovementFactory extends Factory
                     'transfer_id' => $this->faker->numberBetween(1, 100),
                     'source_warehouse' => $this->faker->company(),
                 ]);
-                
+
             case 'purchase_receive':
                 return array_merge($baseMetadata, [
                     'purchase_order_id' => $this->faker->numberBetween(1, 100),
                     'supplier_name' => $this->faker->company(),
                 ]);
-                
+
             case 'sale_fulfill':
                 return array_merge($baseMetadata, [
                     'sale_order_id' => $this->faker->numberBetween(1, 100),
                     'customer_name' => $this->faker->name(),
                 ]);
-                
+
             default:
                 return $baseMetadata;
         }
@@ -213,12 +212,12 @@ class StockMovementFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $movementType = $this->faker->randomElement([
-                'adjustment_increase', 'transfer_in', 'purchase_receive', 'return_customer'
+                'adjustment_increase', 'transfer_in', 'purchase_receive', 'return_customer',
             ]);
-            
+
             $quantityBefore = $this->faker->numberBetween(0, 500);
             $quantityMoved = $this->faker->numberBetween(1, 100);
-            
+
             return [
                 'movement_type' => $movementType,
                 'quantity_moved' => $quantityMoved,
@@ -234,12 +233,12 @@ class StockMovementFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $movementType = $this->faker->randomElement([
-                'adjustment_decrease', 'transfer_out', 'sale_fulfill', 'damage_write_off'
+                'adjustment_decrease', 'transfer_out', 'sale_fulfill', 'damage_write_off',
             ]);
-            
+
             $quantityBefore = $this->faker->numberBetween(50, 500);
             $quantityMoved = -$this->faker->numberBetween(1, min(100, $quantityBefore));
-            
+
             return [
                 'movement_type' => $movementType,
                 'quantity_before' => $quantityBefore,

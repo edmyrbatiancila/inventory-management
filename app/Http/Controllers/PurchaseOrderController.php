@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ApprovePurchaseOrderRequest;
 use App\Http\Requests\ReceivePurchaseOrderRequest;
-use App\Models\PurchaseOrder;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Http\Requests\UpdatePurchaseOrderRequest;
-use App\Models\PurchaseOrderItem;
 use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
 use App\Models\Warehouse;
 use App\Services\PurchaseOrderService;
 use App\Traits\PurchaseOrderResponses;
@@ -18,7 +18,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,7 +36,7 @@ class PurchaseOrderController extends Controller
     {
         $filters = $request->only(['search', 'status', 'priority', 'warehouse_id', 'per_page']);
         $purchaseOrders = $this->purchaseOrderService->getPurchaseOrders($filters, $filters['per_page'] ?? 15);
-        
+
         return $this->renderIndex($purchaseOrders, [
             'warehouses' => Warehouse::select('id', 'name')->get(),
             'statuses' => PurchaseOrder::STATUSES,
@@ -71,7 +70,8 @@ class PurchaseOrderController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error loading Purchase Order create page: ' . $e->getMessage());
+            Log::error('Error loading Purchase Order create page: '.$e->getMessage());
+
             return redirect()
                 ->route('admin.purchase-orders.index')
                 ->with('error', 'Unable to load create form. Please try again.');
@@ -107,7 +107,7 @@ class PurchaseOrderController extends Controller
                     'terms_and_conditions' => $request->terms_and_conditions,
                     'created_by' => Auth::id(),
                 ],
-                'items' => $request->items
+                'items' => $request->items,
             ];
 
             // Create the purchase order through the service
@@ -121,7 +121,8 @@ class PurchaseOrderController extends Controller
             );
 
         } catch (\Exception $e) {
-            Log::error('Error creating purchase order: ' . $e->getMessage());
+            Log::error('Error creating purchase order: '.$e->getMessage());
+
             return $this->errorResponse('Failed to create purchase order. Please try again.');
         }
     }
@@ -141,7 +142,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             // Check if the purchase order can be edited
-            if (!$purchaseOrder->canBeEdited()) {
+            if (! $purchaseOrder->canBeEdited()) {
                 return redirect()
                     ->route('admin.purchase-orders.show', $purchaseOrder)
                     ->with('error', 'This purchase order cannot be edited in its current status.');
@@ -163,13 +164,14 @@ class PurchaseOrderController extends Controller
                 'items.product.brand',
                 'warehouse',
                 'createdBy:id,name',
-                'approvedBy:id,name'
+                'approvedBy:id,name',
             ]);
 
             return $this->renderEdit($purchaseOrderWithItems, $warehouses, $products);
 
         } catch (\Exception $e) {
-            Log::error('Error loading Purchase Order edit page: ' . $e->getMessage());
+            Log::error('Error loading Purchase Order edit page: '.$e->getMessage());
+
             return redirect()
                 ->route('admin.purchase-orders.index')
                 ->with('error', 'Unable to load edit form. Please try again.');
@@ -183,14 +185,14 @@ class PurchaseOrderController extends Controller
     {
         try {
             $updated = $this->purchaseOrderService->updatePurchaseOrder(
-                $purchaseOrder->id, 
+                $purchaseOrder->id,
                 $request->validated()
             );
 
             if ($updated) {
                 return redirect()->route('admin.purchase-orders.edit', $purchaseOrder->id)->with('success', 'Purchase order updated successfully');
             }
-            
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update inventory.');
@@ -198,7 +200,7 @@ class PurchaseOrderController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error updating inventory: ' . $e->getMessage());
+                ->with('error', 'Error updating inventory: '.$e->getMessage());
         }
     }
 
@@ -208,12 +210,12 @@ class PurchaseOrderController extends Controller
     public function destroy(PurchaseOrder $purchaseOrder): JsonResponse|RedirectResponse
     {
         try {
-            if (!$purchaseOrder->canBeCancelled()) {
+            if (! $purchaseOrder->canBeCancelled()) {
                 return $this->errorResponse('Purchase order cannot be deleted in its current state');
             }
 
             $purchaseOrder->delete();
-            
+
             return $this->successResponse('Purchase order deleted successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -229,7 +231,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->purchaseOrderService->approvePurchaseOrder($purchaseOrder->id, Auth::id());
-            
+
             return $this->successResponse('Purchase order approved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -243,7 +245,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->purchaseOrderService->sendToSupplier($purchaseOrder->id);
-            
+
             return $this->successResponse('Purchase order sent to supplier successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -256,10 +258,10 @@ class PurchaseOrderController extends Controller
     public function cancel(Request $request, PurchaseOrder $purchaseOrder): JsonResponse|RedirectResponse
     {
         $request->validate(['reason' => 'required|string|max:500']);
-        
+
         try {
             $this->purchaseOrderService->cancelPurchaseOrder($purchaseOrder->id, $request->reason);
-            
+
             return $this->successResponse('Purchase order cancelled successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -292,7 +294,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->purchaseOrderService->receiveItems($purchaseOrder->id, $request->validated());
-            
+
             return $this->successResponse('Items received successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -314,10 +316,10 @@ class PurchaseOrderController extends Controller
 
         try {
             $item = $this->purchaseOrderService->addItemToPurchaseOrder(
-                $purchaseOrder->id, 
+                $purchaseOrder->id,
                 $request->only(['product_id', 'quantity_ordered', 'unit_cost', 'notes'])
             );
-            
+
             return $this->successResponse('Item added successfully', $item);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -336,11 +338,11 @@ class PurchaseOrderController extends Controller
 
         try {
             $this->purchaseOrderService->updateItem(
-                $purchaseOrder->id, 
-                $item->id, 
+                $purchaseOrder->id,
+                $item->id,
                 $request->only(['quantity_ordered', 'unit_cost', 'notes'])
             );
-            
+
             return $this->successResponse('Item updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -354,7 +356,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->purchaseOrderService->removeItem($purchaseOrder->id, $item->id);
-            
+
             return $this->successResponse('Item removed successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -369,13 +371,13 @@ class PurchaseOrderController extends Controller
     public function pendingApprovals(): JsonResponse|Response
     {
         $pendingApprovals = $this->purchaseOrderService->getPendingApprovals();
-        
+
         if (request()->expectsJson()) {
             return response()->json($pendingApprovals);
         }
-        
+
         return inertia('Admin/PurchaseOrders/PendingApprovals', [
-            'purchase_orders' => $pendingApprovals
+            'purchase_orders' => $pendingApprovals,
         ]);
     }
 
@@ -385,13 +387,13 @@ class PurchaseOrderController extends Controller
     public function overdue(): JsonResponse|Response
     {
         $overdue = $this->purchaseOrderService->getOverduePurchaseOrders();
-        
+
         if (request()->expectsJson()) {
             return response()->json($overdue);
         }
-        
+
         return inertia('Admin/PurchaseOrders/Overdue', [
-            'purchase_orders' => $overdue
+            'purchase_orders' => $overdue,
         ]);
     }
 
@@ -401,7 +403,7 @@ class PurchaseOrderController extends Controller
     public function statistics(): JsonResponse
     {
         $statistics = $this->purchaseOrderService->getDashboardStatistics();
-        
+
         return response()->json($statistics);
     }
 }

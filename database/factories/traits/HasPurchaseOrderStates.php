@@ -3,7 +3,6 @@
 namespace Database\Factories\Traits;
 
 use App\Models\PurchaseOrder;
-use Carbon\Carbon;
 
 trait HasPurchaseOrderStates
 {

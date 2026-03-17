@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkStockTransferRequest;
-use App\Models\StockTransfer;
 use App\Http\Requests\StoreStockTransferRequest;
 use App\Http\Requests\UpdateStockTransferRequest;
-use App\Models\Product;
-use App\Models\Warehouse;
 use App\Models\Inventory;
+use App\Models\Product;
+use App\Models\StockTransfer;
+use App\Models\Warehouse;
 use App\Services\StockTransferService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Exception;
 
 class StockTransferController extends Controller
 {
@@ -53,7 +53,7 @@ class StockTransferController extends Controller
         ]);
 
         // Clean up filters
-        $filters = array_filter($filters, function($value) {
+        $filters = array_filter($filters, function ($value) {
             return $value !== null && $value !== '';
         });
 
@@ -75,25 +75,25 @@ class StockTransferController extends Controller
     public function create()
     {
         $warehouses = Warehouse::select(
-            'id', 
-            'name', 
-            'code', 
-            'city', 
+            'id',
+            'name',
+            'code',
+            'city',
             'is_active'
         )->get();
 
         $products = Product::with('category', 'brand')
-                        ->select(
-                            'id', 
-                            'name', 
-                            'category_id', 
-                            'brand_id',
-                            'is_active', 
-                            'track_quantity', 
-                            'sku',
-                            'min_stock_level',
-                        )->get();
-        
+            ->select(
+                'id',
+                'name',
+                'category_id',
+                'brand_id',
+                'is_active',
+                'track_quantity',
+                'sku',
+                'min_stock_level',
+            )->get();
+
         return Inertia::render('admin/stock-transfers/Create', [
             'warehouses' => $warehouses,
             'products' => $products,
@@ -107,6 +107,7 @@ class StockTransferController extends Controller
     {
         try {
             $transfer = $this->stockTransferService->initiateTransfer($request->validated());
+
             return redirect()
                 ->route('admin.stock-transfers.show', $transfer)
                 ->with('success', 'Stock transfer initiated successfully.');
@@ -137,16 +138,16 @@ class StockTransferController extends Controller
      */
     public function edit(StockTransfer $stockTransfer)
     {
-        try{
+        try {
             // Load relationships
             $stockTransfer->load([
                 'fromWarehouse',
-                'toWarehouse', 
+                'toWarehouse',
                 'product.category',
                 'product.brand',
                 'initiatedBy',
                 'approvedBy',
-                'completedBy'
+                'completedBy',
             ]);
 
             // Get all warehouses and products for dropdowns (if pending)
@@ -168,17 +169,16 @@ class StockTransferController extends Controller
                 'transfer' => $stockTransfer,
                 'warehouses' => $warehouses,
                 'products' => $products,
-                'canEditCore' => $stockTransfer->transfer_status === 'pending'
+                'canEditCore' => $stockTransfer->transfer_status === 'pending',
             ]);
 
         } catch (Exception $e) {
-            Log::error('Error loading stock transfer for edit: ' . $e->getMessage());
+            Log::error('Error loading stock transfer for edit: '.$e->getMessage());
 
             return redirect()->route('admin.stock-transfers.index')
                 ->with('error', 'Failed to load transfer for editing');
         }
 
-        
     }
 
     /**
@@ -190,10 +190,10 @@ class StockTransferController extends Controller
             $data = $request->validated();
 
             // Handle core detail updates for pending transfers
-            if ($stockTransfer->transfer_status === 'pending' && 
-                (isset($data['from_warehouse_id']) || isset($data['to_warehouse_id']) || 
+            if ($stockTransfer->transfer_status === 'pending' &&
+                (isset($data['from_warehouse_id']) || isset($data['to_warehouse_id']) ||
                 isset($data['product_id']) || isset($data['quantity_transferred']))) {
-                
+
                 $stockTransfer = $this->stockTransferService->updateTransfer($stockTransfer->id, $data);
             }
 
@@ -228,12 +228,13 @@ class StockTransferController extends Controller
      */
     public function destroy(StockTransfer $stockTransfer)
     {
-        if (!$stockTransfer->canBeCancelled()) {
+        if (! $stockTransfer->canBeCancelled()) {
             return back()->withErrors(['error' => 'This transfer cannot be deleted.']);
         }
 
         try {
             $this->stockTransferService->cancelTransfer($stockTransfer->id, 'Transfer deleted');
+
             return redirect()->route('admin.stock-transfers.index')
                 ->with('success', 'Stock transfer cancelled successfully.');
         } catch (\Exception $e) {
@@ -246,6 +247,7 @@ class StockTransferController extends Controller
     {
         try {
             $transfer = $this->stockTransferService->approveTransfer($stockTransfer->id, Auth::id());
+
             return redirect()->route('admin.stock-transfers.show', $transfer->id)
                 ->with('success', 'Transfer approved successfully.');
         } catch (\Exception $e) {
@@ -257,6 +259,7 @@ class StockTransferController extends Controller
     {
         try {
             $transfer = $this->stockTransferService->markInTransit($stockTransfer->id);
+
             return redirect()->route('admin.stock-transfers.show', $transfer->id)
                 ->with('success', 'Transfer marked as in transit.');
         } catch (\Exception $e) {
@@ -268,6 +271,7 @@ class StockTransferController extends Controller
     {
         try {
             $transfer = $this->stockTransferService->completeTransfer($stockTransfer->id, Auth::id());
+
             return redirect()->route('admin.stock-transfers.show', $transfer->id)
                 ->with('success', 'Transfer completed successfully.');
         } catch (\Exception $e) {
@@ -283,10 +287,10 @@ class StockTransferController extends Controller
         try {
             $warehouseId = $request->input('warehouse_id');
 
-            if (!$warehouseId) {
+            if (! $warehouseId) {
                 return response()->json([
                     'products' => [],
-                    'message' => 'Warehouse ID is required'
+                    'message' => 'Warehouse ID is required',
                 ], 400);
             }
 
@@ -294,7 +298,7 @@ class StockTransferController extends Controller
             $products = Product::with(['category', 'brand'])
                 ->whereHas('inventories', function ($query) use ($warehouseId) {
                     $query->where('warehouse_id', $warehouseId)
-                          ->where('quantity_available', '>', 0);
+                        ->where('quantity_available', '>', 0);
                 })
                 ->where('is_active', true)
                 ->where('track_quantity', true)
@@ -304,23 +308,23 @@ class StockTransferController extends Controller
             Log::info('📦 Products with inventory fetched', [
                 'warehouse_id' => $warehouseId,
                 'products_count' => $products->count(),
-                'product_ids' => $products->pluck('id')->toArray()
+                'product_ids' => $products->pluck('id')->toArray(),
             ]);
 
             return response()->json([
                 'products' => $products,
-                'message' => "Found {$products->count()} products with available inventory"
+                'message' => "Found {$products->count()} products with available inventory",
             ]);
 
         } catch (Exception $e) {
             Log::error('💥 getProductsWithInventory exception', [
                 'error' => $e->getMessage(),
-                'warehouse_id' => $request->input('warehouse_id')
+                'warehouse_id' => $request->input('warehouse_id'),
             ]);
 
             return response()->json([
                 'products' => [],
-                'message' => 'Error fetching products: ' . $e->getMessage()
+                'message' => 'Error fetching products: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -362,7 +366,7 @@ class StockTransferController extends Controller
                 ] : null,
             ]);
 
-            if (!$inventory) {
+            if (! $inventory) {
                 Log::warning('❌ No inventory found', [
                     'warehouse_id' => $request->warehouse_id,
                     'product_id' => $request->product_id,
@@ -378,6 +382,7 @@ class StockTransferController extends Controller
                 ];
 
                 Log::info('📤 Sending no inventory response', $response);
+
                 return response()->json($response);
             }
 
@@ -390,12 +395,13 @@ class StockTransferController extends Controller
                 'product_sku' => $inventory->product->sku,
                 'has_inventory' => true,
                 'is_sufficient' => $inventory->quantity_available > 0,
-                'message' => $inventory->quantity_available > 0 
+                'message' => $inventory->quantity_available > 0
                     ? "Available for transfer: {$inventory->quantity_available} units"
                     : 'No stock available for transfer in this warehouse.',
             ];
 
             Log::info('📤 Sending successful response', $response);
+
             return response()->json($response);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('❌ Validation error in inventory check', [
@@ -426,7 +432,7 @@ class StockTransferController extends Controller
     public function bulkApprove(BulkStockTransferRequest $request)
     {
         try {
-                $result = $this->stockTransferService->bulkApproveTransfers(
+            $result = $this->stockTransferService->bulkApproveTransfers(
                 $request->validated()['transfer_ids'],
                 Auth::id()
             );
@@ -437,20 +443,20 @@ class StockTransferController extends Controller
                 'data' => [
                     'approved' => $result['approved'],
                     'failed' => $result['failed'],
-                    'errors' => $result['errors']
-                ]
+                    'errors' => $result['errors'],
+                ],
             ]);
         } catch (Exception $e) {
             Log::error('Bulk approve failed', [
                 'user_id' => Auth::id(),
                 'transfer_ids' => $request->validated()['transfer_ids'],
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Bulk approval failed. Please try again.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -459,7 +465,7 @@ class StockTransferController extends Controller
     {
         try {
             $validated = $request->validated();
-        
+
             $result = $this->stockTransferService->bulkCancelTransfers(
                 $validated['transfer_ids'],
                 $validated['cancellation_reason']
@@ -471,20 +477,20 @@ class StockTransferController extends Controller
                 'data' => [
                     'cancelled' => $result['cancelled'],
                     'failed' => $result['failed'],
-                    'errors' => $result['errors']
-                ]
+                    'errors' => $result['errors'],
+                ],
             ]);
         } catch (Exception $e) {
             Log::error('Bulk cancel failed', [
                 'user_id' => Auth::id(),
                 'transfer_ids' => $request->validated()['transfer_ids'],
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Bulk cancellation failed. Please try again.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductAdvancedSearchRequest;
-use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Product;
 use App\Repositories\ProductRepository;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +22,7 @@ use Inertia\Response;
 class ProductController extends Controller
 {
     protected ProductService $productService;
+
     protected ProductRepository $productRepository;
 
     public function __construct(ProductService $productService, ProductRepository $productRepository)
@@ -29,6 +30,7 @@ class ProductController extends Controller
         $this->productService = $productService;
         $this->productRepository = $productRepository;
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -43,19 +45,19 @@ class ProductController extends Controller
             'cost_price_min', 'cost_price_max', 'min_stock_min', 'min_stock_max',
             'is_active', 'track_quantity', 'created_after', 'created_before',
             'has_inventory', 'is_low_stock', 'is_out_of_stock',
-            'sort', 'per_page'
+            'sort', 'per_page',
         ]);
-        
+
         try {
             $products = $this->productService->getAllProducts($filters);
-            
+
             // Calculate search stats for any search activity (to ensure frontend consistency)
             $searchStats = null;
-            $hasFilters = !empty(array_filter($filters, function($value, $key) {
+            $hasFilters = ! empty(array_filter($filters, function ($value, $key) {
                 // Exclude pagination and sort from filter detection
-                return !in_array($key, ['per_page', 'sort']) && $value !== null && $value !== '';
+                return ! in_array($key, ['per_page', 'sort']) && $value !== null && $value !== '';
             }, ARRAY_FILTER_USE_BOTH));
-            
+
             if ($hasFilters) {
                 $searchStats = $this->productRepository->getSearchStats($filters);
                 $searchTime = round((microtime(true) - $startTime) * 1000, 2);
@@ -71,7 +73,7 @@ class ProductController extends Controller
                 'products_count' => $products?->total() ?? 0,
                 'categories_count' => $categories?->count() ?? 0,
                 'brands_count' => $brands?->count() ?? 0,
-                'filters' => $filters
+                'filters' => $filters,
             ]);
 
             return Inertia::render('admin/product/Index', [
@@ -79,14 +81,14 @@ class ProductController extends Controller
                 'categories' => $categories,
                 'brands' => $brands,
                 'searchStats' => $searchStats,
-                'currentFilters' => $filters
+                'currentFilters' => $filters,
             ]);
         } catch (\Exception $e) {
             Log::error('ProductController@index - Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             // Return empty data to prevent crashes
             return Inertia::render('admin/product/Index', [
                 'products' => new LengthAwarePaginator([], 0, 15),
@@ -94,7 +96,7 @@ class ProductController extends Controller
                 'brands' => [],
                 'searchStats' => ['totalResults' => 0, 'statusCounts' => [], 'priceRanges' => []],
                 'currentFilters' => [],
-                'error' => 'Failed to load products. Please try again.'
+                'error' => 'Failed to load products. Please try again.',
             ]);
         }
     }
@@ -110,16 +112,16 @@ class ProductController extends Controller
 
             return Inertia::render('admin/product/Create', [
                 'categories' => $categories,
-                'brands' => $brands
+                'brands' => $brands,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to load product creation page: ' . $e->getMessage());
+            Log::error('Failed to load product creation page: '.$e->getMessage());
 
             return Inertia::render('admin/product/Create', [
                 'categories' => collect(),
                 'brands' => collect(),
-                'error' => 'Failed to load product creation page.'
+                'error' => 'Failed to load product creation page.',
             ]);
         }
     }
@@ -137,12 +139,12 @@ class ProductController extends Controller
                 ->with('success', 'Product created successfully!');
 
         } catch (\Exception $e) {
-            Log::error('Failed to create product: ' . $e->getMessage());
-            
+            Log::error('Failed to create product: '.$e->getMessage());
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to create product: ' . $e->getMessage());
+                ->with('error', 'Failed to create product: '.$e->getMessage());
         }
     }
 
@@ -154,7 +156,7 @@ class ProductController extends Controller
         try {
             $product = $this->productService->getProductById($id);
 
-            if (!$product) {
+            if (! $product) {
                 abort(404, 'Product not found');
             }
 
@@ -165,7 +167,7 @@ class ProductController extends Controller
             return Inertia::render('admin/product/View', [
                 'product' => $product,
                 'stockSummary' => $stockSummary,
-                'analytics' => $analytics
+                'analytics' => $analytics,
             ]);
 
         } catch (\Exception $e) {
@@ -181,7 +183,7 @@ class ProductController extends Controller
         try {
             $product = $this->productService->getProductById($id);
 
-            if (!$product) {
+            if (! $product) {
                 abort(404, 'Product not found');
             }
 
@@ -191,11 +193,11 @@ class ProductController extends Controller
             return Inertia::render('admin/product/Edit', [
                 'product' => $product,
                 'categories' => $categories,
-                'brands' => $brands
+                'brands' => $brands,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to load product edit page: ' . $e->getMessage());
+            Log::error('Failed to load product edit page: '.$e->getMessage());
             abort(404, 'Product not found');
         }
     }
@@ -208,8 +210,9 @@ class ProductController extends Controller
         try {
             $updated = $this->productService->updateProduct($id, $request->validated());
 
-            if (!$updated) {
-                Log::error('Failed to update product with ID: ' . $id);
+            if (! $updated) {
+                Log::error('Failed to update product with ID: '.$id);
+
                 return redirect()
                     ->back()
                     ->withInput()
@@ -221,12 +224,12 @@ class ProductController extends Controller
                 ->with('success', 'Product updated successfully!');
 
         } catch (\Exception $e) {
-            Log::error('Failed to update product: ' . $e->getMessage());
-            
+            Log::error('Failed to update product: '.$e->getMessage());
+
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Failed to update product: ' . $e->getMessage());
+                ->with('error', 'Failed to update product: '.$e->getMessage());
         }
     }
 
@@ -238,7 +241,7 @@ class ProductController extends Controller
         try {
             $deleted = $this->productService->deleteProduct($id);
 
-            if (!$deleted) {
+            if (! $deleted) {
                 return redirect()
                     ->back()
                     ->with('error', 'Failed to delete product');
@@ -247,20 +250,20 @@ class ProductController extends Controller
             return redirect()
                 ->route('admin.products.index')
                 ->with('success', 'Product deleted successfully!');
-                
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::error('Product not found for deletion: ' . $e->getMessage());
-            
+            Log::error('Product not found for deletion: '.$e->getMessage());
+
             return redirect()
                 ->back()
                 ->with('error', 'Product not found');
-                
+
         } catch (\Exception $e) {
-            Log::error('Failed to delete product: ' . $e->getMessage());
-            
+            Log::error('Failed to delete product: '.$e->getMessage());
+
             return redirect()
                 ->route('admin.products.index')
-                ->with('error', 'Failed to delete product: ' . $e->getMessage());
+                ->with('error', 'Failed to delete product: '.$e->getMessage());
         }
     }
 
@@ -272,7 +275,7 @@ class ProductController extends Controller
         $products = $this->productService->getLowStockProducts();
 
         return Inertia::render('Products/LowStock', [
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -284,7 +287,7 @@ class ProductController extends Controller
         $products = $this->productService->getProductsNeedingReorder();
 
         return Inertia::render('Products/NeedingReorder', [
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -295,7 +298,7 @@ class ProductController extends Controller
     {
         $request->validate([
             'quantity' => 'required|integer|min:1',
-            'warehouse_id' => 'nullable|integer|exists:warehouses,id'
+            'warehouse_id' => 'nullable|integer|exists:warehouses,id',
         ]);
 
         $availability = $this->productService->checkAvailability(
@@ -313,13 +316,13 @@ class ProductController extends Controller
     public function search(Request $request): JsonResponse
     {
         $request->validate([
-            'query' => 'required|string|min:2'
+            'query' => 'required|string|min:2',
         ]);
 
         $products = $this->productService->searchProducts($request->input('query'));
 
         return response()->json([
-            'products' => $products
+            'products' => $products,
         ]);
     }
 
@@ -333,28 +336,28 @@ class ProductController extends Controller
 
             // Get validated filters from request
             $filters = $request->getFilters();
-            
+
             // Set default pagination
             $filters['per_page'] = $filters['per_page'] ?? 15;
 
             Log::info('🔍 Product Advanced Search Request:', [
                 'filters' => $filters,
                 'user_id' => Auth::id(),
-                'timestamp' => now()
+                'timestamp' => now(),
             ]);
 
             // Get products using repository with advanced filters
             $products = $this->productRepository->findAll($filters);
-            
+
             // Get search statistics
             $searchStats = $this->productRepository->getSearchStats($filters);
-            
+
             $executionTime = round((microtime(true) - $startTime) * 1000, 2);
 
             Log::info('✅ Product Advanced Search Completed:', [
                 'total_results' => $products->total(),
-                'execution_time' => $executionTime . 'ms',
-                'user_id' => Auth::id()
+                'execution_time' => $executionTime.'ms',
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
@@ -365,7 +368,7 @@ class ProductController extends Controller
                         'totalResults' => $products->total(),
                         'searchTime' => $executionTime,
                         'isFiltered' => count(array_filter($filters)) > 1, // More than just per_page
-                        'appliedFilters' => array_keys(array_filter($filters))
+                        'appliedFilters' => array_keys(array_filter($filters)),
                     ]),
                     'pagination' => [
                         'current_page' => $products->currentPage(),
@@ -374,14 +377,14 @@ class ProductController extends Controller
                         'total' => $products->total(),
                         'from' => $products->firstItem(),
                         'to' => $products->lastItem(),
-                    ]
+                    ],
                 ],
                 'message' => 'Products search completed successfully.',
                 'meta' => [
                     'timestamp' => now(),
                     'execution_time' => $executionTime,
-                    'api_version' => '1.0'
-                ]
+                    'api_version' => '1.0',
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -389,13 +392,13 @@ class ProductController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'filters' => $filters ?? [],
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to search products. Please try again.',
-                'error' => app()->environment('local') ? $e->getMessage() : null
+                'error' => app()->environment('local') ? $e->getMessage() : null,
             ], 500);
         }
     }

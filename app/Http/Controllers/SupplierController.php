@@ -38,7 +38,7 @@ class SupplierController extends Controller
             $suppliers = $this->supplierRepository->getPaginated(15, $filters);
 
             // Transform the data using SupplierResource while preserving pagination
-            $suppliers->through(function ($supplier) use ($request) {
+            $suppliers->getCollection()->transform(function ($supplier) use ($request) {
                 return (new SupplierResource($supplier))->toArray($request);
             });
 

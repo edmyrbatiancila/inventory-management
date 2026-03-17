@@ -17,7 +17,7 @@ return new class extends Migration
             // Sales Order Identification
             $table->string('so_number')->unique(); // SO-2025-001
             $table->string('customer_reference')->nullable(); // Customer's own reference number/PO
-            
+
             // Customer Information
             $table->string('customer_name');
             $table->string('customer_email')->nullable();
@@ -27,8 +27,8 @@ return new class extends Migration
 
             // Sales Order Details
             $table->enum('status', [
-                'draft', 'pending_approval', 'approved', 'confirmed', 
-                'partially_fulfilled', 'fully_fulfilled', 'shipped', 'delivered', 'cancelled', 'closed'
+                'draft', 'pending_approval', 'approved', 'confirmed',
+                'partially_fulfilled', 'fully_fulfilled', 'shipped', 'delivered', 'cancelled', 'closed',
             ])->default('draft');
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
 
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('fulfilled_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('shipped_by')->nullable()->constrained('users')->onDelete('set null');
-            
+
             // Financial Information
             $table->decimal('subtotal', 12, 4)->default(0); // Sum of all line items
             $table->decimal('tax_rate', 5, 4)->default(0); // Tax percentage (0.0000 - 1.0000)
@@ -62,13 +62,13 @@ return new class extends Migration
             $table->string('shipping_method')->nullable(); // Standard, Express, etc.
             $table->string('tracking_number')->nullable();
             $table->string('carrier')->nullable(); // FedEx, UPS, etc.
-            
+
             // Additional Information
             $table->text('notes')->nullable(); // Internal notes
             $table->text('customer_notes')->nullable(); // Customer instructions
             $table->text('terms_and_conditions')->nullable(); // SO terms
             $table->text('cancellation_reason')->nullable();
-            
+
             // Metadata
             $table->json('metadata')->nullable(); // Additional flexible data
             $table->boolean('is_recurring')->default(false); // For recurring orders

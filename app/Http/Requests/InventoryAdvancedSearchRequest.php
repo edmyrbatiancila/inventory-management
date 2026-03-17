@@ -107,7 +107,7 @@ class InventoryAdvancedSearchRequest extends FormRequest
         // Convert string boolean values to actual booleans
         $booleanFields = [
             'warehouseIsActive', 'isLowStock', 'isOutOfStock', 'hasReservedStock',
-            'myInventories', 'recentlyUpdated', 'newInventories', 'highValueInventories'
+            'myInventories', 'recentlyUpdated', 'newInventories', 'highValueInventories',
         ];
 
         foreach ($booleanFields as $field) {
@@ -118,24 +118,24 @@ class InventoryAdvancedSearchRequest extends FormRequest
         }
 
         // Convert numeric string values to integers/floats
-        $numericFields = ['quantityOnHandMin', 'quantityOnHandMax', 'quantityReservedMin', 'quantityReservedMax', 
-                            'quantityAvailableMin', 'quantityAvailableMax', 'stockValueMin', 'stockValueMax', 'per_page'
-                        ];
-        
+        $numericFields = ['quantityOnHandMin', 'quantityOnHandMax', 'quantityReservedMin', 'quantityReservedMax',
+            'quantityAvailableMin', 'quantityAvailableMax', 'stockValueMin', 'stockValueMax', 'per_page',
+        ];
+
         foreach ($numericFields as $field) {
             if ($this->has($field) && $this->input($field) !== null && $this->input($field) !== '') {
                 $value = $this->input($field);
-                $this->merge([$field => is_numeric($value) ? (strpos($value, '.') !== false ? (float)$value : (int)$value) : null]);
+                $this->merge([$field => is_numeric($value) ? (strpos($value, '.') !== false ? (float) $value : (int) $value) : null]);
             }
         }
 
         // Set default sorting if not provided
-        if (!$this->has('sort') || empty($this->input('sort'))) {
+        if (! $this->has('sort') || empty($this->input('sort'))) {
             $this->merge(['sort' => 'newest']);
         }
 
         // Set default per_page if not provided
-        if (!$this->has('per_page') || empty($this->input('per_page'))) {
+        if (! $this->has('per_page') || empty($this->input('per_page'))) {
             $this->merge(['per_page' => 15]);
         }
     }

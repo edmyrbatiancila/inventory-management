@@ -28,7 +28,7 @@ class StoreSalesOrderRequest extends FormRequest
     {
         return array_merge(
             $this->orderRules(),
-            $this->customerRules(), 
+            $this->customerRules(),
             $this->itemRules(),
             $this->financialRules()
         );
@@ -99,6 +99,7 @@ class StoreSalesOrderRequest extends FormRequest
         $rules = $required ? ['required'] : ['nullable'];
         $rules[] = 'numeric';
         $rules[] = "min:$min";
+
         return $rules;
     }
 

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StockAdjustment;
 use App\Http\Requests\StoreStockAdjustmentRequest;
 use App\Http\Requests\UpdateStockAdjustmentRequest;
 use App\Models\Inventory;
+use App\Models\StockAdjustment;
 use App\Services\StockAdjustmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -37,11 +37,11 @@ class StockAdjustmentController extends Controller
                 'date_from',
                 'date_to',
                 'sort',
-                'per_page'
+                'per_page',
             ]);
 
             // Clean up filters
-            $filters = array_filter($filters, function($value) {
+            $filters = array_filter($filters, function ($value) {
                 return $value !== null && $value !== '';
             });
 
@@ -52,12 +52,12 @@ class StockAdjustmentController extends Controller
                 'stockAdjustments' => $stockAdjustments,
                 'analytics' => $analytics,
                 'filters' => $filters,
-                'sort' => $request->get('sort', 'newest')
+                'sort' => $request->get('sort', 'newest'),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@index: ' . $e->getMessage());
-        
+            Log::error('Error in StockAdjustmentController@index: '.$e->getMessage());
+
             return redirect()->back()
                 ->with('error', 'Error loading stock adjustments.');
         }
@@ -70,10 +70,10 @@ class StockAdjustmentController extends Controller
     {
         try {
             $inventories = Inventory::with(['product', 'warehouse'])
-                ->whereHas('product', function($query) {
+                ->whereHas('product', function ($query) {
                     $query->where('is_active', true);
                 })
-                ->whereHas('warehouse', function($query) {
+                ->whereHas('warehouse', function ($query) {
                     $query->where('is_active', true);
                 })
                 ->get();
@@ -82,12 +82,12 @@ class StockAdjustmentController extends Controller
 
             return Inertia::render('admin/stock-adjustments/Create', [
                 'inventories' => $inventories,
-                'reasons' => $reasons
+                'reasons' => $reasons,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@create: ' . $e->getMessage());
-        
+            Log::error('Error in StockAdjustmentController@create: '.$e->getMessage());
+
             return redirect()->route('admin.stock-adjustments.index')
                 ->with('error', 'Error loading create form.');
         }
@@ -105,11 +105,11 @@ class StockAdjustmentController extends Controller
                 ->with('success', 'Stock adjustment created successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@store: ' . $e->getMessage());
+            Log::error('Error in StockAdjustmentController@store: '.$e->getMessage());
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error creating stock adjustment: ' . $e->getMessage());
+                ->with('error', 'Error creating stock adjustment: '.$e->getMessage());
         }
     }
 
@@ -124,12 +124,12 @@ class StockAdjustmentController extends Controller
 
             return Inertia::render('admin/stock-adjustments/View', [
                 'stockAdjustment' => $stockAdjustment,
-                'relatedAdjustments' => $relatedAdjustments->where('id', '!=', $stockAdjustment->id)->take(5)
+                'relatedAdjustments' => $relatedAdjustments->where('id', '!=', $stockAdjustment->id)->take(5),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@show: ' . $e->getMessage());
-        
+            Log::error('Error in StockAdjustmentController@show: '.$e->getMessage());
+
             return redirect()->route('admin.stock-adjustments.index')
                 ->with('error', 'Error loading stock adjustment details.');
         }
@@ -144,12 +144,12 @@ class StockAdjustmentController extends Controller
             $stockAdjustment->load(['inventory.product', 'inventory.warehouse', 'adjustedBy']);
 
             return Inertia::render('admin/stock-adjustments/Edit', [
-                'stockAdjustment' => $stockAdjustment
+                'stockAdjustment' => $stockAdjustment,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@edit: ' . $e->getMessage());
-        
+            Log::error('Error in StockAdjustmentController@edit: '.$e->getMessage());
+
             return redirect()->route('admin.stock-adjustments.index')
                 ->with('error', 'Error loading edit form.');
         }
@@ -167,11 +167,11 @@ class StockAdjustmentController extends Controller
                 ->with('success', 'Stock adjustment updated successfully.');
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@update: ' . $e->getMessage());
-        
+            Log::error('Error in StockAdjustmentController@update: '.$e->getMessage());
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Error updating stock adjustment: ' . $e->getMessage());
+                ->with('error', 'Error updating stock adjustment: '.$e->getMessage());
         }
     }
 
@@ -184,15 +184,15 @@ class StockAdjustmentController extends Controller
             // Note: We only soft delete for audit trail purposes
             // Actual inventory quantities should not be reversed automatically
             $stockAdjustment->delete();
-            
+
             return redirect()->route('admin.stock-adjustments.index')
                 ->with('success', 'Stock adjustment record deleted successfully.');
-                
+
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@destroy: ' . $e->getMessage());
-            
+            Log::error('Error in StockAdjustmentController@destroy: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Error deleting stock adjustment: ' . $e->getMessage());
+                ->with('error', 'Error deleting stock adjustment: '.$e->getMessage());
         }
     }
 
@@ -206,15 +206,15 @@ class StockAdjustmentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $adjustments
+                'data' => $adjustments,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in StockAdjustmentController@getByInventory: ' . $e->getMessage());
+            Log::error('Error in StockAdjustmentController@getByInventory: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching adjustments: ' . $e->getMessage()
+                'message' => 'Error fetching adjustments: '.$e->getMessage(),
             ], 500);
         }
     }

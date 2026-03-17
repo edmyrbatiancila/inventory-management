@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Customer;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CustomerSeeder extends Seeder
@@ -37,24 +36,24 @@ class CustomerSeeder extends Seeder
     {
         // Individual customers
         Customer::factory(12)->individual()->state(['status' => 'active'])->create();
-        
+
         // Business customers (majority)
         Customer::factory(25)->business()->state(['status' => 'active'])->create();
-        
+
         // Government customers
         Customer::factory(3)->state([
             'customer_type' => 'government',
             'status' => 'active',
             'payment_terms' => 'net_45',
-            'credit_limit' => $this->faker->randomFloat(2, 50000, 200000)
+            'credit_limit' => $this->faker->randomFloat(2, 50000, 200000),
         ])->create();
-        
+
         // Non-profit customers
         Customer::factory(2)->state([
             'customer_type' => 'non_profit',
             'status' => 'active',
             'tax_exempt' => true,
-            'default_discount_percentage' => 10.00
+            'default_discount_percentage' => 10.00,
         ])->create();
     }
 
@@ -65,10 +64,10 @@ class CustomerSeeder extends Seeder
     {
         // VIP customers (high value, special treatment)
         Customer::factory(8)->vip()->create();
-        
+
         // High priority customers
         Customer::factory(6)->highValue()->create();
-        
+
         // Regular customers are created in other methods
     }
 
@@ -79,10 +78,10 @@ class CustomerSeeder extends Seeder
     {
         // Prospects (potential customers)
         Customer::factory(10)->prospect()->create();
-        
+
         // Suspended customers
         Customer::factory(3)->suspended()->create();
-        
+
         // Inactive customers
         Customer::factory(2)->state(['status' => 'inactive'])->create();
     }

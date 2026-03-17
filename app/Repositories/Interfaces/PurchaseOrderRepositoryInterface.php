@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Repositories\Interfaces;
 
@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface PurchaseOrderRepositoryInterface
 {
-     // ====== PURCHASE ORDER CRUD OPERATIONS ======
+    // ====== PURCHASE ORDER CRUD OPERATIONS ======
 
     /**
      * Find purchase order by ID with optional relations
@@ -73,39 +73,39 @@ interface PurchaseOrderRepositoryInterface
      * Get overdue purchase orders
      */
     public function findOverdue(array $with = []): Collection;
-    
+
     /**
      * Get purchase orders by warehouse
      */
     public function findByWarehouse(int $warehouseId, array $with = []): Collection;
-    
+
     /**
      * Get purchase orders by supplier
      */
     public function findBySupplier(string $supplierName, array $with = []): Collection;
-    
+
     /**
      * Get purchase orders requiring attention (urgent, overdue, etc.)
      */
     public function findRequiringAttention(): Collection;
-    
+
     /**
      * Get purchase order statistics
      */
     public function getStatistics(): array;
 
     // ====== SEARCH AND FILTER METHODS ======
-    
+
     /**
      * Search purchase orders with advanced filters
      */
     public function search(array $criteria): Collection;
-    
+
     /**
      * Get purchase orders with pending approvals
      */
     public function getPendingApprovals(): Collection;
-    
+
     /**
      * Get recent purchase orders
      */

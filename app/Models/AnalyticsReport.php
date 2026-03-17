@@ -70,29 +70,47 @@ class AnalyticsReport extends Model
 
     // Report Types
     public const TYPE_INVENTORY_SUMMARY = 'inventory_summary';
+
     public const TYPE_STOCK_MOVEMENT = 'stock_movement';
+
     public const TYPE_PURCHASE_ANALYTICS = 'purchase_analytics';
+
     public const TYPE_SALES_ANALYTICS = 'sales_analytics';
+
     public const TYPE_WAREHOUSE_PERFORMANCE = 'warehouse_performance';
+
     public const TYPE_FINANCIAL_SUMMARY = 'financial_summary';
+
     public const TYPE_OPERATIONAL_KPIS = 'operational_kpis';
+
     public const TYPE_CUSTOM_REPORT = 'custom_report';
 
     // Report Status
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_GENERATING = 'generating';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_FAILED = 'failed';
+
     public const STATUS_ARCHIVED = 'archived';
 
     // Report Frequency
     public const FREQUENCY_REAL_TIME = 'real_time';
+
     public const FREQUENCY_DAILY = 'daily';
+
     public const FREQUENCY_WEEKLY = 'weekly';
+
     public const FREQUENCY_MONTHLY = 'monthly';
+
     public const FREQUENCY_QUARTERLY = 'quarterly';
+
     public const FREQUENCY_YEARLY = 'yearly';
+
     public const FREQUENCY_ON_DEMAND = 'on_demand';
 
     // Relationships
@@ -150,37 +168,41 @@ class AnalyticsReport extends Model
 
     public function canBeDownloaded(): bool
     {
-        return $this->isCompleted() && !$this->isExpired() && $this->file_path;
+        return $this->isCompleted() && ! $this->isExpired() && $this->file_path;
     }
 
     public function getFileSizeFormatted(): string
     {
-        if (!$this->file_size) return 'N/A';
-        
+        if (! $this->file_size) {
+            return 'N/A';
+        }
+
         $units = ['B', 'KB', 'MB', 'GB'];
         $size = $this->file_size;
         $unitIndex = 0;
-        
+
         while ($size >= 1024 && $unitIndex < count($units) - 1) {
             $size /= 1024;
             $unitIndex++;
         }
-        
-        return round($size, 2) . ' ' . $units[$unitIndex];
+
+        return round($size, 2).' '.$units[$unitIndex];
     }
 
     public function getGenerationTimeFormatted(): string
     {
-        if (!$this->generation_time_seconds) return 'N/A';
-        
-        if ($this->generation_time_seconds < 60) {
-            return $this->generation_time_seconds . 's';
+        if (! $this->generation_time_seconds) {
+            return 'N/A';
         }
-        
+
+        if ($this->generation_time_seconds < 60) {
+            return $this->generation_time_seconds.'s';
+        }
+
         $minutes = floor($this->generation_time_seconds / 60);
         $seconds = $this->generation_time_seconds % 60;
-        
-        return $minutes . 'm ' . $seconds . 's';
+
+        return $minutes.'m '.$seconds.'s';
     }
 
     // Boot method
@@ -189,11 +211,11 @@ class AnalyticsReport extends Model
         parent::boot();
 
         static::creating(function ($report) {
-            if (!$report->report_code) {
+            if (! $report->report_code) {
                 $report->report_code = self::generateReportCode();
             }
             // Only set created_by if not already set (for seeders)
-            if (!$report->created_by) {
+            if (! $report->created_by) {
                 $report->created_by = auth()->id() ?? 1; // Fallback to user 1 for seeding
             }
         });
@@ -209,9 +231,9 @@ class AnalyticsReport extends Model
         $lastReport = self::whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
-        
+
         $sequence = $lastReport ? (int) substr($lastReport->report_code, -3) + 1 : 1;
-        
-        return 'REP-' . $year . '-' . str_pad($sequence, 3, '0', STR_PAD_LEFT);
+
+        return 'REP-'.$year.'-'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
     }
 }

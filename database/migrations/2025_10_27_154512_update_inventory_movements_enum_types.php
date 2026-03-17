@@ -23,7 +23,7 @@ return new class extends Migration
         DB::statement("UPDATE inventory_movements SET type_temp = 'adjustment_in' WHERE type = 'adjustment' AND quantity > 0");
         DB::statement("UPDATE inventory_movements SET type_temp = 'adjustment_out' WHERE type = 'adjustment' AND quantity < 0");
         DB::statement("UPDATE inventory_movements SET type_temp = 'transfer_out' WHERE type = 'transfer'");
-        
+
         // Handle any records with null or unexpected values
         DB::statement("UPDATE inventory_movements SET type_temp = 'adjustment_in' WHERE type_temp IS NULL AND quantity >= 0");
         DB::statement("UPDATE inventory_movements SET type_temp = 'adjustment_out' WHERE type_temp IS NULL AND quantity < 0");
@@ -37,18 +37,18 @@ return new class extends Migration
         Schema::table('inventory_movements', function (Blueprint $table) {
             $table->enum('type', [
                 'stock_in',
-                'stock_out', 
+                'stock_out',
                 'adjustment_in',
                 'adjustment_out',
                 'transfer_in',
                 'transfer_out',
                 'increase',  // For InventoryService compatibility
-                'decrease'   // For InventoryService compatibility
+                'decrease',   // For InventoryService compatibility
             ])->after('warehouse_id');
         });
 
         // Copy data from temporary column to new enum column
-        DB::statement("UPDATE inventory_movements SET type = type_temp");
+        DB::statement('UPDATE inventory_movements SET type = type_temp');
 
         // Drop the temporary column
         Schema::table('inventory_movements', function (Blueprint $table) {
@@ -86,7 +86,7 @@ return new class extends Migration
         });
 
         // Copy data from temporary column to old enum column
-        DB::statement("UPDATE inventory_movements SET type = type_temp");
+        DB::statement('UPDATE inventory_movements SET type = type_temp');
 
         // Drop the temporary column
         Schema::table('inventory_movements', function (Blueprint $table) {

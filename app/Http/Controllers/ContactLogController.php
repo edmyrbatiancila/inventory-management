@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Constants\ContactLogConstants;
-use App\Models\ContactLog;
 use App\Http\Requests\StoreContactLogRequest;
 use App\Http\Requests\UpdateContactLogRequest;
 use App\Http\Resources\ContactLogResource;
+use App\Models\ContactLog;
 use App\Services\ContactLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -28,9 +28,9 @@ class ContactLogController extends Controller
     {
         try {
             $filters = $request->only([
-                'contact_type', 'direction', 'priority', 'outcome', 
-                'contactable_type', 'contact_person_id', 'date_from', 
-                'date_to', 'needs_follow_up'
+                'contact_type', 'direction', 'priority', 'outcome',
+                'contactable_type', 'contact_person_id', 'date_from',
+                'date_to', 'needs_follow_up',
             ]);
 
             $contactLogs = $this->contactLogService->getAllContactLogs($filters);
@@ -48,7 +48,7 @@ class ContactLogController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to load contact logs: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to load contact logs: '.$e->getMessage());
         }
     }
 
@@ -76,15 +76,15 @@ class ContactLogController extends Controller
             $contactLog = $this->contactLogService->createContactLog($request->validated());
 
             return redirect()->route('contact-logs.show', $contactLog)
-                            ->with('success', 'Contact log created successfully.');
+                ->with('success', 'Contact log created successfully.');
         } catch (ValidationException $e) {
             return redirect()->back()
-                            ->withErrors($e->errors())
-                            ->withInput();
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
-                            ->with('error', 'Failed to create contact log: ' . $e->getMessage())
-                            ->withInput();
+                ->with('error', 'Failed to create contact log: '.$e->getMessage())
+                ->withInput();
         }
     }
 
@@ -95,7 +95,7 @@ class ContactLogController extends Controller
     {
         try {
             $contactLog->load(['contactable', 'contactPerson']);
-            
+
             $activitySummary = $this->contactLogService->getActivitySummary(
                 $contactLog->contactable_type,
                 $contactLog->contactable_id
@@ -113,7 +113,7 @@ class ContactLogController extends Controller
             ]);
         } catch (\Exception $e) {
             return redirect()->route('contact-logs.index')
-                            ->with('error', 'Contact log not found.');
+                ->with('error', 'Contact log not found.');
         }
     }
 
@@ -136,7 +136,7 @@ class ContactLogController extends Controller
             ]);
         } catch (\Exception $e) {
             return redirect()->route('contact-logs.index')
-                            ->with('error', 'Contact log not found.');
+                ->with('error', 'Contact log not found.');
         }
     }
 
@@ -152,15 +152,15 @@ class ContactLogController extends Controller
             );
 
             return redirect()->route('contact-logs.show', $updatedContactLog)
-                            ->with('success', 'Contact log updated successfully.');
+                ->with('success', 'Contact log updated successfully.');
         } catch (ValidationException $e) {
             return redirect()->back()
-                            ->withErrors($e->errors())
-                            ->withInput();
+                ->withErrors($e->errors())
+                ->withInput();
         } catch (\Exception $e) {
             return redirect()->back()
-                            ->with('error', 'Failed to update contact log: ' . $e->getMessage())
-                            ->withInput();
+                ->with('error', 'Failed to update contact log: '.$e->getMessage())
+                ->withInput();
         }
     }
 
@@ -173,10 +173,10 @@ class ContactLogController extends Controller
             $this->contactLogService->deleteContactLog($contactLog->id);
 
             return redirect()->route('contact-logs.index')
-                            ->with('success', 'Contact log deleted successfully.');
+                ->with('success', 'Contact log deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                            ->with('error', 'Failed to delete contact log: ' . $e->getMessage());
+                ->with('error', 'Failed to delete contact log: '.$e->getMessage());
         }
     }
 
@@ -186,19 +186,19 @@ class ContactLogController extends Controller
         try {
             $filters = $request->only([
                 'contact_type', 'direction', 'priority', 'outcome',
-                'contactable_type', 'date_from', 'date_to'
+                'contactable_type', 'date_from', 'date_to',
             ]);
 
             $contactLogs = $this->contactLogService->getAllContactLogs($filters);
 
             return response()->json([
                 'success' => true,
-                'data' => ContactLogResource::collection($contactLogs)
+                'data' => ContactLogResource::collection($contactLogs),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Search failed: ' . $e->getMessage()
+                'message' => 'Search failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -210,12 +210,12 @@ class ContactLogController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => ContactLogResource::collection($contactLogs)
+                'data' => ContactLogResource::collection($contactLogs),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load contact logs: ' . $e->getMessage()
+                'message' => 'Failed to load contact logs: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -227,12 +227,12 @@ class ContactLogController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => ContactLogResource::collection($followUps)
+                'data' => ContactLogResource::collection($followUps),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load follow-ups: ' . $e->getMessage()
+                'message' => 'Failed to load follow-ups: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -244,12 +244,12 @@ class ContactLogController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Follow-up marked as complete.'
+                'message' => 'Follow-up marked as complete.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to mark follow-up as complete: ' . $e->getMessage()
+                'message' => 'Failed to mark follow-up as complete: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -21,7 +21,7 @@ trait PurchaseOrderResponses
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'data' => $data
+                'data' => $data,
             ]);
         }
 
@@ -36,7 +36,7 @@ trait PurchaseOrderResponses
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => $message
+                'message' => $message,
             ], $status);
         }
 
@@ -57,13 +57,14 @@ trait PurchaseOrderResponses
     protected function renderIndex($purchaseOrders, array $additionalData = []): Response
     {
         $user = Auth::user();
+
         return Inertia::render('admin/purchase-orders/Index', array_merge([
             'purchase_orders' => $purchaseOrders,
             'filters' => request()->only(['search', 'status', 'priority', 'warehouse_id']),
             'can' => [
                 'create' => Gate::allows('create', PurchaseOrder::class),
                 'viewAny' => Gate::allows('viewAny', PurchaseOrder::class),
-            ]
+            ],
         ], $additionalData));
     }
 
@@ -78,7 +79,7 @@ trait PurchaseOrderResponses
             'warehouse',
             'createdBy',
             'approvedBy',
-            'receivedBy'
+            'receivedBy',
         ]);
 
         return Inertia::render('admin/purchase-orders/View', [
@@ -93,7 +94,7 @@ trait PurchaseOrderResponses
                 'send' => $purchaseOrder->canBeSent() && Gate::allows('send', $purchaseOrder),
                 'receive' => $purchaseOrder->canBeReceived() && Gate::allows('receive', $purchaseOrder),
                 'cancel' => $purchaseOrder->canBeCancelled() && Gate::allows('cancel', $purchaseOrder),
-            ]
+            ],
         ]);
     }
 
@@ -112,7 +113,7 @@ trait PurchaseOrderResponses
             'can' => [
                 'update' => Gate::allows('update', $purchaseOrder),
                 'delete' => Gate::allows('delete', $purchaseOrder),
-            ]
+            ],
         ]);
     }
 }

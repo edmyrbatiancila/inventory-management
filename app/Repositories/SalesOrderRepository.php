@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Repositories;
 
@@ -17,11 +17,10 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
     }
 
     public function paginate(
-        array $filters = [], 
-        int $perPage = 15, 
+        array $filters = [],
+        int $perPage = 15,
         array $with = ['items', 'warehouse', 'createdBy']
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         $query = SalesOrder::with($with);
 
         // Apply filters
@@ -38,7 +37,7 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
         }
 
         if (isset($filters['customer_name'])) {
-            $query->where('customer_name', 'like', '%' . $filters['customer_name'] . '%');
+            $query->where('customer_name', 'like', '%'.$filters['customer_name'].'%');
         }
 
         if (isset($filters['payment_status'])) {
@@ -47,11 +46,11 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
 
         if (isset($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->where('so_number', 'like', '%' . $search . '%')
-                    ->orWhere('customer_name', 'like', '%' . $search . '%')
-                    ->orWhere('customer_reference', 'like', '%' . $search . '%')
-                    ->orWhere('customer_email', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('so_number', 'like', '%'.$search.'%')
+                    ->orWhere('customer_name', 'like', '%'.$search.'%')
+                    ->orWhere('customer_reference', 'like', '%'.$search.'%')
+                    ->orWhere('customer_email', 'like', '%'.$search.'%');
             });
         }
 
@@ -87,7 +86,7 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
 
             // Update totals
             $salesOrder->calculateTotals();
-            
+
             return $salesOrder->fresh(['items', 'warehouse', 'createdBy']);
         });
     }
@@ -98,25 +97,25 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
             // Separate items data from order data
             $itemsData = $data['items'] ?? null;
             unset($data['items']);
-            
+
             // Update the sales order
             $updated = $salesOrder->update($data);
-            
+
             // Update items if provided
             if ($updated && $itemsData !== null && $salesOrder->canBeEdited()) {
                 // Delete existing items
                 $salesOrder->items()->delete();
-                
+
                 // Create new items
                 foreach ($itemsData as $itemData) {
                     $this->addItem($salesOrder, $itemData);
                 }
             }
-            
+
             if ($updated) {
                 $salesOrder->calculateTotals();
             }
-            
+
             return $updated;
         });
     }
@@ -133,7 +132,7 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
         return DB::transaction(function () use ($salesOrder, $itemData) {
             $item = $salesOrder->items()->create($itemData);
             $salesOrder->calculateTotals();
-            
+
             return $item;
         });
     }
@@ -142,21 +141,21 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
     {
         return DB::transaction(function () use ($salesOrder, $itemId, $itemData) {
             $item = $salesOrder->items()->find($itemId);
-            
-            if (!$item) {
+
+            if (! $item) {
                 return false;
             }
-            
+
             $updated = $item->update($itemData);
-            
+
             if ($updated) {
                 $item->calculateTotals();
                 $item->save();
-                
+
                 $salesOrder->calculateTotals();
                 $salesOrder->updateFulfillmentStatus();
             }
-            
+
             return $updated;
         });
     }
@@ -165,18 +164,18 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
     {
         return DB::transaction(function () use ($salesOrder, $itemId) {
             $item = $salesOrder->items()->find($itemId);
-            
-            if (!$item) {
+
+            if (! $item) {
                 return false;
             }
-            
+
             $deleted = $item->delete();
-            
+
             if ($deleted) {
                 $salesOrder->calculateTotals();
                 $salesOrder->updateFulfillmentStatus();
             }
-            
+
             return $deleted;
         });
     }
@@ -233,10 +232,10 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
         return SalesOrder::with(['items', 'warehouse'])
             ->where(function ($query) {
                 $query->where('priority', 'urgent')
-                        ->orWhere('status', 'pending_approval')
-                        ->orWhere(function ($q) {
-                            $q->overdue();
-                        });
+                    ->orWhere('status', 'pending_approval')
+                    ->orWhere(function ($q) {
+                        $q->overdue();
+                    });
             })
             ->orderBy('priority', 'desc')
             ->orderBy('promised_delivery_date', 'asc')
@@ -251,7 +250,7 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
         $confirmedCount = SalesOrder::where('status', 'confirmed')->count();
         $inProgressCount = SalesOrder::whereIn('status', [
             'partially_fulfilled',
-            'fully_fulfilled'
+            'fully_fulfilled',
         ])->count();
         $completedCount = SalesOrder::where('status', 'delivered')->count();
         $overdueCount = $this->findOverdue()->count();
@@ -281,7 +280,7 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
             'percentages' => [
                 'completion_rate' => $totalSOs > 0 ? round(($completedCount / $totalSOs) * 100, 1) : 0,
                 'overdue_rate' => $totalSOs > 0 ? round(($overdueCount / $totalSOs) * 100, 1) : 0,
-            ]
+            ],
         ];
     }
 
@@ -290,14 +289,16 @@ class SalesOrderRepository implements SalesOrderRepositoryInterface
         $query = SalesOrder::with(['items', 'warehouse', 'createdBy']);
 
         foreach ($criteria as $field => $value) {
-            if (empty($value)) continue;
+            if (empty($value)) {
+                continue;
+            }
 
             switch ($field) {
                 case 'so_number':
-                    $query->where('so_number', 'like', '%' . $value . '%');
+                    $query->where('so_number', 'like', '%'.$value.'%');
                     break;
                 case 'customer':
-                    $query->where('customer_name', 'like', '%' . $value . '%');
+                    $query->where('customer_name', 'like', '%'.$value.'%');
                     break;
                 case 'status':
                     if (is_array($value)) {

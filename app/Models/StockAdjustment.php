@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class StockAdjustment extends Model
 {
     /** @use HasFactory<\Database\Factories\StockAdjustmentFactory> */
-    use HasFactory, SoftDeletes, HasSearchAndFilter;
+    use HasFactory, HasSearchAndFilter, SoftDeletes;
 
     protected $fillable = [
         'inventory_id',
@@ -22,14 +22,14 @@ class StockAdjustment extends Model
         'notes',
         'reference_number',
         'adjusted_by',
-        'adjusted_at'
+        'adjusted_at',
     ];
 
     protected $casts = [
         'quantity_adjusted' => 'integer',
         'quantity_before' => 'integer',
         'quantity_after' => 'integer',
-        'adjusted_at' => 'datetime'
+        'adjusted_at' => 'datetime',
     ];
 
     // Add relationships
@@ -46,12 +46,13 @@ class StockAdjustment extends Model
     // Add helper methods
     public static function generateReferenceNumber()
     {
-        return 'ADJ-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        return 'ADJ-'.date('Ymd').'-'.strtoupper(substr(uniqid(), -6));
     }
 
     public function getFormattedAdjustmentAttribute()
     {
         $sign = $this->adjustment_type === 'increase' ? '+' : '-';
-        return $sign . $this->quantity_adjusted;
+
+        return $sign.$this->quantity_adjusted;
     }
 }

@@ -18,12 +18,12 @@ return new class extends Migration
             $table->foreignId('sales_order_id')->constrained('sales_orders')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('inventory_id')->nullable()->constrained('inventories')->onDelete('set null');
-            
+
             // Item Details
             $table->string('product_sku'); // Snapshot of SKU at time of order
             $table->string('product_name'); // Snapshot of product name at time of order
             $table->text('product_description')->nullable(); // Additional description
-            
+
             // Quantities
             $table->integer('quantity_ordered'); // Originally ordered quantity
             $table->integer('quantity_fulfilled')->default(0); // Actually fulfilled/picked quantity
@@ -37,13 +37,13 @@ return new class extends Migration
             $table->decimal('discount_percentage', 5, 4)->default(0); // Item-level discount
             $table->decimal('discount_amount', 10, 4)->default(0); // Item-level discount amount
             $table->decimal('final_line_total', 12, 4); // After discount
-            
+
             // Status & Tracking
             $table->enum('item_status', [
-                'pending', 'confirmed', 'allocated', 'partially_fulfilled', 'fully_fulfilled', 
-                'shipped', 'delivered', 'cancelled', 'backordered'
+                'pending', 'confirmed', 'allocated', 'partially_fulfilled', 'fully_fulfilled',
+                'shipped', 'delivered', 'cancelled', 'backordered',
             ])->default('pending');
-            
+
             // Fulfillment Information
             $table->date('requested_delivery_date')->nullable();
             $table->date('promised_delivery_date')->nullable();
@@ -52,16 +52,16 @@ return new class extends Migration
             $table->timestamp('shipped_at')->nullable(); // When shipped
             $table->timestamp('delivered_at')->nullable(); // When delivered
             $table->text('fulfillment_notes')->nullable();
-            
+
             // Inventory Management
             $table->boolean('requires_allocation')->default(true); // Whether inventory needs to be allocated
             $table->integer('allocated_quantity')->default(0); // Currently allocated inventory
             $table->timestamp('allocation_expires_at')->nullable(); // When allocation expires
-            
+
             // Quality Control
             $table->integer('quantity_returned')->default(0); // Returned quantity
             $table->text('return_reason')->nullable();
-            
+
             // Metadata
             $table->json('metadata')->nullable(); // Flexible additional data
             $table->text('notes')->nullable(); // Item-specific notes

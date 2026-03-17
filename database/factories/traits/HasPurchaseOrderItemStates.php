@@ -28,7 +28,7 @@ trait HasPurchaseOrderItemStates
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? $this->faker->numberBetween(10, 100);
             $quantityReceived = $this->faker->numberBetween(1, $quantityOrdered - 1);
-            
+
             return [
                 'item_status' => PurchaseOrderItem::STATUS_PARTIALLY_RECEIVED,
                 'quantity_received' => $quantityReceived,
@@ -45,7 +45,7 @@ trait HasPurchaseOrderItemStates
     {
         return $this->state(function (array $attributes) {
             $quantityOrdered = $attributes['quantity_ordered'] ?? $this->faker->numberBetween(10, 100);
-            
+
             return [
                 'item_status' => PurchaseOrderItem::STATUS_FULLY_RECEIVED,
                 'quantity_received' => $quantityOrdered,
@@ -64,7 +64,7 @@ trait HasPurchaseOrderItemStates
             $quantityOrdered = $attributes['quantity_ordered'] ?? $this->faker->numberBetween(10, 100);
             $quantityReceived = $this->faker->numberBetween(1, $quantityOrdered);
             $quantityRejected = $this->faker->numberBetween(1, min(5, $quantityReceived));
-            
+
             return [
                 'quantity_received' => $quantityReceived,
                 'quantity_rejected' => $quantityRejected,
@@ -73,7 +73,7 @@ trait HasPurchaseOrderItemStates
                     'Product quality below standards',
                     'Incorrect specifications',
                     'Missing components',
-                    'Expired products received'
+                    'Expired products received',
                 ]),
                 'last_received_at' => $this->faker->dateTimeBetween('-1 week', 'now'),
             ];
@@ -98,13 +98,13 @@ trait HasPurchaseOrderItemStates
     public function withDiscount(?float $discountPercentage = null): static
     {
         $discount = $discountPercentage ?? $this->faker->randomFloat(4, 0.05, 0.15); // 5% to 15% as decimal
-        
+
         return $this->state(function (array $attributes) use ($discount) {
             $unitCost = $attributes['unit_cost'] ?? $this->faker->randomFloat(2, 10, 1000);
             $quantityOrdered = $attributes['quantity_ordered'] ?? $this->faker->numberBetween(1, 100);
             $lineTotal = $unitCost * $quantityOrdered;
             $discountAmount = $lineTotal * ($discount / 100);
-            
+
             return [
                 'discount_percentage' => $discount,
                 'discount_amount' => $discountAmount,

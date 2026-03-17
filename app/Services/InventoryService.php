@@ -16,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 class InventoryService
 {
     protected InventoryRepositoryInterface $inventoryRepository;
+
     protected StockAdjustmentRepositoryInterface $stockAdjustmentRepository;
 
     public function __construct(InventoryRepositoryInterface $inventoryRepository, StockAdjustmentRepositoryInterface $stockAdjustmentRepository)
@@ -64,7 +65,7 @@ class InventoryService
             // Validate that product and warehouse exist
             $existingInventory = $this->inventoryRepository->findByProductAndWarehouse($data['product_id'], $data['warehouse_id']);
 
-            if($existingInventory) {
+            if ($existingInventory) {
                 throw new ValidationException('Inventory record already exists for this product in this warehouse');
             }
 
@@ -74,56 +75,59 @@ class InventoryService
             $inventory = $this->inventoryRepository->create($data);
 
             DB::commit();
+
             return $inventory;
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            throw new \Exception('Error creating inventory: ' . $e->getMessage());
+            throw new \Exception('Error creating inventory: '.$e->getMessage());
         }
     }
 
     /**
      * Update inventory quantity
      */
-    public function updateInventoryQuantity(int $id, int $quantity, string $reason = null): bool
+    public function updateInventoryQuantity(int $id, int $quantity, ?string $reason = null): bool
     {
         try {
             DB::beginTransaction();
 
             $inventory = $this->getInventoryById($id);
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new ModelNotFoundException('Inventory not found');
             }
 
             $oldQuantity = $inventory->quantity_on_hand;
             $result = $this->inventoryRepository->update($id, [
-                'quantity_on_hand' => $quantity
+                'quantity_on_hand' => $quantity,
             ]);
 
             // Log the change (you'll need to create InventoryMovement model later)
             // $this->logInventoryMovement($id, $oldQuantity, $quantity, 'adjustment', $reason);
 
             DB::commit();
+
             return $result;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error updating inventory: ' . $e->getMessage());
+            throw new \Exception('Error updating inventory: '.$e->getMessage());
         }
     }
 
     /**
      * Adjust stock (add or subtract)
      */
-    public function adjustStock(int $id, int $adjustment, string $reason = null): bool
+    public function adjustStock(int $id, int $adjustment, ?string $reason = null): bool
     {
         $inventory = $this->getInventoryById($id);
-        if (!$inventory) {
+        if (! $inventory) {
             throw new ModelNotFoundException('Inventory not found');
         }
 
         $newQuantity = max(0, $inventory->quantity_on_hand + $adjustment);
+
         return $this->updateInventoryQuantity($id, $newQuantity, $reason);
     }
 
@@ -138,7 +142,7 @@ class InventoryService
             $fromInventory = $this->getInventoryById($fromInventoryId);
             $toInventory = $this->getInventoryById($toInventoryId);
 
-            if (!$fromInventory || !$toInventory) {
+            if (! $fromInventory || ! $toInventory) {
                 throw new ModelNotFoundException('One or both inventory records not found');
             }
 
@@ -148,20 +152,21 @@ class InventoryService
 
             // Reduce from source
             $this->inventoryRepository->update($fromInventoryId, [
-                'quantity_on_hand' => $fromInventory->quantity_on_hand - $quantity
+                'quantity_on_hand' => $fromInventory->quantity_on_hand - $quantity,
             ]);
 
             // Add to destination
             $this->inventoryRepository->update($toInventoryId, [
-                'quantity_on_hand' => $toInventory->quantity_on_hand + $quantity
+                'quantity_on_hand' => $toInventory->quantity_on_hand + $quantity,
             ]);
 
             DB::commit();
+
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error transferring stock: ' . $e->getMessage());
+            throw new \Exception('Error transferring stock: '.$e->getMessage());
         }
     }
 
@@ -180,7 +185,7 @@ class InventoryService
     {
         $totalValue = $this->inventoryRepository->getTotalStockValue();
         $lowStockCount = $this->inventoryRepository->findLowStock()->count();
-        
+
         return [
             'total_inventory_value' => $totalValue,
             'low_stock_items' => $lowStockCount,
@@ -196,24 +201,25 @@ class InventoryService
     {
         try {
             DB::beginTransaction();
-            
+
             $inventory = $this->getInventoryById($id);
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new ModelNotFoundException('Inventory not found');
             }
-            
+
             // Set calculated available quantity
-            $data['quantity_available'] = ($data['quantity_on_hand'] ?? $inventory->quantity_on_hand) - 
+            $data['quantity_available'] = ($data['quantity_on_hand'] ?? $inventory->quantity_on_hand) -
                 ($data['quantity_reserved'] ?? $inventory->quantity_reserved);
-            
+
             $result = $this->inventoryRepository->update($id, $data);
-            
+
             DB::commit();
+
             return $result;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error updating inventory: ' . $e->getMessage());
+            throw new \Exception('Error updating inventory: '.$e->getMessage());
         }
     }
 
@@ -226,7 +232,7 @@ class InventoryService
             DB::beginTransaction();
 
             $inventory = $this->getInventoryById($id);
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new ModelNotFoundException('Inventory not found');
             }
 
@@ -242,19 +248,20 @@ class InventoryService
                         'Go to the Edit page for this inventory item',
                         'Reduce the "Quantity Reserved" to 0',
                         'Save the changes',
-                        'Return to this page and try deleting again'
-                    ]
+                        'Return to this page and try deleting again',
+                    ],
                 ]));
             }
 
             $result = $this->inventoryRepository->delete($id);
 
             DB::commit();
+
             return $result;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error deleting inventory: ' . $e->getMessage());
+            throw new \Exception('Error deleting inventory: '.$e->getMessage());
         }
     }
 
@@ -267,14 +274,14 @@ class InventoryService
             DB::beginTransaction();
 
             $inventory = $this->getInventoryById($inventoryId);
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new ModelNotFoundException('Inventory not found');
             }
 
             // Calculate new quantities
             $quantityBefore = $inventory->quantity_on_hand;
-            $newQuantity = $adjustmentType === 'increase' 
-                ? $quantityBefore + $quantity 
+            $newQuantity = $adjustmentType === 'increase'
+                ? $quantityBefore + $quantity
                 : $quantityBefore - $quantity;
 
             // Create adjustment record
@@ -293,10 +300,10 @@ class InventoryService
 
             // Update inventory
             $updated = $this->inventoryRepository->update($inventoryId, [
-                'quantity_on_hand' => $newQuantity
+                'quantity_on_hand' => $newQuantity,
             ]);
 
-            if (!$updated) {
+            if (! $updated) {
                 throw new \Exception('Failed to update inventory');
             }
 
@@ -309,12 +316,12 @@ class InventoryService
                 'success' => true,
                 'adjustment' => $adjustment,
                 'inventory' => $updatedInventory,
-                'message' => "Stock {$adjustmentType}d by {$quantity}. Reference: {$adjustment->reference_number}"
+                'message' => "Stock {$adjustmentType}d by {$quantity}. Reference: {$adjustment->reference_number}",
             ];
 
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new \Exception('Error adjusting stock: ' . $e->getMessage());
+            throw new \Exception('Error adjusting stock: '.$e->getMessage());
         }
     }
 
@@ -337,7 +344,7 @@ class InventoryService
     /**
      * Increase stock quantity for a specific warehouse/product combination
      */
-    public function increaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, string $notes = null): bool
+    public function increaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, ?string $notes = null): bool
     {
         try {
             DB::beginTransaction();
@@ -345,7 +352,7 @@ class InventoryService
             // Find or create inventory record
             $inventory = $this->inventoryRepository->findByProductAndWarehouse($productId, $warehouseId);
 
-            if (!$inventory) {
+            if (! $inventory) {
                 // Create new inventory record if doesn't exist
                 $inventory = $this->inventoryRepository->create([
                     'warehouse_id' => $warehouseId,
@@ -384,6 +391,7 @@ class InventoryService
             ]);
 
             DB::commit();
+
             return true;
 
         } catch (\Exception $e) {
@@ -395,7 +403,7 @@ class InventoryService
     /**
      * Decrease stock quantity for a specific warehouse/product combination
      */
-    public function decreaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, string $notes = null): bool
+    public function decreaseStock(int $warehouseId, int $productId, int $quantity, string $referenceType, int $referenceId, ?string $notes = null): bool
     {
         try {
             DB::beginTransaction();
@@ -403,7 +411,7 @@ class InventoryService
             // Find inventory record
             $inventory = $this->inventoryRepository->findByProductAndWarehouse($productId, $warehouseId);
 
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new ValidationException("Inventory record not found for product {$productId} in warehouse {$warehouseId}");
             }
 
@@ -436,6 +444,7 @@ class InventoryService
             ]);
 
             DB::commit();
+
             return true;
 
         } catch (\Exception $e) {

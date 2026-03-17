@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,7 +21,7 @@ class SalesOrderEditSimpleTest extends TestCase
         $user = User::factory()->create(['type' => 'admin']);
         $warehouse = Warehouse::factory()->create();
         $product = Product::factory()->create(['price' => 100.00]);
-        
+
         $salesOrder = SalesOrder::factory()->create([
             'status' => 'draft',
             'warehouse_id' => $warehouse->id,
@@ -35,7 +35,7 @@ class SalesOrderEditSimpleTest extends TestCase
             'product_id' => $product->id,
             'quantity_ordered' => 10,
             'unit_price' => 100.00,
-            'line_total' => 1000.00
+            'line_total' => 1000.00,
         ]);
 
         $this->actingAs($user);
@@ -48,7 +48,7 @@ class SalesOrderEditSimpleTest extends TestCase
         ]);
 
         $response->assertSessionDoesntHaveErrors(['tax_rate']);
-        
+
         // Verify the tax_rate was converted to decimal
         $salesOrder->refresh();
         $this->assertEquals(0.22, (float) $salesOrder->tax_rate);
@@ -59,7 +59,7 @@ class SalesOrderEditSimpleTest extends TestCase
     {
         $user = User::factory()->create(['type' => 'admin']);
         $warehouse = Warehouse::factory()->create();
-        
+
         $salesOrder = SalesOrder::factory()->create([
             'status' => 'draft',
             'warehouse_id' => $warehouse->id,
@@ -101,7 +101,7 @@ class SalesOrderEditSimpleTest extends TestCase
     {
         $user = User::factory()->create(['type' => 'admin']);
         $warehouse = Warehouse::factory()->create();
-        
+
         $salesOrder = SalesOrder::factory()->create([
             'status' => 'draft',
             'warehouse_id' => $warehouse->id,

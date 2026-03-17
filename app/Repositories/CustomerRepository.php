@@ -19,27 +19,27 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function getAll(array $filters = [], array $relations = []): Collection
     {
         $query = $this->model->with($relations);
-        
+
         // Apply status filter
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        
+
         // Apply customer type filter
         if (isset($filters['customer_type'])) {
             $query->byType($filters['customer_type']);
         }
-        
+
         // Apply priority filter
         if (isset($filters['priority'])) {
             $query->byPriority($filters['priority']);
         }
-        
+
         // Apply credit status filter
         if (isset($filters['credit_status'])) {
             $query->byCreditStatus($filters['credit_status']);
         }
-        
+
         // Apply price tier filter
         if (isset($filters['price_tier'])) {
             $query->byPriceTier($filters['price_tier']);
@@ -47,7 +47,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 
         // Apply search
         if (isset($filters['search'])) {
-            $query->where(function($q) use ($filters) {
+            $query->where(function ($q) use ($filters) {
                 $q->where('company_name', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('customer_code', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('first_name', 'LIKE', "%{$filters['search']}%")
@@ -55,7 +55,7 @@ class CustomerRepository implements CustomerRepositoryInterface
                     ->orWhere('contact_person', 'LIKE', "%{$filters['search']}%");
             });
         }
-        
+
         return $query->orderBy('company_name')->orderBy('last_name')->get();
     }
 
@@ -77,46 +77,47 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function update(int $id, array $data): bool
     {
         $customer = $this->findById($id);
-        if (!$customer) {
+        if (! $customer) {
             return false;
         }
-        
+
         $data['updated_by'] = auth()->id();
+
         return $customer->update($data);
     }
 
     public function delete(int $id): bool
     {
         $customer = $this->findById($id);
-        if (!$customer) {
+        if (! $customer) {
             return false;
         }
-        
+
         return $customer->delete();
     }
 
     public function getPaginated(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model->query();
-        
+
         // Apply same filters as getAll
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        
+
         if (isset($filters['customer_type'])) {
             $query->byType($filters['customer_type']);
         }
-        
+
         if (isset($filters['search'])) {
-            $query->where(function($q) use ($filters) {
+            $query->where(function ($q) use ($filters) {
                 $q->where('company_name', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('customer_code', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('first_name', 'LIKE', "%{$filters['search']}%")
                     ->orWhere('last_name', 'LIKE', "%{$filters['search']}%");
             });
         }
-        
+
         return $query->orderBy('company_name')->orderBy('last_name')->paginate($perPage);
     }
 
@@ -142,7 +143,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 
     public function search(string $term, array $filters = []): Collection
     {
-        $query = $this->model->where(function($q) use ($term) {
+        $query = $this->model->where(function ($q) use ($term) {
             $q->where('company_name', 'LIKE', "%{$term}%")
                 ->orWhere('customer_code', 'LIKE', "%{$term}%")
                 ->orWhere('first_name', 'LIKE', "%{$term}%")
@@ -150,13 +151,13 @@ class CustomerRepository implements CustomerRepositoryInterface
                 ->orWhere('contact_person', 'LIKE', "%{$term}%")
                 ->orWhere('email', 'LIKE', "%{$term}%");
         });
-        
+
         foreach ($filters as $key => $value) {
             if ($value !== null) {
                 $query->where($key, $value);
             }
         }
-        
+
         return $query->orderBy('company_name')->orderBy('last_name')->get();
     }
 

@@ -75,8 +75,8 @@ class ProductService
     public function updateProduct(int $id, array $data): bool
     {
         $product = $this->productRepository->findById($id);
-        
-        if (!$product) {
+
+        if (! $product) {
             throw new ModelNotFoundException('Product not found');
         }
 
@@ -99,8 +99,8 @@ class ProductService
     public function deleteProduct(int $id): bool
     {
         $product = $this->productRepository->findById($id);
-        
-        if (!$product) {
+
+        if (! $product) {
             throw new ModelNotFoundException('Product not found');
         }
 
@@ -158,8 +158,8 @@ class ProductService
     public function getProductStockSummary(int $productId): array
     {
         $product = $this->productRepository->findWithInventory($productId);
-        
-        if (!$product) {
+
+        if (! $product) {
             throw new ModelNotFoundException('Product not found');
         }
 
@@ -183,34 +183,34 @@ class ProductService
                     'quantity_on_hand' => $inventory->quantity_on_hand,
                     'quantity_reserved' => $inventory->quantity_reserved,
                     'quantity_available' => $inventory->quantity_available,
-                    'is_low_stock' => $inventory->quantity_available <= $inventory->product->min_stock_level
+                    'is_low_stock' => $inventory->quantity_available <= $inventory->product->min_stock_level,
                 ];
-            })
+            }),
         ];
     }
 
     /**
      * Check if product is available in sufficient quantity
      */
-    public function checkAvailability(int $productId, int $requestedQuantity, int $warehouseId = null): array
+    public function checkAvailability(int $productId, int $requestedQuantity, ?int $warehouseId = null): array
     {
         $product = $this->productRepository->findWithInventory($productId);
-        
-        if (!$product) {
+
+        if (! $product) {
             return [
                 'available' => false,
-                'message' => 'Product not found'
+                'message' => 'Product not found',
             ];
         }
 
-        if (!$product->track_quantity) {
+        if (! $product->track_quantity) {
             return [
                 'available' => true,
-                'message' => 'Product does not require quantity tracking'
+                'message' => 'Product does not require quantity tracking',
             ];
         }
 
-        $inventories = $warehouseId 
+        $inventories = $warehouseId
             ? $product->inventories->where('warehouse_id', $warehouseId)
             : $product->inventories;
 
@@ -221,7 +221,7 @@ class ProductService
                 'available' => true,
                 'available_quantity' => $totalAvailable,
                 'requested_quantity' => $requestedQuantity,
-                'message' => 'Product is available'
+                'message' => 'Product is available',
             ];
         }
 
@@ -230,7 +230,7 @@ class ProductService
             'available_quantity' => $totalAvailable,
             'requested_quantity' => $requestedQuantity,
             'shortage' => $requestedQuantity - $totalAvailable,
-            'message' => "Insufficient stock. Available: {$totalAvailable}, Requested: {$requestedQuantity}"
+            'message' => "Insufficient stock. Available: {$totalAvailable}, Requested: {$requestedQuantity}",
         ];
     }
 
@@ -240,8 +240,8 @@ class ProductService
     public function getInventoryAnalytics(int $productId): array
     {
         $product = $this->productRepository->findWithInventory($productId);
-        
-        if (!$product) {
+
+        if (! $product) {
             throw new ModelNotFoundException('Product not found');
         }
 
@@ -265,30 +265,30 @@ class ProductService
                 'total_on_hand' => $totalStock,
                 'total_reserved' => $totalReserved,
                 'total_available' => $totalAvailable,
-                'stock_value' => $totalStock * $product->cost_price
+                'stock_value' => $totalStock * $product->cost_price,
             ],
             'stock_levels' => [
                 'min_level' => $product->min_stock_level,
                 'max_level' => $product->max_stock_level,
                 'reorder_needed' => $totalAvailable <= $product->min_stock_level,
-                'overstock' => $product->max_stock_level ? $totalStock > $product->max_stock_level : false
+                'overstock' => $product->max_stock_level ? $totalStock > $product->max_stock_level : false,
             ],
             'recent_activity' => [
                 'stock_in' => $stockIn,
                 'stock_out' => abs($stockOut),
                 'adjustments' => $adjustments,
                 'net_movement' => $stockIn + $stockOut + $adjustments,
-                'movement_count' => $recentMovements->count()
+                'movement_count' => $recentMovements->count(),
             ],
             'locations' => $product->inventories->count(),
-            'last_movement' => $recentMovements->first()?->movement_date
+            'last_movement' => $recentMovements->first()?->movement_date,
         ];
     }
 
     /**
      * Validate product data
      */
-    protected function validateProductData(array $data, int $excludeId = null): void
+    protected function validateProductData(array $data, ?int $excludeId = null): void
     {
         $rules = [
             'name' => 'required|string|max:255',
@@ -297,27 +297,27 @@ class ProductService
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'min_stock_level' => 'integer|min:0',
-            'max_stock_level' => 'nullable|integer|min:0'
+            'max_stock_level' => 'nullable|integer|min:0',
         ];
 
         // Add unique validation for SKU and slug if provided
         if (isset($data['sku'])) {
-            $rules['sku'] = 'required|string|unique:products,sku' . ($excludeId ? ",{$excludeId}" : '');
+            $rules['sku'] = 'required|string|unique:products,sku'.($excludeId ? ",{$excludeId}" : '');
         }
 
         if (isset($data['slug'])) {
-            $rules['slug'] = 'required|string|unique:products,slug' . ($excludeId ? ",{$excludeId}" : '');
+            $rules['slug'] = 'required|string|unique:products,slug'.($excludeId ? ",{$excludeId}" : '');
         }
 
         if (isset($data['barcode']) && $data['barcode']) {
-            $rules['barcode'] = 'string|unique:products,barcode' . ($excludeId ? ",{$excludeId}" : '');
+            $rules['barcode'] = 'string|unique:products,barcode'.($excludeId ? ",{$excludeId}" : '');
         }
 
         // Validate max stock level is greater than min stock level
         if (isset($data['max_stock_level']) && isset($data['min_stock_level'])) {
             if ($data['max_stock_level'] <= $data['min_stock_level']) {
                 throw ValidationException::withMessages([
-                    'max_stock_level' => 'Maximum stock level must be greater than minimum stock level'
+                    'max_stock_level' => 'Maximum stock level must be greater than minimum stock level',
                 ]);
             }
         }
@@ -332,14 +332,14 @@ class ProductService
     /**
      * Generate unique slug for product
      */
-    protected function generateUniqueSlug(string $name, int $excludeId = null): string
+    protected function generateUniqueSlug(string $name, ?int $excludeId = null): string
     {
         $baseSlug = Str::slug($name);
         $slug = $baseSlug;
         $counter = 1;
 
         while ($this->slugExists($slug, $excludeId)) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -349,10 +349,10 @@ class ProductService
     /**
      * Check if slug exists
      */
-    protected function slugExists(string $slug, int $excludeId = null): bool
+    protected function slugExists(string $slug, ?int $excludeId = null): bool
     {
         $query = Product::where('slug', $slug);
-        
+
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
@@ -366,7 +366,7 @@ class ProductService
     protected function generateUniqueSku(): string
     {
         do {
-            $sku = 'PRD-' . strtoupper(Str::random(3)) . '-' . rand(100, 999);
+            $sku = 'PRD-'.strtoupper(Str::random(3)).'-'.rand(100, 999);
         } while (Product::where('sku', $sku)->exists());
 
         return $sku;
@@ -381,7 +381,7 @@ class ProductService
             'is_active' => true,
             'track_quantity' => true,
             'min_stock_level' => 0,
-            'cost_price' => $data['price'] * 0.7 // Default cost price 70% of selling price
+            'cost_price' => $data['price'] * 0.7, // Default cost price 70% of selling price
         ], $data);
     }
 

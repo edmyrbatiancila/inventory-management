@@ -17,9 +17,9 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         $this->applyAdvancedFilters($query, $filters);
 
         // Apply filters
-        if (isset($filters['search']) && !empty($filters['search'])) {
+        if (isset($filters['search']) && ! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('city', 'like', "%{$search}%")
@@ -78,7 +78,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     private function applyAdvancedFilters($query, array $filters): void
     {
         // Global search
-        if (isset($filters['globalSearch']) && !empty($filters['globalSearch'])) {
+        if (isset($filters['globalSearch']) && ! empty($filters['globalSearch'])) {
             $search = $filters['globalSearch'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -93,40 +93,40 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         }
 
         // Specific field searches
-        if (isset($filters['name']) && !empty($filters['name'])) {
+        if (isset($filters['name']) && ! empty($filters['name'])) {
             $query->where('name', 'like', "%{$filters['name']}%");
         }
 
-        if (isset($filters['code']) && !empty($filters['code'])) {
+        if (isset($filters['code']) && ! empty($filters['code'])) {
             $query->where('code', 'like', "%{$filters['code']}%");
         }
 
-        if (isset($filters['address']) && !empty($filters['address'])) {
+        if (isset($filters['address']) && ! empty($filters['address'])) {
             $query->where('address', 'like', "%{$filters['address']}%");
         }
 
-        if (isset($filters['city']) && !empty($filters['city'])) {
+        if (isset($filters['city']) && ! empty($filters['city'])) {
             $query->where('city', 'like', "%{$filters['city']}%");
         }
 
-        if (isset($filters['state']) && !empty($filters['state'])) {
+        if (isset($filters['state']) && ! empty($filters['state'])) {
             $query->where('state', 'like', "%{$filters['state']}%");
         }
 
-        if (isset($filters['country']) && !empty($filters['country'])) {
+        if (isset($filters['country']) && ! empty($filters['country'])) {
             $query->where('country', 'like', "%{$filters['country']}%");
         }
 
-        if (isset($filters['postalCode']) && !empty($filters['postalCode'])) {
+        if (isset($filters['postalCode']) && ! empty($filters['postalCode'])) {
             $query->where('postal_code', 'like', "%{$filters['postalCode']}%");
         }
 
         // Contact filters
-        if (isset($filters['phone']) && !empty($filters['phone'])) {
+        if (isset($filters['phone']) && ! empty($filters['phone'])) {
             $query->where('phone', 'like', "%{$filters['phone']}%");
         }
 
-        if (isset($filters['email']) && !empty($filters['email'])) {
+        if (isset($filters['email']) && ! empty($filters['email'])) {
             $query->where('email', 'like', "%{$filters['email']}%");
         }
 
@@ -136,19 +136,19 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         }
 
         // Date filters
-        if (isset($filters['createdAfter']) && !empty($filters['createdAfter'])) {
+        if (isset($filters['createdAfter']) && ! empty($filters['createdAfter'])) {
             $query->where('created_at', '>=', $filters['createdAfter']);
         }
 
-        if (isset($filters['createdBefore']) && !empty($filters['createdBefore'])) {
+        if (isset($filters['createdBefore']) && ! empty($filters['createdBefore'])) {
             $query->where('created_at', '<=', $filters['createdBefore']);
         }
 
-        if (isset($filters['updatedAfter']) && !empty($filters['updatedAfter'])) {
+        if (isset($filters['updatedAfter']) && ! empty($filters['updatedAfter'])) {
             $query->where('updated_at', '>=', $filters['updatedAfter']);
         }
 
-        if (isset($filters['updatedBefore']) && !empty($filters['updatedBefore'])) {
+        if (isset($filters['updatedBefore']) && ! empty($filters['updatedBefore'])) {
             $query->where('updated_at', '<=', $filters['updatedBefore']);
         }
 
@@ -162,7 +162,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         }
 
         // Legacy basic filters for backward compatibility
-        if (isset($filters['search']) && !empty($filters['search']) && !isset($filters['globalSearch'])) {
+        if (isset($filters['search']) && ! empty($filters['search']) && ! isset($filters['globalSearch'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -179,7 +179,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     public function getSearchStats(array $filters = []): array
     {
         $baseQuery = Warehouse::query();
-        
+
         // Apply the same filters but without pagination
         $this->applyAdvancedFilters($baseQuery, $filters);
 
@@ -255,6 +255,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     public function delete(int $id): bool
     {
         $warehouse = Warehouse::find($id);
+
         return $warehouse ? $warehouse->delete() : false;
     }
 
@@ -268,7 +269,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         return Warehouse::where('is_active', true)->get();
     }
 
-    public function findByLocation(string $city, string $state = null): Collection
+    public function findByLocation(string $city, ?string $state = null): Collection
     {
         $query = Warehouse::where('city', 'like', "%{$city}%");
 
@@ -295,7 +296,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
 
     public function findWarehousesWithStock(): Collection
     {
-        return Warehouse::whereHas('inventories', function($query) {
+        return Warehouse::whereHas('inventories', function ($query) {
             $query->where('quantiry_on_hand', '>', 0);
         })->get();
     }
@@ -311,7 +312,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     {
         $warehouse = $this->findWithInventories($id);
 
-        if (!$warehouse) {
+        if (! $warehouse) {
             return [];
         }
 
